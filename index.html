@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111318" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="製作提醒器" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>IDLE iktah 製作提醒器</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --card-opacity: .78;
+      --card: rgba(27,31,42,var(--card-opacity));
+      --card2: rgba(36,41,54,.88);
+      --text: #f3f4f6;
+      --muted: #c7ccd7;
+      --accent: #b7d7a8;
+      --danger: #ffb4a2;
+      --line: rgba(255,255,255,.16);
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
+      --bg-dim: .25;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { min-height: 100%; background: #111318; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    #appBg {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%),
+        var(--bg);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: translateZ(0);
+    }
+
+    #appDim {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background: rgba(0,0,0,var(--bg-dim));
+      pointer-events: none;
+    }
+
+    .wrap { max-width: 720px; margin: 0 auto; }
+    header { margin: 18px 0 16px; padding: 6px 2px 2px; background: transparent; }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 6vw, 42px);
+      letter-spacing: .5px;
+      text-shadow: 0 2px 14px rgba(0,0,0,.65);
+    }
+
+    h2 { margin: 0 0 8px; }
+
+    .sub {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.7);
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)), var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin: 14px 0;
+      backdrop-filter: blur(8px);
+    }
+
+    label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 7px; }
+    input, select, button { font: inherit; }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--card2);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+      min-height: 48px;
+    }
+
+    input[type="file"] { padding: 10px; }
+    input[type="range"] { padding: 0; min-height: 40px; accent-color: var(--accent); }
+    input:focus, select:focus { border-color: rgba(183,215,168,.65); }
+
+    .grid, .grid3 { display: grid; gap: 12px; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .grid3 { grid-template-columns: 1.2fr .8fr .8fr; }
+    @media (max-width: 640px) { .grid, .grid3 { grid-template-columns: 1fr; } }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      cursor: pointer;
+      color: #10140f;
+      background: var(--accent);
+      font-weight: 800;
+      width: 100%;
+      min-height: 48px;
+    }
+
+    button.secondary { color: var(--text); background: var(--card2); border: 1px solid var(--line); }
+    button.danger { color: #26110c; background: var(--danger); }
+
+    .actions { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; margin-top: 14px; }
+    @media (max-width: 640px) { .actions { grid-template-columns: 1fr; } }
+
+    .result {
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.22);
+      border-radius: 18px;
+      padding: 15px;
+      margin-top: 14px;
+      line-height: 1.7;
+    }
+
+    .bigtime { font-size: clamp(32px, 11vw, 70px); font-weight: 900; letter-spacing: 1px; margin: 10px 0 4px; }
+    .muted { color: var(--muted); }
+
+    .task, .historyItem { background: var(--card2); border: 1px solid var(--line); border-radius: 18px; padding: 14px; margin-top: 12px; }
+    .taskTop { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .taskName { font-weight: 900; font-size: 17px; }
+    .pill { display: inline-block; color: #10140f; background: var(--accent); border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .pill.done { background: #d7c8ff; }
+    .taskTime { font-size: 28px; font-weight: 900; margin: 8px 0 6px; }
+    .miniBtns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .miniBtns button { padding: 10px; font-size: 14px; }
+
+    .note, .footer, .status { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 12px; }
+    .installBox { display:none; margin-top:12px; }
+
+    .soundRow, .bgRow {
+      display: grid;
+      grid-template-columns: 1fr .7fr .7fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (max-width: 640px) { .soundRow, .bgRow { grid-template-columns: 1fr; } }
+
+    .sectionTitle {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-weight: 900;
+    }
+
+    details.settingsDetails summary {
+      cursor: pointer;
+      font-weight: 900;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    details.settingsDetails summary::-webkit-details-marker { display: none; }
+
+    .summaryHint {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div id="appBg"></div>
+  <div id="appDim"></div>
+
+  <div class="wrap">
+    <header>
+      <h1>IDLE iktah 製作提醒器</h1>
+      <div class="sub">開始倒數放最上方；完成後自動清除，只保留最近三次完成紀錄；安裝版啟動路徑已修正。</div>
+    </header>
+
+    <section class="card">
+      <h2>開始倒數</h2>
+      <div class="grid3">
+        <div>
+          <label>製作名稱</label>
+          <input id="name" value="製作項目" placeholder="例如：金條、戒指、藥水" />
+        </div>
+        <div>
+          <label>材料／次數</label>
+          <input id="count" type="number" min="1" value="100" />
+        </div>
+        <div>
+          <label>每個耗時（秒）</label>
+          <input id="seconds" type="number" min="0.1" step="0.1" value="7" />
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:12px;">
+        <div>
+          <label>提前提醒</label>
+          <select id="early">
+            <option value="0">不提前</option>
+            <option value="60">提前 1 分鐘</option>
+            <option value="300">提前 5 分鐘</option>
+            <option value="600">提前 10 分鐘</option>
+          </select>
+        </div>
+        <div>
+          <label>提示音</label>
+          <select id="sound">
+            <option value="yes">開啟</option>
+            <option value="no">關閉</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="startBtn">開始倒數</button>
+        <button class="secondary" id="notifyBtn">開啟通知權限</button>
+      </div>
+
+      <div class="installBox" id="installBox">
+        <button class="secondary" id="installBtn">安裝成 APP</button>
+      </div>
+
+      <div class="result">
+        <div class="muted">預估總時間</div>
+        <div class="bigtime" id="preview">11:40</div>
+        <div id="finishAt" class="muted">完成時間會顯示在這裡</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>目前倒數</h2>
+      <div id="tasks"></div>
+    </section>
+
+    <section class="card">
+      <h2>最近三次完成紀錄</h2>
+      <div id="history"></div>
+      <div class="note">完成紀錄只保留最近 3 筆；新的完成後會自動取代最舊的一筆。</div>
+    </section>
+
+    <section class="card">
+      <details class="settingsDetails">
+        <summary>
+          <span>外觀與鈴聲設定</span>
+          <span class="summaryHint">點開修改</span>
+        </summary>
+
+        <div class="sectionTitle">自訂鈴聲</div>
+        <div style="margin-top:12px;">
+          <label>選擇音檔</label>
+          <input id="soundFile" type="file" accept="audio/*" />
+          <div class="soundRow">
+            <button class="secondary" id="testSoundBtn">試聽鈴聲</button>
+            <button class="secondary" id="defaultSoundBtn">改回預設音</button>
+            <button class="danger" id="clearSoundBtn">清除鈴聲</button>
+          </div>
+          <div id="soundStatus" class="status">目前：預設提示音</div>
+        </div>
+
+        <div class="sectionTitle">自訂背景</div>
+        <div style="margin-top:12px;">
+          <label>選擇背景圖片</label>
+          <input id="bgFile" type="file" accept="image/*" />
+          <div class="grid" style="margin-top:12px;">
+            <div>
+              <label>背景暗度</label>
+              <input id="bgDim" type="range" min="0" max="85" value="25" />
+            </div>
+            <div>
+              <label>背景狀態</label>
+              <select id="bgMode">
+                <option value="cover">填滿畫面</option>
+                <option value="contain">完整顯示</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid" style="margin-top:12px;">
+            <div>
+              <label>卡片透明度</label>
+              <input id="cardOpacity" type="range" min="35" max="95" value="78" />
+            </div>
+            <div>
+              <label>背景位置</label>
+              <select id="bgPosition">
+                <option value="center">置中</option>
+                <option value="top center">靠上</option>
+                <option value="bottom center">靠下</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bgRow">
+            <button class="secondary" id="applyBgBtn">套用背景設定</button>
+            <button class="secondary" id="defaultBgBtn">改回預設背景</button>
+            <button class="danger" id="clearBgBtn">清除背景</button>
+          </div>
+          <div id="bgStatus" class="status">目前：預設背景</div>
+        </div>
+
+        <div class="note">
+          背景、鈴聲都只存在本機瀏覽器，不會上傳。
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>安裝方式</h2>
+      <div class="note">
+        <b>安卓／電腦：</b>用瀏覽器打開後，按「安裝成 APP」或瀏覽器選單裡的「新增至主畫面」。<br>
+        <b>iPhone：</b>用 Safari 打開 → 分享 → 加入主畫面。
+      </div>
+    </section>
+
+    <div class="footer">
+      本工具資料存在你的裝置瀏覽器裡，不會上傳。它不能偵測遊戲畫面，只能依照你輸入的數量與秒數估算。
+    </div>
+  </div>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js"));
+  }
+
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById("installBox").style.display = "block";
+  });
+
+  document.getElementById("installBtn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById("installBox").style.display = "none";
+  });
+
+  const $ = (id) => document.getElementById(id);
+  let tasks = JSON.parse(localStorage.getItem("iktahCraftTimers") || "[]");
+  let history = JSON.parse(localStorage.getItem("iktahCraftHistory") || "[]");
+  let earlyNotified = new Set(JSON.parse(localStorage.getItem("iktahEarlyNotified") || "[]"));
+  let doneNotified = new Set(JSON.parse(localStorage.getItem("iktahDoneNotified") || "[]"));
+
+  let customSound = localStorage.getItem("iktahCustomSound") || "";
+  let customSoundName = localStorage.getItem("iktahCustomSoundName") || "";
+  let customBg = localStorage.getItem("iktahCustomBg") || "";
+  let customBgName = localStorage.getItem("iktahCustomBgName") || "";
+  let bgDim = localStorage.getItem("iktahBgDim") || "25";
+  let bgMode = localStorage.getItem("iktahBgMode") || "cover";
+  let bgPosition = localStorage.getItem("iktahBgPosition") || "center";
+  let cardOpacity = localStorage.getItem("iktahCardOpacity") || "78";
+
+  function updateSoundStatus() {
+    $("soundStatus").textContent = customSound
+      ? `目前：自訂鈴聲「${customSoundName || "未命名音檔"}」`
+      : "目前：預設提示音";
+  }
+
+  function updateBgStatus() {
+    $("bgStatus").textContent = customBg
+      ? `目前：自訂背景「${customBgName || "未命名圖片"}」`
+      : "目前：預設背景";
+  }
+
+  function applyBackground() {
+    document.documentElement.style.setProperty("--bg-dim", String(Number(bgDim) / 100));
+    document.documentElement.style.setProperty("--card-opacity", String(Number(cardOpacity) / 100));
+    const bg = $("appBg");
+    bg.style.backgroundSize = bgMode;
+    bg.style.backgroundPosition = bgPosition;
+    bg.style.backgroundRepeat = "no-repeat";
+
+    if (customBg) {
+      bg.style.backgroundImage = `url("${customBg}")`;
+      bg.style.backgroundColor = "#111318";
+    } else {
+      bg.style.backgroundImage = `
+        radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%),
+        linear-gradient(180deg, #111318, #111318)
+      `;
+      bg.style.backgroundSize = "cover";
+      bg.style.backgroundPosition = "center";
+    }
+
+    $("bgDim").value = bgDim;
+    $("bgMode").value = bgMode;
+    $("bgPosition").value = bgPosition;
+    $("cardOpacity").value = cardOpacity;
+    updateBgStatus();
+  }
+
+  function save() {
+    localStorage.setItem("iktahCraftTimers", JSON.stringify(tasks));
+    localStorage.setItem("iktahCraftHistory", JSON.stringify(history.slice(0, 3)));
+    localStorage.setItem("iktahEarlyNotified", JSON.stringify([...earlyNotified]));
+    localStorage.setItem("iktahDoneNotified", JSON.stringify([...doneNotified]));
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function formatDuration(ms) {
+    let total = Math.max(0, Math.ceil(ms / 1000));
+    const h = Math.floor(total / 3600);
+    total %= 3600;
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+    return `${m}:${pad(s)}`;
+  }
+
+  function finishText(ts) {
+    return new Date(ts).toLocaleString("zh-TW", {
+      month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+    });
+  }
+
+  function fullTimeText(ts) {
+    return new Date(ts).toLocaleString("zh-TW", {
+      month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+  }
+
+  function calcPreview() {
+    const count = Number($("count").value || 0);
+    const seconds = Number($("seconds").value || 0);
+    const totalMs = count * seconds * 1000;
+    $("preview").textContent = formatDuration(totalMs);
+    $("finishAt").textContent = totalMs > 0
+      ? `預計完成：${finishText(Date.now() + totalMs)}`
+      : "請輸入數量與秒數";
+  }
+
+  ["count", "seconds"].forEach(id => $(id).addEventListener("input", calcPreview));
+
+  $("soundFile").addEventListener("change", () => {
+    const file = $("soundFile").files && $("soundFile").files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("audio/")) {
+      alert("請選擇音訊檔。");
+      return;
+    }
+    if (file.size > 1024 * 1024 * 2.5) {
+      alert("音檔太大。建議使用 2.5MB 以下的短鈴聲。");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        customSound = reader.result;
+        customSoundName = file.name;
+        localStorage.setItem("iktahCustomSound", customSound);
+        localStorage.setItem("iktahCustomSoundName", customSoundName);
+        updateSoundStatus();
+        alert("自訂鈴聲已儲存。");
+      } catch(e) {
+        alert("儲存失敗，音檔可能太大。");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("bgFile").addEventListener("change", () => {
+    const file = $("bgFile").files && $("bgFile").files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("請選擇圖片檔。");
+      return;
+    }
+    if (file.size > 1024 * 1024 * 4) {
+      alert("圖片太大。建議使用 4MB 以下圖片。");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        customBg = reader.result;
+        customBgName = file.name;
+        localStorage.setItem("iktahCustomBg", customBg);
+        localStorage.setItem("iktahCustomBgName", customBgName);
+        applyBackground();
+        alert("自訂背景已儲存。");
+      } catch(e) {
+        alert("儲存失敗，圖片可能太大。");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("applyBgBtn").addEventListener("click", () => {
+    bgDim = $("bgDim").value;
+    bgMode = $("bgMode").value;
+    bgPosition = $("bgPosition").value;
+    cardOpacity = $("cardOpacity").value;
+    localStorage.setItem("iktahBgDim", bgDim);
+    localStorage.setItem("iktahBgMode", bgMode);
+    localStorage.setItem("iktahBgPosition", bgPosition);
+    localStorage.setItem("iktahCardOpacity", cardOpacity);
+    applyBackground();
+  });
+
+  $("defaultBgBtn").addEventListener("click", () => {
+    customBg = "";
+    customBgName = "";
+    bgDim = "25";
+    bgMode = "cover";
+    bgPosition = "center";
+    cardOpacity = "78";
+    localStorage.removeItem("iktahCustomBg");
+    localStorage.removeItem("iktahCustomBgName");
+    localStorage.setItem("iktahBgDim", bgDim);
+    localStorage.setItem("iktahBgMode", bgMode);
+    localStorage.setItem("iktahBgPosition", bgPosition);
+    localStorage.setItem("iktahCardOpacity", cardOpacity);
+    applyBackground();
+  });
+
+  $("clearBgBtn").addEventListener("click", () => {
+    customBg = "";
+    customBgName = "";
+    localStorage.removeItem("iktahCustomBg");
+    localStorage.removeItem("iktahCustomBgName");
+    applyBackground();
+  });
+
+  $("testSoundBtn").addEventListener("click", () => playSound());
+  $("defaultSoundBtn").addEventListener("click", () => {
+    customSound = "";
+    customSoundName = "";
+    localStorage.removeItem("iktahCustomSound");
+    localStorage.removeItem("iktahCustomSoundName");
+    updateSoundStatus();
+    playDefaultBeep();
+  });
+  $("clearSoundBtn").addEventListener("click", () => {
+    customSound = "";
+    customSoundName = "";
+    localStorage.removeItem("iktahCustomSound");
+    localStorage.removeItem("iktahCustomSoundName");
+    updateSoundStatus();
+  });
+
+  function playSound() {
+    if ($("sound").value !== "yes") return;
+    if (customSound) {
+      try {
+        const audio = new Audio(customSound);
+        audio.volume = 1;
+        audio.play().catch(() => playDefaultBeep());
+      } catch(e) {
+        playDefaultBeep();
+      }
+    } else {
+      playDefaultBeep();
+    }
+  }
+
+  function playDefaultBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    } catch(e) {}
+  }
+
+  function notify(title, body) {
+    playSound();
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body });
+    } else {
+      alert(`${title}\n${body}`);
+    }
+  }
+
+  $("notifyBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) {
+      alert("這個瀏覽器不支援通知，會改用彈窗提醒。");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    alert(permission === "granted" ? "通知已開啟。" : "通知未開啟，會改用彈窗提醒。");
+  });
+
+  $("startBtn").addEventListener("click", () => {
+    const name = $("name").value.trim() || "製作項目";
+    const count = Number($("count").value || 0);
+    const seconds = Number($("seconds").value || 0);
+    const early = Number($("early").value || 0);
+
+    if (count <= 0 || seconds <= 0) {
+      alert("請輸入正確的材料數量與每個耗時。");
+      return;
+    }
+
+    const now = Date.now();
+    const totalMs = count * seconds * 1000;
+    const task = {
+      id: String(now) + Math.random().toString(16).slice(2),
+      name, count, seconds, early,
+      startAt: now,
+      endAt: now + totalMs,
+      paused: false,
+      remainingWhenPaused: null
+    };
+    tasks.unshift(task);
+    save();
+    render();
+  });
+
+  function pauseTask(id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t || t.paused) return;
+    t.paused = true;
+    t.remainingWhenPaused = Math.max(0, t.endAt - Date.now());
+    save();
+    render();
+  }
+
+  function resumeTask(id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t || !t.paused) return;
+    t.paused = false;
+    t.endAt = Date.now() + t.remainingWhenPaused;
+    t.remainingWhenPaused = null;
+    earlyNotified.delete(id);
+    doneNotified.delete(id);
+    save();
+    render();
+  }
+
+  function removeTask(id) {
+    tasks = tasks.filter(x => x.id !== id);
+    earlyNotified.delete(id);
+    doneNotified.delete(id);
+    save();
+    render();
+  }
+
+  function completeTask(t) {
+    if (doneNotified.has(t.id)) return;
+
+    doneNotified.add(t.id);
+    notify("IDLE iktah 製作完成", `${t.name} 的材料預估已用完。`);
+
+    history.unshift({
+      id: t.id,
+      name: t.name,
+      count: t.count,
+      seconds: t.seconds,
+      durationMs: t.count * t.seconds * 1000,
+      completedAt: Date.now()
+    });
+    history = history.slice(0, 3);
+
+    tasks = tasks.filter(x => x.id !== t.id);
+    earlyNotified.delete(t.id);
+    doneNotified.delete(t.id);
+    save();
+    render();
+  }
+
+  function render() {
+    const box = $("tasks");
+    if (!tasks.length) {
+      box.innerHTML = `<div class="muted">目前沒有進行中的倒數。</div>`;
+    } else {
+      box.innerHTML = tasks.map(t => {
+        const remain = t.paused ? t.remainingWhenPaused : t.endAt - Date.now();
+        return `
+          <div class="task">
+            <div class="taskTop">
+              <div>
+                <div class="taskName">${escapeHtml(t.name)}</div>
+                <div class="muted">${t.count} 個 × ${t.seconds} 秒</div>
+              </div>
+              <span class="pill">${t.paused ? "已暫停" : "倒數中"}</span>
+            </div>
+            <div class="taskTime">${formatDuration(remain)}</div>
+            <div class="muted">預計完成：${finishText(t.endAt)}</div>
+            <div class="miniBtns">
+              <button class="secondary" onclick="pauseTask('${t.id}')">暫停</button>
+              <button class="secondary" onclick="resumeTask('${t.id}')">繼續</button>
+              <button class="danger" onclick="removeTask('${t.id}')">刪除</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    const histBox = $("history");
+    if (!history.length) {
+      histBox.innerHTML = `<div class="muted">還沒有完成紀錄。</div>`;
+    } else {
+      histBox.innerHTML = history.slice(0, 3).map(h => `
+        <div class="historyItem">
+          <div class="taskTop">
+            <div>
+              <div class="taskName">${escapeHtml(h.name)}</div>
+              <div class="muted">${h.count} 個 × ${h.seconds} 秒</div>
+            </div>
+            <span class="pill done">已完成</span>
+          </div>
+          <div class="muted" style="margin-top:8px;">耗時：${formatDuration(h.durationMs)}</div>
+          <div class="muted">完成時間：${fullTimeText(h.completedAt)}</div>
+        </div>
+      `).join("");
+    }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+    }[c]));
+  }
+
+  function tick() {
+    const now = Date.now();
+    const snapshot = [...tasks];
+
+    for (const t of snapshot) {
+      if (t.paused) continue;
+      const remain = t.endAt - now;
+
+      if (t.early > 0 && remain <= t.early * 1000 && remain > 0 && !earlyNotified.has(t.id)) {
+        earlyNotified.add(t.id);
+        notify("IDLE iktah 製作快完成", `${t.name} 約剩 ${formatDuration(remain)}。`);
+      }
+
+      if (remain <= 0) {
+        completeTask(t);
+      }
+    }
+    save();
+    render();
+  }
+
+  calcPreview();
+  updateSoundStatus();
+  applyBackground();
+  render();
+  setInterval(tick, 1000);
+
+  window.pauseTask = pauseTask;
+  window.resumeTask = resumeTask;
+  window.removeTask = removeTask;
+</script>
+</body>
+</html>
