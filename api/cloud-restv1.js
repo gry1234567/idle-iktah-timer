@@ -3,7 +3,7 @@ import https from "https";
 const SUPABASE_REST_URL = "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/";
 const SUPABASE_ROOT_URL = "https://oivbidfpeuddedsucwhg.supabase.co";
 const PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
-const API_VERSION = "PUBLIC-SCHEMA-FORCED-20260608-04";
+const API_VERSION = "OVERWRITE-UPLOAD-FIX-20260608-06";
 
 function requestJson(path, options = {}) {
   return new Promise((resolve, reject) => {
@@ -168,14 +168,71 @@ async function deleteRecipe(id, token) {
   });
 }
 
+function noteSignatureForUpload(note) {
+  return JSON.stringify({
+    title: String(note?.title || "").trim(),
+    content: String(note?.content || "").trim()
+  });
+}
+
+function recipeSignatureForUpload(recipe) {
+  const ingredients = (recipe?.ingredients || [])
+    .map(i => ({
+      name: String(i?.name || "").trim(),
+      amount: Number(i?.amount || 0),
+      unit: String(i?.unit || "克").trim()
+    }))
+    .sort((a, b) => `${a.name}|${a.amount}|${a.unit}`.localeCompare(`${b.name}|${b.amount}|${b.unit}`));
+
+  return JSON.stringify({
+    name: String(recipe?.name || "").trim(),
+    baseWeight: Number(recipe?.baseWeight || 500),
+    ingredients
+  });
+}
+
+function uniqueBySignature(items, signatureFn) {
+  const map = new Map();
+  for (const item of items || []) {
+    const key = signatureFn(item);
+    if (!map.has(key)) map.set(key, item);
+  }
+  return Array.from(map.values());
+}
+
+async function clearCloudData(token) {
+  await requireAdmin(token);
+
+  // 先刪 recipes，ingredients 會因 foreign key cascade 自動刪除。
+  await requestJson("/rest/v1/iktah_recipes?id=not.is.null", {
+    method: "DELETE",
+    headers: { ...adminHeaders(token), Prefer: "return=minimal" }
+  });
+
+  await requestJson("/rest/v1/iktah_notes?id=not.is.null", {
+    method: "DELETE",
+    headers: { ...adminHeaders(token), Prefer: "return=minimal" }
+  });
+}
+
 async function uploadAll(notes, recipes, token) {
   await requireAdmin(token);
-  for (const n of notes || []) {
+
+  const uniqueNotes = uniqueBySignature(notes || [], noteSignatureForUpload);
+  const uniqueRecipes = uniqueBySignature(recipes || [], recipeSignatureForUpload);
+
+  // 修正重複倍增問題：
+  // 本機資料上傳雲端 = 以本機目前資料覆蓋雲端，而不是一直 insert 新資料。
+  await clearCloudData(token);
+
+  for (const n of uniqueNotes) {
     await saveNote({ ...n, id: "" }, token);
   }
-  for (const r of recipes || []) {
+  for (const r of uniqueRecipes) {
     await saveRecipe({ ...r, id: "" }, token);
   }
+
+  return { uploadedNotes: uniqueNotes.length, uploadedRecipes: uniqueRecipes.length };
 }
 
 export default async function handler(req, res) {
@@ -243,8 +300,8 @@ export default async function handler(req, res) {
     }
 
     if (action === "uploadAll") {
-      await uploadAll(body.notes, body.recipes, body.token);
-      return res.status(200).json({ ok: true, version: API_VERSION });
+      const uploaded = await uploadAll(body.notes, body.recipes, body.token);
+      return res.status(200).json({ ok: true, ...uploaded, version: API_VERSION });
     }
 
     return res.status(400).json({ error: "Unknown action", version: API_VERSION });
