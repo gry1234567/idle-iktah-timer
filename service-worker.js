@@ -1,4 +1,4 @@
-const CACHE_NAME = "idle-iktah-import-merge-default-v7";
+const CACHE_NAME = "idle-iktah-separate-backup-v8";
 const FILES = [
   "/",
   "/index.html",

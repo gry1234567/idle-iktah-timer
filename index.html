@@ -343,6 +343,17 @@
       box-shadow: 0 0 0 2px rgba(183,215,168,.12);
     }
 
+
+    .previewBox {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      background: rgba(255,255,255,.03);
+    }
   </style>
 </head>
 <body>
@@ -614,17 +625,31 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">記事本／配方備份</div>
+            <div class="sectionTitle">記事本備份</div>
             <div class="actions3">
-              <button class="secondary" id="exportDataBtn">匯出記事本與配方</button>
-              <button class="secondary" id="importDataBtn">合併匯入記事本與配方</button>
-              <button class="danger" id="overwriteImportDataBtn">覆蓋匯入</button>
+              <button class="secondary" id="exportNotesBtn">匯出記事本</button>
+              <button class="secondary" id="importNotesBtn">合併匯入記事本</button>
+              <button class="danger" id="overwriteNotesBtn">覆蓋匯入記事本</button>
             </div>
             <div style="margin-top:12px;">
-              <label>記事本／配方備份文字</label>
-              <textarea id="backupText" placeholder="這裡只會匯出記事本與配方計算機內容；要匯入時把備份文字貼回來"></textarea>
+              <label>記事本備份文字</label>
+              <textarea id="notesBackupText" placeholder="這裡只處理記事本備份"></textarea>
             </div>
-            <div class="note">這個備份只包含記事本與配方計算機。預設匯入會合併，不會刪掉目前資料；只有按「覆蓋匯入」才會取代目前資料。</div>
+            <div class="previewBox" id="notesPreviewBox">尚未偵測記事本備份內容。</div>
+            <div class="note">記事本備份只包含所有記事本內容。預設為合併匯入，不會刪除目前記事本。</div>
+
+            <div class="sectionTitle">配方備份</div>
+            <div class="actions3">
+              <button class="secondary" id="exportRecipesBtn">匯出配方</button>
+              <button class="secondary" id="importRecipesBtn">合併匯入配方</button>
+              <button class="danger" id="overwriteRecipesBtn">覆蓋匯入配方</button>
+            </div>
+            <div style="margin-top:12px;">
+              <label>配方備份文字</label>
+              <textarea id="recipesBackupText" placeholder="這裡只處理配方備份"></textarea>
+            </div>
+            <div class="previewBox" id="recipesPreviewBox">尚未偵測配方備份內容。</div>
+            <div class="note">配方備份只包含所有已儲存配方。預設為合併匯入，不會刪除目前配方。</div>
           </div>
         </section>
 
@@ -1389,47 +1414,90 @@ function renderRecipeList() {
 }
 
 
-function exportData() {
+function exportNotesData() {
   const data = {
-    type: "iktah_notes_and_recipes_backup",
+    type: "iktah_notes_backup",
     version: 1,
     exportedAt: Date.now(),
     notes,
-    recipes,
-    selectedNoteId,
-    selectedRecipeId
+    selectedNoteId
   };
-
-  $("backupText").value = JSON.stringify(data, null, 2);
-  alert(`已匯出記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。請複製備份文字保存。`);
+  $("notesBackupText").value = JSON.stringify(data, null, 2);
+  updateNotesPreview();
+  alert(`已匯出記事本 ${notes.length} 筆。請複製備份文字保存。`);
 }
 
-function importData(mode = "merge") {
-  const text = $("backupText").value.trim();
-  if (!text) return alert("請先貼上記事本／配方備份文字。");
+function exportRecipesData() {
+  const data = {
+    type: "iktah_recipes_backup",
+    version: 1,
+    exportedAt: Date.now(),
+    recipes,
+    selectedRecipeId
+  };
+  $("recipesBackupText").value = JSON.stringify(data, null, 2);
+  updateRecipesPreview();
+  alert(`已匯出配方 ${recipes.length} 筆。請複製備份文字保存。`);
+}
+
+function updateNotesPreview() {
+  const box = $("notesPreviewBox");
+  const text = $("notesBackupText").value.trim();
+  if (!text) {
+    box.textContent = "尚未偵測記事本備份內容。";
+    return;
+  }
 
   try {
     const data = JSON.parse(text);
-    if (!data || typeof data !== "object") throw new Error("格式錯誤");
+    const count = Array.isArray(data.notes) ? data.notes.length : 0;
+    const typeOk = data.type === "iktah_notes_backup" || Array.isArray(data.notes);
+    box.textContent = typeOk
+      ? `偵測到記事本備份：${count} 筆記事本。`
+      : "這不是有效的記事本備份格式。";
+  } catch (e) {
+    box.textContent = "記事本備份文字格式錯誤。";
+  }
+}
 
+function updateRecipesPreview() {
+  const box = $("recipesPreviewBox");
+  const text = $("recipesBackupText").value.trim();
+  if (!text) {
+    box.textContent = "尚未偵測配方備份內容。";
+    return;
+  }
+
+  try {
+    const data = JSON.parse(text);
+    const count = Array.isArray(data.recipes) ? data.recipes.length : 0;
+    const typeOk = data.type === "iktah_recipes_backup" || Array.isArray(data.recipes);
+    box.textContent = typeOk
+      ? `偵測到配方備份：${count} 筆配方。`
+      : "這不是有效的配方備份格式。";
+  } catch (e) {
+    box.textContent = "配方備份文字格式錯誤。";
+  }
+}
+
+function importNotesData(mode = "merge") {
+  const text = $("notesBackupText").value.trim();
+  if (!text) return alert("請先貼上記事本備份文字。");
+
+  try {
+    const data = JSON.parse(text);
     const incomingNotes = Array.isArray(data.notes) ? data.notes : [];
-    const incomingRecipes = Array.isArray(data.recipes) ? data.recipes : [];
-
-    if (!incomingNotes.length && !incomingRecipes.length) {
-      return alert("這份備份裡沒有記事本或配方資料。");
-    }
+    if (!incomingNotes.length) return alert("這份備份裡沒有記事本資料。");
 
     if (mode === "overwrite") {
-      if (!confirm(`覆蓋匯入會清掉目前記事本與配方，改成備份內容。\n\n備份內含：記事本 ${incomingNotes.length} 筆、配方 ${incomingRecipes.length} 筆。\n\n確定要覆蓋嗎？`)) {
-        return;
-      }
+      if (!confirm(`覆蓋匯入會清掉目前記事本，改成備份內容。
 
+備份內含：記事本 ${incomingNotes.length} 筆。
+
+確定要覆蓋嗎？`)) return;
       notes = incomingNotes;
-      recipes = incomingRecipes;
     } else {
       const existingNoteIds = new Set(notes.map(n => n.id));
-      const existingRecipeIds = new Set(recipes.map(r => r.id));
-
       incomingNotes.forEach(n => {
         const copy = {...n};
         if (!copy.id || existingNoteIds.has(copy.id)) {
@@ -1437,7 +1505,37 @@ function importData(mode = "merge") {
         }
         notes.unshift(copy);
       });
+    }
 
+    selectedNoteId = notes[0]?.id || "";
+    saveNotes();
+    renderNotes();
+    if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
+
+    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}記事本完成：${incomingNotes.length} 筆。`);
+  } catch (e) {
+    alert("匯入失敗，記事本備份文字格式不正確。");
+  }
+}
+
+function importRecipesData(mode = "merge") {
+  const text = $("recipesBackupText").value.trim();
+  if (!text) return alert("請先貼上配方備份文字。");
+
+  try {
+    const data = JSON.parse(text);
+    const incomingRecipes = Array.isArray(data.recipes) ? data.recipes : [];
+    if (!incomingRecipes.length) return alert("這份備份裡沒有配方資料。");
+
+    if (mode === "overwrite") {
+      if (!confirm(`覆蓋匯入會清掉目前配方，改成備份內容。
+
+備份內含：配方 ${incomingRecipes.length} 筆。
+
+確定要覆蓋嗎？`)) return;
+      recipes = incomingRecipes;
+    } else {
+      const existingRecipeIds = new Set(recipes.map(r => r.id));
       incomingRecipes.forEach(r => {
         const copy = {...r};
         if (!copy.id || existingRecipeIds.has(copy.id)) {
@@ -1447,21 +1545,14 @@ function importData(mode = "merge") {
       });
     }
 
-    selectedNoteId = notes[0]?.id || "";
     selectedRecipeId = recipes[0]?.id || "";
-
-    saveNotes();
     saveRecipes();
-
-    renderNotes();
     renderRecipeList();
-
-    if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
     if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
 
-    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}完成：記事本 ${incomingNotes.length} 筆、配方 ${incomingRecipes.length} 筆。`);
+    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}配方完成：${incomingRecipes.length} 筆。`);
   } catch (e) {
-    alert("匯入失敗，備份文字格式不正確。");
+    alert("匯入失敗，配方備份文字格式不正確。");
   }
 }
 
@@ -1470,10 +1561,18 @@ function importData(mode = "merge") {
 function initSettings() {
   updateSoundStatus();
   updateBg();
+  updateNotesPreview();
+  updateRecipesPreview();
 
-  if ($("exportDataBtn")) $("exportDataBtn").addEventListener("click", exportData);
-  if ($("importDataBtn")) $("importDataBtn").addEventListener("click", () => importData("merge"));
-  if ($("overwriteImportDataBtn")) $("overwriteImportDataBtn").addEventListener("click", () => importData("overwrite"));
+  if ($("exportNotesBtn")) $("exportNotesBtn").addEventListener("click", exportNotesData);
+  if ($("importNotesBtn")) $("importNotesBtn").addEventListener("click", () => importNotesData("merge"));
+  if ($("overwriteNotesBtn")) $("overwriteNotesBtn").addEventListener("click", () => importNotesData("overwrite"));
+  if ($("notesBackupText")) $("notesBackupText").addEventListener("input", updateNotesPreview);
+
+  if ($("exportRecipesBtn")) $("exportRecipesBtn").addEventListener("click", exportRecipesData);
+  if ($("importRecipesBtn")) $("importRecipesBtn").addEventListener("click", () => importRecipesData("merge"));
+  if ($("overwriteRecipesBtn")) $("overwriteRecipesBtn").addEventListener("click", () => importRecipesData("overwrite"));
+  if ($("recipesBackupText")) $("recipesBackupText").addEventListener("input", updateRecipesPreview);
 
   $("soundFile").addEventListener("change", () => {
     const file = $("soundFile").files?.[0];

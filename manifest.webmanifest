@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "記事本與配方備份，預設合併匯入",
+  "description": "記事本與配方分開備份匯入匯出版",
   "id": "/",
   "start_url": "/",
   "scope": "/",
