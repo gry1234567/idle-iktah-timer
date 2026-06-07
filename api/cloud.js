@@ -1,11 +1,17 @@
 import https from "https";
 
-const SUPABASE_URL = "https://oivbidfpeudddesucwhg.supabase.co";
+const SUPABASE_REST_URL = "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/";
+const SUPABASE_ROOT_URL = "https://oivbidfpeuddedsucwhg.supabase.co";
 const PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
 
 function requestJson(path, options = {}) {
   return new Promise((resolve, reject) => {
-    const url = new URL(path, SUPABASE_URL);
+    // 測試版：REST 資料表 API 使用完整 /rest/v1/ URL。
+    // 如果 path 是 /rest/v1/xxx，會自動去掉前綴，避免變成 /rest/v1/rest/v1/xxx。
+    // 如果 path 是 /auth/v1/xxx，則使用專案根網址。
+    const isAuthPath = path.startsWith("/auth/v1/");
+    const normalizedPath = isAuthPath ? path : path.replace(/^\/rest\/v1\//, "");
+    const url = new URL(normalizedPath, isAuthPath ? SUPABASE_ROOT_URL : SUPABASE_REST_URL);
     const body = options.body ? JSON.stringify(options.body) : null;
 
     const headers = {
@@ -178,7 +184,13 @@ export default async function handler(req, res) {
 
     if (action === "test") {
       const result = await requestJson("/rest/v1/iktah_notes?select=id&limit=1");
-      return res.status(200).json({ api: "ok", supabase: "ok", sample: result || [] });
+      return res.status(200).json({
+        api: "ok",
+        supabase: "ok",
+        restUrl: "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/",
+        rootUrl: "https://oivbidfpeuddedsucwhg.supabase.co",
+        sample: result || []
+      });
     }
 
     if (action === "read") {
