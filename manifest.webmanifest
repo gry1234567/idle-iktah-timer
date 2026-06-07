@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "雲端覆蓋上傳修正版 OVERWRITE-UPLOAD-FIX-20260608-06",
+  "description": "本機編輯、手動覆蓋雲端版 LOCAL-EDIT-ONLY-UPLOAD-SYNC-20260608-07",
   "id": "/",
   "start_url": "/",
   "scope": "/",

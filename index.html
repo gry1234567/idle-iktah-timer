@@ -454,7 +454,7 @@
   <div class="wrap">
     <header>
       <h1>IDLE iktah 工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 OVERWRITE-UPLOAD-FIX-20260608-06</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 LOCAL-EDIT-ONLY-UPLOAD-SYNC-20260608-07</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -717,9 +717,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜OVERWRITE-UPLOAD-FIX-20260608-06</div>
+            <div class="sectionTitle">雲端同步｜LOCAL-EDIT-ONLY-UPLOAD-SYNC-20260608-07</div>
             <div class="note">
-              版本：OVERWRITE-UPLOAD-FIX-20260608-06<br>
+              版本：LOCAL-EDIT-ONLY-UPLOAD-SYNC-20260608-07<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -1959,26 +1959,24 @@ function cleanUpdateBadge() {
 }
 
 function cleanCanEdit() {
-  return !cleanCloudMode || cleanAdminLoggedIn;
+  // 方案 A：
+  // 新增、修改、刪除一律只改本機，不直接動雲端。
+  // 管理者登入只用於「本機資料上傳雲端」。
+  return true;
 }
 
 function cleanRequireEdit() {
-  if (!cleanCanEdit()) {
-    alert("目前是雲端唯讀模式。請先登入管理者。");
-    return false;
-  }
   return true;
 }
 
 function cleanUpdateEditLock() {
-  const disabled = cleanCloudMode && !cleanAdminLoggedIn;
   [
     "newNoteBtn", "saveNoteBtn", "deleteNoteBtn", "noteTitle", "noteContent",
     "newRecipeBtn", "saveRecipeBtn", "saveAsRecipeBtn", "deleteRecipeBtn", "addIngredientBtn",
     "recipeName", "recipeBase", "recipeBulkText", "bulkImportRecipeBtn", "bulkFillExampleBtn", "bulkClearBtn"
   ].forEach(id => {
     const el = $(id);
-    if (el) el.disabled = disabled;
+    if (el) el.disabled = false;
   });
   cleanUpdateBadge();
 }
@@ -2197,8 +2195,6 @@ function cleanCurrentRecipeFromForm(forceNew = false) {
 }
 
 async function saveCurrentNote() {
-  if (!cleanRequireEdit()) return;
-
   const title = $("noteTitle").value.trim() || "未命名記事";
   const content = $("noteContent").value || "";
   const now = Date.now();
@@ -2212,24 +2208,17 @@ async function saveCurrentNote() {
     note = { id: String(now) + Math.random().toString(16).slice(2), title, content, createdAt: now, updatedAt: now };
   }
 
-  if (cleanCloudMode && cleanAdminLoggedIn) {
-    try {
-      await cleanXhr("saveNote", { note });
-      showToast("雲端記事已儲存");
-      await cleanLoadCloud();
-      return;
-    } catch (e) {
-      alert(`雲端記事儲存失敗。\n\n${cleanDescribeError(e)}`);
-      return;
-    }
+  if (notes.some(n => n.id === note.id)) {
+    notes = [note, ...notes.filter(n => n.id !== note.id)];
+  } else {
+    notes.unshift(note);
+    selectedNoteId = note.id;
   }
 
-  if (notes.some(n => n.id === note.id)) notes = [note, ...notes.filter(n => n.id !== note.id)];
-  else { notes.unshift(note); selectedNoteId = note.id; }
   saveNotes();
   renderNotes();
   $("noteCurrent").value = title;
-  showToast("記事已儲存");
+  showToast("記事已儲存到本機。要同步雲端請按「本機資料上傳雲端」。");
 }
 
 async function deleteCurrentNote() {
@@ -2262,8 +2251,6 @@ async function deleteCurrentNote() {
 }
 
 async function saveRecipe(forceNew = false) {
-  if (!cleanRequireEdit()) return;
-
   let recipe;
   try {
     recipe = cleanCurrentRecipeFromForm(forceNew);
@@ -2271,64 +2258,58 @@ async function saveRecipe(forceNew = false) {
     return alert(e.message);
   }
 
-  if (cleanCloudMode && cleanAdminLoggedIn) {
-    try {
-      await cleanXhr("saveRecipe", { recipe });
-      showToast("雲端配方已儲存");
-      await cleanLoadCloud();
-      return;
-    } catch (e) {
-      alert(`雲端配方儲存失敗。\n\n${cleanDescribeError(e)}`);
-      return;
-    }
-  }
-
   const now = Date.now();
   let local = !forceNew ? recipes.find(r => r.id === selectedRecipeId) : null;
+
   if (local) {
     local.name = recipe.name;
     local.baseWeight = recipe.baseWeight;
     local.ingredients = recipe.ingredients;
     local.updatedAt = now;
   } else {
-    local = { ...recipe, id: String(now) + Math.random().toString(16).slice(2), createdAt: now, updatedAt: now };
+    local = {
+      ...recipe,
+      id: String(now) + Math.random().toString(16).slice(2),
+      createdAt: now,
+      updatedAt: now
+    };
   }
 
-  if (!forceNew && recipes.some(r => r.id === local.id)) recipes = [local, ...recipes.filter(r => r.id !== local.id)];
-  else { recipes.unshift(local); selectedRecipeId = local.id; }
+  if (!forceNew && recipes.some(r => r.id === local.id)) {
+    recipes = [local, ...recipes.filter(r => r.id !== local.id)];
+  } else {
+    recipes.unshift(local);
+    selectedRecipeId = local.id;
+  }
+
   saveRecipes();
   selectRecipe(selectedRecipeId);
-  showToast(forceNew ? "已另存新配方" : "配方已儲存");
+  showToast(forceNew ? "已另存本機配方。雲端尚未變更。" : "配方已儲存到本機。雲端尚未變更。");
 }
 
 async function deleteRecipe() {
-  if (!cleanRequireEdit()) return;
   if (!selectedRecipeId) return alert("目前沒有選取配方。");
   const recipe = recipes.find(r => r.id === selectedRecipeId);
-  if (!confirm(`確定刪除「${recipe ? recipe.name : "這個配方"}」嗎？`)) return;
+  if (!confirm(`確定刪除本機配方「${recipe ? recipe.name : "這個配方"}」嗎？
 
-  if (cleanCloudMode && cleanAdminLoggedIn) {
-    try {
-      await cleanXhr("deleteRecipe", { id: selectedRecipeId });
-      showToast("雲端配方已刪除");
-      await cleanLoadCloud();
-      return;
-    } catch (e) {
-      alert(`雲端配方刪除失敗。\n\n${cleanDescribeError(e)}`);
-      return;
-    }
-  }
+雲端不會立刻刪除，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
 
   recipes = recipes.filter(r => r.id !== selectedRecipeId);
   selectedRecipeId = recipes[0]?.id || "";
   saveRecipes();
-  if (selectedRecipeId) selectRecipe(selectedRecipeId);
-  else newRecipeForm();
+
+  if (selectedRecipeId) {
+    selectRecipe(selectedRecipeId);
+  } else {
+    newRecipeForm();
+  }
+
+  showToast("已刪除本機配方。雲端尚未變更。");
 }
 
 async function cleanUploadLocal() {
   if (!cleanAdminLoggedIn) return alert("請先登入管理者。");
-  if (!confirm(`會用目前本機資料「覆蓋」雲端資料。\n\n這會先清空雲端記事本與配方，再上傳目前本機資料。\n\n本機：記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。\n\n確定繼續嗎？`)) return;
+  if (!confirm(`會用目前本機資料「覆蓋」雲端資料。\n\n你剛才在本機新增、修改、刪除的內容，會在這一步才同步到雲端。\n\n這會先清空雲端記事本與配方，再上傳目前本機資料。\n\n本機：記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。\n\n確定繼續嗎？`)) return;
 
   const btn = $("cleanUploadBtn");
   const old = btn ? btn.textContent : "";
