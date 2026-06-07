@@ -585,6 +585,17 @@
               <button class="danger" id="clearBgBtn">清除背景</button>
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
+
+            <div class="sectionTitle">資料備份</div>
+            <div class="actions">
+              <button class="secondary" id="exportDataBtn">匯出資料</button>
+              <button class="secondary" id="importDataBtn">匯入資料</button>
+            </div>
+            <div style="margin-top:12px;">
+              <label>備份資料文字</label>
+              <textarea id="backupText" placeholder="匯出後會出現在這裡；要匯入時把備份文字貼回來"></textarea>
+            </div>
+            <div class="note">配方會固定存在同一個網址底下。若你換了 Vercel 網址，瀏覽器會視為不同網站，資料仍可能不同；可用這裡手動備份。</div>
           </div>
         </section>
 
@@ -601,19 +612,56 @@
 
 const $ = (id) => document.getElementById(id);
 const KEY = {
-  timers: "iktah_clean_timers",
-  notes: "iktah_clean_notes",
-  recipes: "iktah_clean_recipes",
-  selectedNote: "iktah_clean_selected_note",
-  selectedRecipe: "iktah_clean_selected_recipe",
-  sound: "iktah_clean_sound",
-  soundName: "iktah_clean_sound_name",
-  bg: "iktah_clean_bg",
-  bgName: "iktah_clean_bg_name",
-  bgDim: "iktah_clean_bg_dim",
-  cardOpacity: "iktah_clean_card_opacity",
-  menuCollapsed: "iktah_clean_menu_collapsed"
+  timers: "iktah_toolbox_timers_v1",
+  notes: "iktah_toolbox_notes_v1",
+  recipes: "iktah_toolbox_recipes_v1",
+  selectedNote: "iktah_toolbox_selected_note_v1",
+  selectedRecipe: "iktah_toolbox_selected_recipe_v1",
+  sound: "iktah_toolbox_sound_v1",
+  soundName: "iktah_toolbox_sound_name_v1",
+  bg: "iktah_toolbox_bg_v1",
+  bgName: "iktah_toolbox_bg_name_v1",
+  bgDim: "iktah_toolbox_bg_dim_v1",
+  cardOpacity: "iktah_toolbox_card_opacity_v1",
+  menuCollapsed: "iktah_toolbox_menu_collapsed_v1"
 };
+
+const LEGACY_KEYS = {
+  timers: ["iktah_clean_timers", "iktahCraftTimers"],
+  notes: ["iktah_clean_notes", "iktahNotes"],
+  recipes: ["iktah_clean_recipes", "iktahRecipes"],
+  selectedNote: ["iktah_clean_selected_note", "iktahSelectedNoteId"],
+  selectedRecipe: ["iktah_clean_selected_recipe", "iktahSelectedRecipeId"],
+  sound: ["iktah_clean_sound", "iktahCustomSound"],
+  soundName: ["iktah_clean_sound_name", "iktahCustomSoundName"],
+  bg: ["iktah_clean_bg", "iktahCustomBg"],
+  bgName: ["iktah_clean_bg_name", "iktahCustomBgName"],
+  bgDim: ["iktah_clean_bg_dim", "iktahBgDim"],
+  cardOpacity: ["iktah_clean_card_opacity", "iktahCardOpacity"],
+  menuCollapsed: ["iktah_clean_menu_collapsed", "iktahMenuCollapsed"]
+};
+
+function migrateStorageOnce() {
+  const flag = "iktah_toolbox_storage_migrated_v1";
+  if (localStorage.getItem(flag) === "yes") return;
+
+  Object.keys(LEGACY_KEYS).forEach(name => {
+    const targetKey = KEY[name];
+    if (localStorage.getItem(targetKey) !== null) return;
+
+    for (const oldKey of LEGACY_KEYS[name]) {
+      const value = localStorage.getItem(oldKey);
+      if (value !== null && value !== "" && value !== "[]") {
+        localStorage.setItem(targetKey, value);
+        break;
+      }
+    }
+  });
+
+  localStorage.setItem(flag, "yes");
+}
+
+migrateStorageOnce();
 
 let timers = JSON.parse(localStorage.getItem(KEY.timers) || "[]");
 let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
@@ -1150,9 +1198,59 @@ function renderRecipeList() {
   `).join("");
 }
 
+
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: Date.now(),
+    timers,
+    notes,
+    recipes,
+    selectedNoteId,
+    selectedRecipeId
+  };
+  $("backupText").value = JSON.stringify(data);
+  alert("資料已匯出。請複製備份文字保存。");
+}
+
+function importData() {
+  const text = $("backupText").value.trim();
+  if (!text) return alert("請先貼上備份資料文字。");
+
+  try {
+    const data = JSON.parse(text);
+    if (!data || typeof data !== "object") throw new Error("格式錯誤");
+
+    if (Array.isArray(data.timers)) timers = data.timers;
+    if (Array.isArray(data.notes)) notes = data.notes;
+    if (Array.isArray(data.recipes)) recipes = data.recipes;
+    if (typeof data.selectedNoteId === "string") selectedNoteId = data.selectedNoteId;
+    if (typeof data.selectedRecipeId === "string") selectedRecipeId = data.selectedRecipeId;
+
+    saveTimers();
+    saveNotes();
+    saveRecipes();
+
+    renderTimers();
+    renderNotes();
+    renderRecipeList();
+
+    if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
+    if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
+
+    alert("資料已匯入。");
+  } catch (e) {
+    alert("匯入失敗，備份文字格式不正確。");
+  }
+}
+
+
 function initSettings() {
   updateSoundStatus();
   updateBg();
+
+  if ($("exportDataBtn")) $("exportDataBtn").addEventListener("click", exportData);
+  if ($("importDataBtn")) $("importDataBtn").addEventListener("click", importData);
 
   $("soundFile").addEventListener("change", () => {
     const file = $("soundFile").files?.[0];

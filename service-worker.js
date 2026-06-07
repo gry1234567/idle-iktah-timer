@@ -1,4 +1,4 @@
-const CACHE_NAME = "idle-iktah-install-recipe-reorder-v3";
+const CACHE_NAME = "idle-iktah-stable-storage-v4";
 const FILES = [
   "/",
   "/index.html",

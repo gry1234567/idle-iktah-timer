@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "可安裝 APP、配方計算機排序調整、多配方儲存",
+  "description": "固定儲存版：配方更新後不消失，支援備份匯出匯入",
   "id": "/",
   "start_url": "/",
   "scope": "/",
