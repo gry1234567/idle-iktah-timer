@@ -1,7 +1,8 @@
 {
-  "name": "IDLE iktah 製作提醒器",
-  "short_name": "製作提醒器",
-  "description": "IDLE iktah 製作倒數、最近三次完成紀錄、自訂鈴聲與整頁背景",
+  "name": "IDLE iktah 工具箱",
+  "short_name": "工具箱",
+  "description": "可安裝 APP、配方計算機排序調整、多配方儲存",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -18,6 +19,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "id": "/"
+  ]
 }

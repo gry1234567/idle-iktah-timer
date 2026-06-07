@@ -1,4 +1,4 @@
-const CACHE_NAME = "idle-iktah-timer-install-fix-v6";
+const CACHE_NAME = "idle-iktah-install-recipe-reorder-v3";
 const FILES = [
   "/",
   "/index.html",
@@ -8,9 +8,7 @@ const FILES = [
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES)));
   self.skipWaiting();
 });
 
@@ -24,16 +22,9 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  const request = event.request;
-
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match("/index.html"))
-    );
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request).catch(() => caches.match("/index.html")));
     return;
   }
-
-  event.respondWith(
-    caches.match(request).then(cached => cached || fetch(request))
-  );
+  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
 });
