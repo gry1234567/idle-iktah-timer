@@ -470,6 +470,32 @@
     .hiddenByRepair {
       display: none !important;
     }
+
+    /* RECIPE_MATERIAL_BULK_CSS */
+    .ingredientBulkTools {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .ingredientBulkTools .inlineTools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+    .ingredientBulkTools input[type="number"] {
+      max-width: 120px;
+    }
+    .ingredientSelectCell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ingredientSelectCell input {
+      width: auto !important;
+    }
   </style>
 </head>
 <body>
@@ -489,7 +515,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 LONGMEN-STABLE-REPAIR-20260608-11</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 AUTO-NEXT-MATERIAL-20260608-13</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -699,7 +725,7 @@
             <div class="grid">
               <div>
                 <label>實際原材料重量（克）</label>
-                <input id="recipeTarget" type="number" min="0.01" step="0.01" value="340" />
+                <input id="recipeTarget" type="number" min="0.01" step="0.01" value="1" />
               </div>
               <div>
                 <label>倍率</label>
@@ -732,6 +758,16 @@
 
             <div class="actions">
               <button id="addIngredientBtn">新增材料</button>
+            <div class="ingredientBulkTools" id="ingredientBulkTools">
+              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">材料欄位工具</div>
+              <div class="inlineTools">
+                
+                <button class="secondary" id="selectAllIngredientsBtn">全選材料</button>
+                <button class="dangerSoft" id="deleteSelectedIngredientsBtn">刪除勾選材料</button>
+              </div>
+              <div class="note">最後一行輸入內容後會自動新增下一行；刪除材料只會修改本機配方，雲端要等「本機資料上傳雲端」才會同步。</div>
+            </div>
+            
               <button class="danger" id="deleteRecipeBtn">刪除配方</button>
             </div>
 
@@ -778,9 +814,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜LONGMEN-STABLE-REPAIR-20260608-11</div>
+            <div class="sectionTitle">雲端同步｜AUTO-NEXT-MATERIAL-20260608-13</div>
             <div class="note">
-              版本：LONGMEN-STABLE-REPAIR-20260608-11<br>
+              版本：AUTO-NEXT-MATERIAL-20260608-13<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -2620,6 +2656,204 @@ function initStableRepairControls() {
 }
 
 setTimeout(initStableRepairControls, 50);
+
+
+function recipeBulkFindIngredientRows() {
+  const selectors = [
+    "#ingredientsList .ingredientRow",
+    "#ingredientList .ingredientRow",
+    "#recipeIngredients .ingredientRow",
+    "#ingredients .ingredientRow",
+    ".ingredientRow",
+    "#ingredientsList > div",
+    "#ingredientList > div",
+    "#recipeIngredients > div"
+  ];
+
+  for (const selector of selectors) {
+    const rows = Array.from(document.querySelectorAll(selector)).filter(row => {
+      return row.querySelector("input") || row.querySelector("select");
+    });
+    if (rows.length) return rows;
+  }
+
+  return [];
+}
+
+function recipeBulkPatchIngredientCheckboxes() {
+  const rows = recipeBulkFindIngredientRows();
+
+  rows.forEach((row, index) => {
+    if (row.querySelector(".ingredientBulkCheck")) return;
+
+    const cell = document.createElement("div");
+    cell.className = "ingredientSelectCell";
+    cell.innerHTML = `<input type="checkbox" class="ingredientBulkCheck" data-index="${index}" />`;
+
+    row.prepend(cell);
+  });
+
+  recipeBulkBindAutoNextRow();
+}
+
+
+function recipeBulkIsRowFilled(row) {
+  if (!row) return false;
+  const inputs = Array.from(row.querySelectorAll("input, select, textarea"))
+    .filter(el => !el.classList.contains("ingredientBulkCheck") && el.type !== "checkbox" && el.type !== "button");
+  return inputs.some(el => String(el.value || "").trim() !== "");
+}
+
+function recipeBulkLastRowIsFilled() {
+  const rows = recipeBulkFindIngredientRows();
+  if (!rows.length) return false;
+  return recipeBulkIsRowFilled(rows[rows.length - 1]);
+}
+
+function recipeBulkAutoAddNextRow() {
+  const rows = recipeBulkFindIngredientRows();
+  if (!rows.length) return;
+
+  const last = rows[rows.length - 1];
+  if (!recipeBulkIsRowFilled(last)) return;
+
+  if (typeof addIngredient === "function") {
+    addIngredient();
+  } else {
+    const btn = $("addIngredientBtn");
+    if (btn) btn.click();
+  }
+
+  setTimeout(() => {
+    recipeBulkPatchIngredientCheckboxes();
+  }, 30);
+}
+
+function recipeBulkBindAutoNextRow() {
+  const rows = recipeBulkFindIngredientRows();
+  rows.forEach(row => {
+    if (row.dataset.autoNextBound === "1") return;
+    row.dataset.autoNextBound = "1";
+    row.addEventListener("input", () => {
+      clearTimeout(window.__recipeAutoNextTimer);
+      window.__recipeAutoNextTimer = setTimeout(recipeBulkAutoAddNextRow, 120);
+    });
+    row.addEventListener("change", () => {
+      clearTimeout(window.__recipeAutoNextTimer);
+      window.__recipeAutoNextTimer = setTimeout(recipeBulkAutoAddNextRow, 120);
+    });
+  });
+}
+
+function recipeBulkSelectAllIngredients() {
+  recipeBulkPatchIngredientCheckboxes();
+  const checks = Array.from(document.querySelectorAll(".ingredientBulkCheck"));
+  if (!checks.length) return alert("目前沒有材料欄位可選。");
+  const shouldCheck = checks.some(c => !c.checked);
+  checks.forEach(c => c.checked = shouldCheck);
+  showToast(shouldCheck ? "已全選材料" : "已取消全選材料");
+}
+
+function recipeBulkDeleteSelectedIngredients() {
+  recipeBulkPatchIngredientCheckboxes();
+
+  const rows = recipeBulkFindIngredientRows();
+  const checks = Array.from(document.querySelectorAll(".ingredientBulkCheck"));
+  const selectedIndexes = checks
+    .filter(c => c.checked)
+    .map(c => Number(c.dataset.index))
+    .filter(n => Number.isFinite(n))
+    .sort((a, b) => b - a);
+
+  if (!selectedIndexes.length) return alert("請先勾選要刪除的材料欄位。");
+  if (!confirm(`確定刪除 ${selectedIndexes.length} 個材料欄位嗎？`)) return;
+
+  // Prefer data model update if selected recipe exists.
+  const recipe = recipes.find(r => r.id === selectedRecipeId);
+  if (recipe && Array.isArray(recipe.ingredients)) {
+    for (const index of selectedIndexes) {
+      recipe.ingredients.splice(index, 1);
+    }
+    recipe.updatedAt = Date.now();
+    saveRecipes();
+    selectRecipe(selectedRecipeId);
+  } else {
+    // Fallback: remove DOM rows only.
+    for (const index of selectedIndexes) {
+      if (rows[index]) rows[index].remove();
+    }
+  }
+
+  setTimeout(() => {
+    recipeBulkPatchIngredientCheckboxes();
+    showToast(`已刪除 ${selectedIndexes.length} 個材料欄位`);
+  }, 50);
+}
+
+function recipeBulkSetConvertDefaultOneGram() {
+  const candidates = Array.from(document.querySelectorAll("input")).filter(input => {
+    const id = (input.id || "").toLowerCase();
+    const name = (input.name || "").toLowerCase();
+    const ph = (input.placeholder || "").toLowerCase();
+    const label = input.closest("div")?.textContent || "";
+    return (
+      id.includes("target") ||
+      id.includes("convert") ||
+      id.includes("calc") ||
+      id.includes("weight") ||
+      name.includes("target") ||
+      name.includes("convert") ||
+      ph.includes("原材料") ||
+      ph.includes("換算") ||
+      label.includes("換算") ||
+      label.includes("原材料")
+    );
+  });
+
+  const likely = candidates.find(input => {
+    const label = input.closest("div")?.textContent || "";
+    return label.includes("換算") || label.includes("原材料");
+  }) || candidates[0];
+
+  if (likely && (!likely.value || Number(likely.value) === 500 || Number(likely.value) === 0)) {
+    likely.value = "1";
+    likely.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}
+
+function initRecipeMaterialBulkTools() {
+  if ($("selectAllIngredientsBtn")) $("selectAllIngredientsBtn").addEventListener("click", recipeBulkSelectAllIngredients);
+  if ($("deleteSelectedIngredientsBtn")) $("deleteSelectedIngredientsBtn").addEventListener("click", recipeBulkDeleteSelectedIngredients);
+
+  const oldRenderIngredientRows = window.renderIngredientRows || (typeof renderIngredientRows !== "undefined" ? renderIngredientRows : null);
+  if (typeof oldRenderIngredientRows === "function") {
+    window.renderIngredientRows = function(...args) {
+      const result = oldRenderIngredientRows.apply(this, args);
+      setTimeout(recipeBulkPatchIngredientCheckboxes, 0);
+      return result;
+    };
+    try { renderIngredientRows = window.renderIngredientRows; } catch {}
+  }
+
+  const oldSelectRecipe = window.selectRecipe || (typeof selectRecipe !== "undefined" ? selectRecipe : null);
+  if (typeof oldSelectRecipe === "function") {
+    window.selectRecipe = function(...args) {
+      const result = oldSelectRecipe.apply(this, args);
+      setTimeout(() => {
+        recipeBulkPatchIngredientCheckboxes();
+        recipeBulkSetConvertDefaultOneGram();
+      }, 0);
+      return result;
+    };
+    try { selectRecipe = window.selectRecipe; } catch {}
+  }
+
+  setTimeout(() => {
+    recipeBulkPatchIngredientCheckboxes();
+    recipeBulkSetConvertDefaultOneGram();
+  }, 100);
+}
+setTimeout(initRecipeMaterialBulkTools, 100);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;

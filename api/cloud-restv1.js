@@ -3,7 +3,7 @@ import https from "https";
 const SUPABASE_REST_URL = "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/";
 const SUPABASE_ROOT_URL = "https://oivbidfpeuddedsucwhg.supabase.co";
 const PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
-const API_VERSION = "LONGMEN-STABLE-REPAIR-20260608-11";
+const API_VERSION = "AUTO-NEXT-MATERIAL-20260608-13";
 
 function requestJson(path, options = {}) {
   return new Promise((resolve, reject) => {
