@@ -746,6 +746,10 @@
               <button class="secondary" id="testCloudBtn">測試雲端連線</button>
               <button class="secondary" id="loadCloudBtn">重新讀取雲端</button>
             </div>
+            <div class="actions">
+              <button class="danger" id="resetAppCacheBtn">清除 APP 快取並重載</button>
+              <button class="secondary" id="openProxyTestBtn">測試代理網址</button>
+            </div>
             <div class="actions3">
               <button id="adminLoginBtn">管理者登入</button>
               <button class="secondary" id="adminLogoutBtn">登出管理者</button>
@@ -2033,9 +2037,11 @@ function cloudHeaders(useAdmin = false) {
 async function cloudFetch(path, options = {}, useAdmin = false) {
   if (!cloudReady) throw new Error("尚未設定 Supabase URL 或 publishable key。");
 
-  const response = await fetch(`/api/supabase-proxy?t=${Date.now()}`, {
+  const proxyUrl = `${location.origin}/api/supabase-proxy?t=${Date.now()}`;
+  const response = await fetch(proxyUrl, {
     method: "POST",
     cache: "no-store",
+    credentials: "omit",
     headers: {
       "Content-Type": "application/json"
     },
@@ -2522,6 +2528,34 @@ async function uploadLocalToCloudRest() {
   }
 }
 
+
+async function resetAppCacheAndReload() {
+  if (!confirm("確定要清除 APP 快取並重載嗎？\n\n這不會刪除你的記事本／配方本機資料，但會重置 PWA 舊快取。")) return;
+
+  showToast("正在清除 APP 快取...");
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) await reg.unregister();
+    }
+
+    if ("caches" in window) {
+      const names = await caches.keys();
+      for (const name of names) await caches.delete(name);
+    }
+
+    alert("APP 快取已清除。接下來會重新載入。");
+    location.href = `${location.origin}${location.pathname}?fresh=${Date.now()}`;
+  } catch (e) {
+    alert("清除快取時發生錯誤：" + (e.message || e));
+  }
+}
+
+function openProxyTest() {
+  window.open(`${location.origin}/api/supabase-proxy`, "_blank");
+}
+
 function initCloudRest() {
   if ($("supabaseUrlInput")) $("supabaseUrlInput").value = supabaseUrl;
   if ($("supabaseAnonKeyInput")) $("supabaseAnonKeyInput").value = supabaseAnonKey;
@@ -2564,6 +2598,8 @@ function initCloudRest() {
 
   if ($("testCloudBtn")) $("testCloudBtn").addEventListener("click", testCloudConnectionRest);
   if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", loadCloudDataRest);
+  if ($("resetAppCacheBtn")) $("resetAppCacheBtn").addEventListener("click", resetAppCacheAndReload);
+  if ($("openProxyTestBtn")) $("openProxyTestBtn").addEventListener("click", openProxyTest);
   if ($("adminLoginBtn")) $("adminLoginBtn").addEventListener("click", loginAdminRest);
   if ($("adminLogoutBtn")) $("adminLogoutBtn").addEventListener("click", logoutAdminRest);
   if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", uploadLocalToCloudRest);

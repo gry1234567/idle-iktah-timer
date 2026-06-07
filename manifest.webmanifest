@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "Vercel API 轉接 + service worker 不攔截 API 修正版",
+  "description": "快取重置 + Vercel API 雲端同步修正版",
   "id": "/",
   "start_url": "/",
   "scope": "/",
