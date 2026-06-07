@@ -436,6 +436,13 @@
       color: #10140f;
     }
 
+    /* LONGMEN_STABLE_REPAIR_CSS */
+    [id*="calib"], [id*="Calib"], [id*="offset"], [id*="Offset"],
+    [id*="correction"], [id*="Correction"], [class*="calib"], [class*="Calib"],
+    [class*="offset"], [class*="Offset"], [class*="correction"], [class*="Correction"] {
+      display: none !important;
+    }
+
     .bulkDeleteBox {
       margin-top: 12px;
       padding: 12px;
@@ -443,6 +450,7 @@
       border-radius: 14px;
       background: rgba(255,255,255,.04);
     }
+
     .bulkDeleteBox .row {
       display: flex;
       gap: 8px;
@@ -452,23 +460,14 @@
       color: var(--muted);
       font-size: 13px;
     }
+
     .dangerSoft {
       background: rgba(255,167,153,.12) !important;
       border-color: rgba(255,167,153,.35) !important;
       color: var(--danger) !important;
     }
 
-    /* LONGMEN_FIX2_HIDE */
-    [id*="calibration"], [id*="Calibration"], [id*="calibrate"], [id*="Calibrate"],
-    [id*="offset"], [id*="Offset"], [id*="correction"], [id*="Correction"],
-    [class*="calibration"], [class*="Calibration"], [class*="calibrate"], [class*="Calibrate"],
-    [class*="offset"], [class*="Offset"], [class*="correction"], [class*="Correction"] {
-      display: none !important;
-    }
-
-    /* HIDE_STANDALONE_LONGMEN */
-    section[id*="longmen"], section[id*="dragon"], section[id*="alarm"].standaloneLongmen,
-    div[id*="longmen"].standaloneLongmen, div[id*="dragon"].standaloneLongmen {
+    .hiddenByRepair {
       display: none !important;
     }
   </style>
@@ -483,6 +482,16 @@
       <div class="alarmIcon">⏰</div>
       <div class="alarmTitle">時間到了</div>
       <div class="alarmName" id="alarmOverlayName">提醒已完成</div>
+      <button class="stopAlarmBtn" id="stopAlarmBtn">停止鈴聲</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header>
+      <h1>龍門陣工具箱</h1>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 LONGMEN-STABLE-REPAIR-20260608-11</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="actions" style="margin-top:12px; max-width:420px;">
+        <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
       </div>
     </header>
@@ -492,6 +501,7 @@
         <button class="menuToggle" id="menuToggle"></button>
         <div class="menuTitle">分類</div>
         <button class="menuBtn active" data-page="craftPage" data-short="製"><span class="menuText">製作提醒</span></button>
+        <button class="menuBtn" data-page="longmenPage" data-short="龍"><span class="menuText">龍門陣</span></button>
         <button class="menuBtn" data-page="notesPage" data-short="記"><span class="menuText">記事本</span></button>
         <button class="menuBtn" data-page="recipePage" data-short="配"><span class="menuText">配方計算機</span></button>
         <button class="menuBtn" data-page="settingsPage" data-short="設"><span class="menuText">設定</span></button>
@@ -499,7 +509,36 @@
 
       <main>
         <section class="page active" id="craftPage">
+          <div class="card">
+            <h2>開始倒數</h2>
+            <div class="grid3">
+              <div>
+                <label>製作名稱</label>
+                <input id="craftName" value="製作項目" />
+              </div>
+              <div>
+                <label>材料／次數</label>
+                <input id="craftCount" type="number" min="1" value="100" />
+              </div>
+              <div>
+                <label>每個耗時（秒）</label>
+                <input id="craftSeconds" type="number" min="0.1" step="0.1" value="3.9" />
+              </div>
+            </div>
 
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>（秒）</label>
+                <input id="craftOffset" type="number" step="1" value="20" />
+              </div>
+              <div>
+                <label>校正方式</label>
+                <select id="craftOffsetMode">
+                  <option value="add">遊戲比較慢：加上</option>
+                  <option value="subtract">遊戲比較快：扣掉</option>
+                  <option value="none">不校正</option>
+                </select>
+              </div>
             </div>
 
             <div class="actions">
@@ -515,7 +554,42 @@
           </div>
         </section>
 
-        
+        <section class="page" id="longmenPage">
+          <div class="card">
+            <h2>龍門陣鬧鐘</h2>
+            <div class="sub">固定鬧鐘與自設時間，都可以加名稱。</div>
+
+            <div style="margin-top:12px;">
+              <label>鬧鐘名稱</label>
+              <input id="alarmName" value="龍門陣" />
+            </div>
+
+            <div class="quickTimers">
+              <button data-alarm-seconds="1800" data-label="30 分鐘">30 分鐘</button>
+              <button data-alarm-seconds="3600" data-label="1 小時">1 小時</button>
+              <button data-alarm-seconds="7200" data-label="2 小時">2 小時</button>
+            </div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>自設時間數值</label>
+                <input id="customAlarmValue" type="number" min="1" value="45" />
+              </div>
+              <div>
+                <label>自設時間單位</label>
+                <select id="customAlarmUnit">
+                  <option value="minutes">分鐘</option>
+                  <option value="hours">小時</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="startCustomAlarmBtn">開始自設鬧鐘</button>
+              <button class="secondary" data-jump="craftPage">回製作提醒</button>
+            </div>
+          </div>
+        </section>
 
         <section class="page" id="notesPage">
           <div class="card">
@@ -544,17 +618,474 @@
               <button class="danger" id="deleteNoteBtn">刪除記事</button>
             </div>
 
-            
-          <div class="card">
-            <h2>龍門陣鬧鐘</h2>
-            <div class="sub">固定鬧鐘與自設時間，都可以加名稱。</div>
+            <div class="sectionTitle">記事列表</div>
+            <div class="searchBox">
+              <label>搜尋記事本</label>
+              <input id="noteSearchInput" placeholder="搜尋標題或內容，例如：菜單、材料、備註" />
+              <div class="searchHint" id="noteSearchHint">會搜尋所有記事本標題與內容。</div>
+            </div>
+            <div id="noteList"></div>
+            <div class="bulkDeleteBox" id="noteBulkDeleteBox">
+              <div class="row">
+                <span>記事本批量刪除</span>
+                <label style="display:flex; gap:6px; align-items:center; margin:0;">
+                  <input type="checkbox" id="noteBulkSelectAll" style="width:auto;" />
+                  全選
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="deleteSelectedNotesBtn">刪除勾選記事</button>
+                <button class="dangerSoft" id="deleteAllNotesBtn">刪除全部記事</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
-            <div style="margin-top:12px;">
-              <label>鬧鐘名稱</label>
-              <input id="alarmName" value="龍門陣" />
+        <section class="page" id="recipePage">
+          <div class="card">
+            <h2>配方計算機</h2>
+            <div class="sub">先選已儲存配方，再輸入實際重量換算。也可以新增或修改配方內容。</div>
+
+            <details style="margin-top:12px;">
+              <summary>快速批量匯入配方</summary>
+              <div class="note" style="margin-top:10px;">
+                你可以一次貼上單一配方或多個配方，按一次按鈕就自動建立。
+                多個配方建議用 "---" 分隔。
+              </div>
+              <div style="margin-top:12px;">
+                <label>快速貼上配方</label>
+                <textarea id="recipeBulkText" placeholder="配方名稱：滷汁
+基準重量：500
+糖 100 克
+鹽 20 克
+水 300 ml
+
+---
+配方名稱：醃肉醬
+基準重量：1000
+醬油 120 ml
+米酒 80 ml
+蒜泥 30 克"></textarea>
+              </div>
+              <div class="actions3">
+                <button id="bulkImportRecipeBtn">一鍵匯入貼上內容</button>
+                <button class="secondary" id="bulkFillExampleBtn">帶入範例</button>
+                <button class="secondary" id="bulkClearBtn">清空貼上內容</button>
+              </div>
+            </details>
+
+            <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
+            <div class="searchBox">
+              <label>搜尋配方</label>
+              <input id="recipeSearchInput" placeholder="搜尋配方名稱或材料，例如：糖、醬油、滷汁" />
+              <div class="searchHint" id="recipeSearchHint">會搜尋配方名稱與材料名稱。</div>
+            </div>
+            <div id="recipeList"></div>
+            <div class="bulkDeleteBox" id="recipeBulkDeleteBox">
+              <div class="row">
+                <span>配方批量刪除</span>
+                <label style="display:flex; gap:6px; align-items:center; margin:0;">
+                  <input type="checkbox" id="recipeBulkSelectAll" style="width:auto;" />
+                  全選
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="deleteSelectedRecipesBtn">刪除勾選配方</button>
+                <button class="dangerSoft" id="deleteAllRecipesBtn">刪除全部配方</button>
+              </div>
             </div>
 
-            <div class="quickTimers">
+            <div class="sectionTitle">2. 換算</div>
+            <div class="grid">
+              <div>
+                <label>實際原材料重量（克）</label>
+                <input id="recipeTarget" type="number" min="0.01" step="0.01" value="340" />
+              </div>
+              <div>
+                <label>倍率</label>
+                <input id="recipeRatio" disabled />
+              </div>
+            </div>
+
+            <div id="recipeResults"></div>
+
+            <div class="sectionTitle">3. 配方內容</div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>配方名稱</label>
+                <input id="recipeName" placeholder="例如：醃料、菜單配方" />
+              </div>
+              <div>
+                <label>基準原材料重量（克）</label>
+                <input id="recipeBase" type="number" min="0.01" step="0.01" value="500" />
+              </div>
+            </div>
+
+            <div class="sectionTitle">4. 配方材料</div>
+            <div id="ingredientBox"></div>
+
+            <div class="actions3">
+              <button id="newRecipeBtn">新增配方</button>
+              <button class="secondary" id="saveRecipeBtn">儲存修改</button>
+              <button class="secondary" id="saveAsRecipeBtn">另存新配方</button>
+            </div>
+
+            <div class="actions">
+              <button id="addIngredientBtn">新增材料</button>
+              <button class="danger" id="deleteRecipeBtn">刪除配方</button>
+            </div>
+
+            <div class="note">
+              使用方式：先從「已儲存配方」點選配方，再在「換算」輸入實際原材料重量。若要建立不同配方，請按「新增配方」或「另存新配方」。
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="settingsPage">
+          <div class="card">
+            <h2>設定</h2>
+
+            <div class="sectionTitle">自訂鈴聲</div>
+            <div>
+              <label>選擇音檔</label>
+              <input id="soundFile" type="file" accept="audio/*" />
+            </div>
+            <div class="actions3">
+              <button class="secondary" id="testSoundBtn">試聽</button>
+              <button class="secondary" id="defaultSoundBtn">改回預設</button>
+              <button class="danger" id="clearSoundBtn">清除</button>
+            </div>
+            <div class="note" id="soundStatus">目前：預設提示音</div>
+
+            <div class="sectionTitle">自訂背景</div>
+            <div>
+              <label>選擇背景圖片</label>
+              <input id="bgFile" type="file" accept="image/*" />
+            </div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>背景暗度</label>
+                <input id="bgDim" type="range" min="0" max="85" value="25" />
+              </div>
+              <div>
+                <label>卡片透明度</label>
+                <input id="cardOpacity" type="range" min="35" max="95" value="82" />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="secondary" id="applyBgBtn">套用背景</button>
+              <button class="danger" id="clearBgBtn">清除背景</button>
+            </div>
+            <div class="note" id="bgStatus">目前：預設背景</div>
+
+            <div class="sectionTitle">雲端同步｜LONGMEN-STABLE-REPAIR-20260608-11</div>
+            <div class="note">
+              版本：LONGMEN-STABLE-REPAIR-20260608-11<br>
+              這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
+            </div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>管理者 Email</label>
+                <input id="cleanAdminEmailInput" placeholder="請輸入管理者 Email" />
+              </div>
+              <div>
+                <label>管理者密碼</label>
+                <input id="cleanAdminPasswordInput" type="password" placeholder="請輸入管理者密碼" />
+              </div>
+            </div>
+            <div class="actions3">
+              <button class="secondary" id="cleanTestCloudBtn">測試雲端</button>
+              <button class="secondary" id="cleanLoadCloudBtn">讀取雲端</button>
+              <button id="cleanLoginBtn">管理者登入</button>
+            </div>
+            <div class="actions">
+              <button class="secondary" id="cleanLogoutBtn">登出管理者</button>
+              <button class="secondary" id="cleanUploadBtn">本機資料上傳雲端</button>
+            </div>
+            <div class="cloudPanelClean" id="cleanCloudStatus">狀態：尚未測試雲端。</div>
+            <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div>
+
+            <div class="sectionTitle">記事本備份</div>
+            <div class="actions3">
+              <button class="secondary" id="exportNotesBtn">匯出記事本</button>
+              <button class="secondary" id="importNotesBtn">合併匯入記事本</button>
+              <button class="danger" id="overwriteNotesBtn">覆蓋匯入記事本</button>
+            </div>
+            <div style="margin-top:12px;">
+              <label>記事本備份文字</label>
+              <textarea id="notesBackupText" placeholder="這裡只處理記事本備份"></textarea>
+            </div>
+            <div class="previewBox" id="notesPreviewBox">尚未偵測記事本備份內容。</div>
+            <div class="note">記事本備份只包含所有記事本內容。預設為合併匯入，不會刪除目前記事本。</div>
+
+            <div class="sectionTitle">配方備份</div>
+            <div class="actions3">
+              <button class="secondary" id="exportRecipesBtn">匯出配方</button>
+              <button class="secondary" id="importRecipesBtn">合併匯入配方</button>
+              <button class="danger" id="overwriteRecipesBtn">覆蓋匯入配方</button>
+            </div>
+            <div style="margin-top:12px;">
+              <label>配方備份文字</label>
+              <textarea id="recipesBackupText" placeholder="這裡只處理配方備份"></textarea>
+            </div>
+            <div class="previewBox" id="recipesPreviewBox">尚未偵測配方備份內容。</div>
+            <div class="note">配方備份只包含所有已儲存配方。預設為合併匯入，不會刪除目前配方。</div>
+          </div>
+        </section>
+
+        <div class="card">
+          <h2>目前倒數</h2>
+          <div id="timerList"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+<script>
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const KEY = {
+  timers: "iktah_toolbox_timers_v1",
+  notes: "iktah_toolbox_notes_v1",
+  recipes: "iktah_toolbox_recipes_v1",
+  selectedNote: "iktah_toolbox_selected_note_v1",
+  selectedRecipe: "iktah_toolbox_selected_recipe_v1",
+  sound: "iktah_toolbox_sound_v1",
+  soundName: "iktah_toolbox_sound_name_v1",
+  bg: "iktah_toolbox_bg_v1",
+  bgName: "iktah_toolbox_bg_name_v1",
+  bgDim: "iktah_toolbox_bg_dim_v1",
+  cardOpacity: "iktah_toolbox_card_opacity_v1",
+  menuCollapsed: "iktah_toolbox_menu_collapsed_v1",
+  cleanAdminEmail: "iktah_clean_admin_email_v1",
+  cleanAccessToken: "iktah_clean_access_token_v1"
+};
+
+const LEGACY_KEYS = {
+  timers: ["iktah_clean_timers", "iktahCraftTimers"],
+  notes: ["iktah_clean_notes", "iktahNotes"],
+  recipes: ["iktah_clean_recipes", "iktahRecipes"],
+  selectedNote: ["iktah_clean_selected_note", "iktahSelectedNoteId"],
+  selectedRecipe: ["iktah_clean_selected_recipe", "iktahSelectedRecipeId"],
+  sound: ["iktah_clean_sound", "iktahCustomSound"],
+  soundName: ["iktah_clean_sound_name", "iktahCustomSoundName"],
+  bg: ["iktah_clean_bg", "iktahCustomBg"],
+  bgName: ["iktah_clean_bg_name", "iktahCustomBgName"],
+  bgDim: ["iktah_clean_bg_dim", "iktahBgDim"],
+  cardOpacity: ["iktah_clean_card_opacity", "iktahCardOpacity"],
+  menuCollapsed: ["iktah_clean_menu_collapsed", "iktahMenuCollapsed"]
+};
+
+function migrateStorageOnce() {
+  const flag = "iktah_toolbox_storage_migrated_v1";
+  if (localStorage.getItem(flag) === "yes") return;
+
+  Object.keys(LEGACY_KEYS).forEach(name => {
+    const targetKey = KEY[name];
+    if (localStorage.getItem(targetKey) !== null) return;
+
+    for (const oldKey of LEGACY_KEYS[name]) {
+      const value = localStorage.getItem(oldKey);
+      if (value !== null && value !== "" && value !== "[]") {
+        localStorage.setItem(targetKey, value);
+        break;
+      }
+    }
+  });
+
+  localStorage.setItem(flag, "yes");
+}
+
+migrateStorageOnce();
+
+let timers = JSON.parse(localStorage.getItem(KEY.timers) || "[]");
+let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
+let recipes = JSON.parse(localStorage.getItem(KEY.recipes) || "[]");
+let selectedNoteId = localStorage.getItem(KEY.selectedNote) || "";
+let selectedRecipeId = localStorage.getItem(KEY.selectedRecipe) || "";
+let cleanCloudMode = false;
+let cleanAdminEmail = localStorage.getItem(KEY.cleanAdminEmail) || "";
+let cleanAccessToken = localStorage.getItem(KEY.cleanAccessToken) || "";
+let cleanAdminLoggedIn = !!cleanAccessToken;
+let customSound = localStorage.getItem(KEY.sound) || "";
+let customSoundName = localStorage.getItem(KEY.soundName) || "";
+let customBg = localStorage.getItem(KEY.bg) || "";
+let customBgName = localStorage.getItem(KEY.bgName) || "";
+let bgDim = localStorage.getItem(KEY.bgDim) || "25";
+let cardOpacity = localStorage.getItem(KEY.cardOpacity) || "82";
+let alarmAudio = null;
+let defaultAlarmInterval = null;
+let deferredInstallPrompt = null;
+
+function saveTimers() { localStorage.setItem(KEY.timers, JSON.stringify(timers)); }
+function saveNotes() { localStorage.setItem(KEY.notes, JSON.stringify(notes)); localStorage.setItem(KEY.selectedNote, selectedNoteId); }
+function saveRecipes() { localStorage.setItem(KEY.recipes, JSON.stringify(recipes)); localStorage.setItem(KEY.selectedRecipe, selectedRecipeId); }
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+  }[c]));
+}
+
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function formatAmount(num) {
+  const n = Number(num || 0);
+  if (!Number.isFinite(n)) return "0";
+  return (Math.round(n * 1000) / 1000).toFixed(3).replace(/\.?0+$/, "");
+}
+
+function formatDuration(seconds) {
+  const safe = Math.max(0, Number(seconds || 0));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = Math.round((safe - h * 3600 - m * 60) * 10) / 10;
+  const parts = [];
+  if (h > 0) parts.push(`${h} 小時`);
+  if (m > 0) parts.push(`${m} 分`);
+  if (s > 0 || parts.length === 0) parts.push(`${s.toFixed(s % 1 === 0 ? 0 : 1)} 秒`);
+  return parts.join(" ");
+}
+
+function formatClock(seconds) {
+  let total = Math.max(0, Math.ceil(Number(seconds || 0)));
+  const h = Math.floor(total / 3600);
+  total %= 3600;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+function timeText(ts) {
+  return new Date(ts).toLocaleString("zh-TW", {
+    month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+  });
+}
+
+function switchPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === pageId));
+  document.querySelectorAll(".menuBtn").forEach(b => b.classList.toggle("active", b.dataset.page === pageId));
+}
+
+function initMenu() {
+  document.querySelectorAll(".menuBtn").forEach(btn => {
+    btn.addEventListener("click", () => switchPage(btn.dataset.page));
+  });
+  document.querySelectorAll("[data-jump]").forEach(btn => {
+    btn.addEventListener("click", () => switchPage(btn.dataset.jump));
+  });
+
+  const shell = $("appShell");
+  let collapsed = localStorage.getItem(KEY.menuCollapsed) === "yes";
+  function apply() {
+    shell.classList.toggle("collapsed", collapsed);
+    shell.classList.toggle("expanded", !collapsed);
+  }
+  $("menuToggle").addEventListener("click", () => {
+    collapsed = !collapsed;
+    localStorage.setItem(KEY.menuCollapsed, collapsed ? "yes" : "no");
+    apply();
+  });
+  apply();
+}
+
+function adjustedSeconds(baseSeconds) {
+  const offset = Number($("craftOffset").value || 0);
+  const mode = $("craftOffsetMode").value;
+  if (mode === "add") return Math.max(0, baseSeconds + offset);
+  if (mode === "subtract") return Math.max(0, baseSeconds - offset);
+  return Math.max(0, baseSeconds);
+}
+
+function updateCraftPreview() {
+  const count = Number($("craftCount").value || 0);
+  const seconds = Number($("craftSeconds").value || 0);
+  const base = count * seconds;
+  const total = adjustedSeconds(base);
+  $("craftPreview").textContent = formatDuration(total);
+  $("craftDetail").textContent = `計算：${count} × ${seconds} 秒 = ${formatAmount(base)} 秒；校正後 ${formatAmount(total)} 秒`;
+}
+
+function addTimer(name, totalSeconds, label) {
+  const now = Date.now();
+  const timer = {
+    id: String(now) + Math.random().toString(16).slice(2),
+    name: name || "提醒",
+    totalSeconds: Math.max(1, Number(totalSeconds || 1)),
+    label: label || formatDuration(totalSeconds),
+    endAt: now + Math.max(1, Number(totalSeconds || 1)) * 1000,
+    paused: false,
+    remaining: null
+  };
+  timers.unshift(timer);
+  saveTimers();
+  renderTimers();
+  switchPage("craftPage");
+}
+
+function initCraft() {
+  ["craftCount", "craftSeconds", "craftOffset", "craftOffsetMode"].forEach(id => {
+    $(id).addEventListener("input", updateCraftPreview);
+    $(id).addEventListener("change", updateCraftPreview);
+  });
+  $("startCraftBtn").addEventListener("click", () => {
+    const name = $("craftName").value.trim() || "製作項目";
+    const count = Number($("craftCount").value || 0);
+    const seconds = Number($("craftSeconds").value || 0);
+    const base = count * seconds;
+    const total = adjustedSeconds(base);
+    if (count <= 0 || seconds <= 0) return alert("請輸入正確的數量與秒數。");
+    addTimer(name, total, `${count} 個 × ${seconds} 秒`);
+  });
+  $("notifyBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) return alert("這個瀏覽器不支援通知。");
+    const permission = await Notification.requestPermission();
+    alert(permission === "granted" ? "通知已開啟。" : "通知未開啟。");
+  });
+  updateCraftPreview();
+}
+
+function initLongmen() {
+  document.querySelectorAll("[data-alarm-seconds]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const name = $("alarmName").value.trim() || "龍門陣";
+      addTimer(name, Number(btn.dataset.alarmSeconds), btn.dataset.label);
+    });
+  });
+  $("startCustomAlarmBtn").addEventListener("click", () => {
+    const value = Number($("customAlarmValue").value || 0);
+    const unit = $("customAlarmUnit").value;
+    if (value <= 0) return alert("請輸入正確的自設時間。");
+    const seconds = unit === "hours" ? value * 3600 : value * 60;
+    const label = unit === "hours" ? `${value} 小時` : `${value} 分鐘`;
+    const name = $("alarmName").value.trim() || `龍門陣 ${label}`;
+    addTimer(name, seconds, label);
+  });
+}
+
+function renderTimers() {
+  const box = $("timerList");
+  if (!timers.length) {
+    box.innerHTML = `<div class="muted">目前沒有進行中的倒數。</div>`;
+    return;
+  }
+  const now = Date.now();
+  box.innerHTML = timers.map(t => {
+    const remaining = t.paused ? t.remaining : Math.max(0, (t.endAt - now) / 1000);
+    return `
+      <div class="item">
+        <div class="rowTop">
+          <div>
+            <div class="itemTitle">${escapeHtml(t.name)}</div>
+            <div class="muted">${escapeHtml(t.label || "")}</div>
+          </div>
+          <span class="pill">${t.paused ? "已暫停" : "倒數中"}</span>
+        </div>
+        <div class="bigtime">${formatClock(remaining)}</div>
+        <div class="muted">預計完成：${timeText(t.endAt)}</div>
+        <div class="actions3">
+          <button class="secondary" onclick="pauseTimer('${t.id}')">暫停</button>
           <button class="secondary" onclick="resumeTimer('${t.id}')">繼續</button>
           <button class="danger" onclick="deleteTimer('${t.id}')">刪除</button>
         </div>
@@ -1061,14 +1592,9 @@ function renderRecipeList() {
   }
   box.innerHTML = recipes.map(r => `
     <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div style="display:flex; gap:8px; align-items:flex-start;">
-        <input type="checkbox" class="recipeBulkCheck" value="${r.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
-        <div style="flex:1;">
-          <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div class="itemTitle">${escapeHtml(r.name)}</div>
       <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
       <div class="muted">更新：${timeText(r.updatedAt)}</div>
-        </div>
-      </div>
     </div>
   `).join("");
 }
@@ -1411,14 +1937,9 @@ function renderNotes() {
 
   box.innerHTML = filtered.map(n => `
     <div class="item ${n.id === selectedNoteId ? "active" : ""}" onclick="selectNote('${n.id}')">
-      <div style="display:flex; gap:8px; align-items:flex-start;">
-        <input type="checkbox" class="noteBulkCheck" value="${n.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
-        <div style="flex:1;">
-          <div class="itemTitle">${escapeHtml(n.title)}</div>
+      <div class="itemTitle">${escapeHtml(n.title)}</div>
       <div class="muted">更新：${timeText(n.updatedAt)}</div>
       <div class="muted">${escapeHtml((n.content || "").slice(0, 80))}</div>
-        </div>
-      </div>
     </div>
   `).join("");
 }
@@ -1458,10 +1979,7 @@ function renderRecipeList() {
 
   box.innerHTML = filtered.map(r => `
     <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div style="display:flex; gap:8px; align-items:flex-start;">
-        <input type="checkbox" class="recipeBulkCheck" value="${r.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
-        <div style="flex:1;">
-          <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div class="itemTitle">${escapeHtml(r.name)}</div>
       <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
       <div class="muted">更新：${timeText(r.updatedAt)}</div>
     </div>
@@ -1896,89 +2414,6 @@ async function cleanUploadLocal() {
   }
 }
 
-
-function getCheckedValues(selector) {
-  return Array.from(document.querySelectorAll(selector + ":checked")).map(el => el.value);
-}
-
-function deleteSelectedNotesLocal() {
-  const ids = getCheckedValues(".noteBulkCheck");
-  if (!ids.length) return alert("請先勾選要刪除的記事。");
-  if (!confirm(`確定刪除 ${ids.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
-
-  notes = notes.filter(n => !ids.includes(n.id));
-  if (ids.includes(selectedNoteId)) selectedNoteId = notes[0]?.id || "";
-  saveNotes();
-
-  if (selectedNoteId) selectNote(selectedNoteId);
-  else {
-    if ($("noteTitle")) $("noteTitle").value = "";
-    if ($("noteContent")) $("noteContent").value = "";
-    if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
-    renderNotes();
-  }
-
-  showToast(`已刪除 ${ids.length} 筆本機記事`);
-}
-
-function deleteAllNotesLocal() {
-  if (!notes.length) return alert("目前沒有記事可刪除。");
-  if (!confirm(`確定刪除全部 ${notes.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
-
-  notes = [];
-  selectedNoteId = "";
-  saveNotes();
-
-  if ($("noteTitle")) $("noteTitle").value = "";
-  if ($("noteContent")) $("noteContent").value = "";
-  if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
-  renderNotes();
-  showToast("已刪除全部本機記事");
-}
-
-function deleteSelectedRecipesLocal() {
-  const ids = getCheckedValues(".recipeBulkCheck");
-  if (!ids.length) return alert("請先勾選要刪除的配方。");
-  if (!confirm(`確定刪除 ${ids.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
-
-  recipes = recipes.filter(r => !ids.includes(r.id));
-  if (ids.includes(selectedRecipeId)) selectedRecipeId = recipes[0]?.id || "";
-  saveRecipes();
-
-  if (selectedRecipeId) selectRecipe(selectedRecipeId);
-  else newRecipeForm();
-
-  renderRecipeList();
-  showToast(`已刪除 ${ids.length} 個本機配方`);
-}
-
-function deleteAllRecipesLocal() {
-  if (!recipes.length) return alert("目前沒有配方可刪除。");
-  if (!confirm(`確定刪除全部 ${recipes.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
-
-  recipes = [];
-  selectedRecipeId = "";
-  saveRecipes();
-  newRecipeForm();
-  renderRecipeList();
-  showToast("已刪除全部本機配方");
-}
-
-function initBulkDeleteControls() {
-  if ($("deleteSelectedNotesBtn")) $("deleteSelectedNotesBtn").addEventListener("click", deleteSelectedNotesLocal);
-  if ($("deleteAllNotesBtn")) $("deleteAllNotesBtn").addEventListener("click", deleteAllNotesLocal);
-  if ($("deleteSelectedRecipesBtn")) $("deleteSelectedRecipesBtn").addEventListener("click", deleteSelectedRecipesLocal);
-  if ($("deleteAllRecipesBtn")) $("deleteAllRecipesBtn").addEventListener("click", deleteAllRecipesLocal);
-
-  if ($("noteBulkSelectAll")) $("noteBulkSelectAll").addEventListener("change", (e) => {
-    document.querySelectorAll(".noteBulkCheck").forEach(el => el.checked = e.target.checked);
-  });
-
-  if ($("recipeBulkSelectAll")) $("recipeBulkSelectAll").addEventListener("change", (e) => {
-    document.querySelectorAll(".recipeBulkCheck").forEach(el => el.checked = e.target.checked);
-  });
-}
-
 function initCleanCloud() {
   if ($("cleanAdminEmailInput")) $("cleanAdminEmailInput").value = cleanAdminEmail;
 
@@ -1997,8 +2432,194 @@ function initCleanCloud() {
 }
 
 setTimeout(initCleanCloud, 0);
-setTimeout(initBulkDeleteControls, 0);
 
+
+
+function repairFindSectionByText(text) {
+  const candidates = Array.from(document.querySelectorAll("section, .panel, .card, main > div, div"));
+  return candidates.find(el => {
+    const directHead = Array.from(el.children).slice(0, 4).some(child => {
+      const t = (child.textContent || "").trim();
+      return t === text || t.includes(text);
+    });
+    return directHead && (el.textContent || "").includes(text);
+  });
+}
+
+function repairHideTextSections(titles) {
+  const all = Array.from(document.querySelectorAll("section, .panel, .card, div"));
+  for (const title of titles) {
+    const target = all.find(el => {
+      const txt = (el.textContent || "").trim();
+      if (!txt.includes(title)) return false;
+      return txt.length < 3000;
+    });
+    if (target) target.classList.add("hiddenByRepair");
+  }
+}
+
+function repairMoveLongmenIntoTimer() {
+  const longmen = repairFindSectionByText("龍門陣");
+  const timer = repairFindSectionByText("製作提醒");
+
+  if (longmen && timer && longmen !== timer) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "bulkDeleteBox";
+    wrapper.innerHTML = `<div class="sectionTitle">龍門陣鬧鐘</div>`;
+    while (longmen.firstChild) wrapper.appendChild(longmen.firstChild);
+    timer.appendChild(wrapper);
+    longmen.classList.add("hiddenByRepair");
+  }
+
+  // 移除左側或分類選單中的獨立「龍門陣」入口，但不移除內容文字。
+  Array.from(document.querySelectorAll("button, a, option")).forEach(el => {
+    const txt = (el.textContent || "").trim();
+    const attr = `${el.getAttribute("data-section") || ""} ${el.getAttribute("data-target") || ""} ${el.getAttribute("href") || ""}`;
+    if (txt === "龍門陣" || (txt.includes("龍門陣") && /longmen|dragon|alarm/i.test(attr))) {
+      el.classList.add("hiddenByRepair");
+    }
+  });
+}
+
+function repairHideCalibrationText() {
+  const words = ["秒數校正", "校正秒數", "秒差", "時間校正", "校正值", "校準秒數"];
+  Array.from(document.querySelectorAll("label, .row, .field, div, button")).forEach(el => {
+    const txt = (el.textContent || "").trim();
+    if (words.some(w => txt.includes(w)) && txt.length < 200) {
+      el.classList.add("hiddenByRepair");
+    }
+  });
+}
+
+function repairPatchRenderLists() {
+  const oldRenderNotes = window.renderNotes || renderNotes;
+  const oldRenderRecipes = window.renderRecipeList || renderRecipeList;
+
+  window.renderNotes = function() {
+    oldRenderNotes();
+    document.querySelectorAll("#noteList .item").forEach(item => {
+      if (item.querySelector(".noteBulkCheck")) return;
+      const onclick = item.getAttribute("onclick") || "";
+      const m = onclick.match(/selectNote\('([^']+)'\)/);
+      if (!m) return;
+      const id = m[1];
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.className = "noteBulkCheck";
+      box.value = id;
+      box.style.width = "auto";
+      box.style.marginRight = "8px";
+      box.addEventListener("click", e => e.stopPropagation());
+      item.prepend(box);
+    });
+  };
+
+  window.renderRecipeList = function() {
+    oldRenderRecipes();
+    document.querySelectorAll("#recipeList .item").forEach(item => {
+      if (item.querySelector(".recipeBulkCheck")) return;
+      const onclick = item.getAttribute("onclick") || "";
+      const m = onclick.match(/selectRecipe\('([^']+)'\)/);
+      if (!m) return;
+      const id = m[1];
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.className = "recipeBulkCheck";
+      box.value = id;
+      box.style.width = "auto";
+      box.style.marginRight = "8px";
+      box.addEventListener("click", e => e.stopPropagation());
+      item.prepend(box);
+    });
+  };
+
+  renderNotes = window.renderNotes;
+  renderRecipeList = window.renderRecipeList;
+}
+
+function getCheckedValues(selector) {
+  return Array.from(document.querySelectorAll(selector + ":checked")).map(el => el.value);
+}
+
+function deleteSelectedNotesLocal() {
+  const ids = getCheckedValues(".noteBulkCheck");
+  if (!ids.length) return alert("請先勾選要刪除的記事。");
+  if (!confirm(`確定刪除 ${ids.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  notes = notes.filter(n => !ids.includes(n.id));
+  if (ids.includes(selectedNoteId)) selectedNoteId = notes[0]?.id || "";
+  saveNotes();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  else {
+    if ($("noteTitle")) $("noteTitle").value = "";
+    if ($("noteContent")) $("noteContent").value = "";
+    if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
+    renderNotes();
+  }
+  showToast(`已刪除 ${ids.length} 筆本機記事`);
+}
+
+function deleteAllNotesLocal() {
+  if (!notes.length) return alert("目前沒有記事可刪除。");
+  if (!confirm(`確定刪除全部 ${notes.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+  notes = [];
+  selectedNoteId = "";
+  saveNotes();
+  if ($("noteTitle")) $("noteTitle").value = "";
+  if ($("noteContent")) $("noteContent").value = "";
+  if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
+  renderNotes();
+  showToast("已刪除全部本機記事");
+}
+
+function deleteSelectedRecipesLocal() {
+  const ids = getCheckedValues(".recipeBulkCheck");
+  if (!ids.length) return alert("請先勾選要刪除的配方。");
+  if (!confirm(`確定刪除 ${ids.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  recipes = recipes.filter(r => !ids.includes(r.id));
+  if (ids.includes(selectedRecipeId)) selectedRecipeId = recipes[0]?.id || "";
+  saveRecipes();
+  if (selectedRecipeId) selectRecipe(selectedRecipeId);
+  else newRecipeForm();
+  renderRecipeList();
+  showToast(`已刪除 ${ids.length} 個本機配方`);
+}
+
+function deleteAllRecipesLocal() {
+  if (!recipes.length) return alert("目前沒有配方可刪除。");
+  if (!confirm(`確定刪除全部 ${recipes.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+  recipes = [];
+  selectedRecipeId = "";
+  saveRecipes();
+  newRecipeForm();
+  renderRecipeList();
+  showToast("已刪除全部本機配方");
+}
+
+function initStableRepairControls() {
+  repairPatchRenderLists();
+  repairHideCalibrationText();
+  repairMoveLongmenIntoTimer();
+  repairHideTextSections(["記事本備份", "配方備份"]);
+
+  if ($("deleteSelectedNotesBtn")) $("deleteSelectedNotesBtn").addEventListener("click", deleteSelectedNotesLocal);
+  if ($("deleteAllNotesBtn")) $("deleteAllNotesBtn").addEventListener("click", deleteAllNotesLocal);
+  if ($("deleteSelectedRecipesBtn")) $("deleteSelectedRecipesBtn").addEventListener("click", deleteSelectedRecipesLocal);
+  if ($("deleteAllRecipesBtn")) $("deleteAllRecipesBtn").addEventListener("click", deleteAllRecipesLocal);
+
+  if ($("noteBulkSelectAll")) $("noteBulkSelectAll").addEventListener("change", (e) => {
+    document.querySelectorAll(".noteBulkCheck").forEach(el => el.checked = e.target.checked);
+  });
+  if ($("recipeBulkSelectAll")) $("recipeBulkSelectAll").addEventListener("change", (e) => {
+    document.querySelectorAll(".recipeBulkCheck").forEach(el => el.checked = e.target.checked);
+  });
+
+  renderNotes();
+  renderRecipeList();
+}
+
+setTimeout(initStableRepairControls, 50);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
