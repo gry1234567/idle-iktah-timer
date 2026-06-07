@@ -1,36 +1,33 @@
-# IDLE iktah 工具箱｜預填 URL / Key，Email 自行輸入版
+# IDLE iktah 工具箱｜Vercel API 轉接雲端版
 
-這版已經幫你預填：
-- Supabase URL：https://oivbidfpeudddesucwhg.supabase.co
-- Supabase publishable key：已內建
+這版是為了解決手機 / PWA 直接 fetch Supabase 失敗。
 
-這版不會預填：
-- 管理者 Email
-- 管理者密碼
+修正：
+- 手機 APP 不再直接連 Supabase REST API
+- 改成連自己的 Vercel 網址 `/api/supabase-proxy`
+- 由 Vercel API 再去連 Supabase
+- 可以避開手機瀏覽器 / PWA 對外部 API 的 fetch 問題
+
+重要：
+這版除了原本 7 個檔案，還多一個資料夾：
+
+api/supabase-proxy.js
+
+更新 GitHub 時一定要把 api 資料夾也上傳，不然雲端測試一定會失敗。
+
+要覆蓋 / 上傳：
+- index.html
+- manifest.webmanifest
+- service-worker.js
+- icon-192.png
+- icon-512.png
+- vercel.json
+- README.md
+- api/supabase-proxy.js
 
 使用方式：
-1. 覆蓋 GitHub 7 個檔案
-2. 打開 APP → 設定 → 雲端同步與登入 REST 版
-3. 直接按「測試雲端連線」
-4. 成功後按「重新讀取雲端」
-5. 要修改或上傳時，自己輸入管理者 Email 與密碼 → 按「管理者登入」
-
-保留：
-- 分類切換
-- 製作提醒
-- 龍門陣
-- 記事本
-- 配方計算機
-- 配方批量匯入
-- 搜尋
-- 記事本／配方分開備份
-- 管理者登入／登出
-- 本機資料上傳雲端
-
-
-## 本版修正
-
-- 修正 REST API headers
-- 一般讀取只使用 `apikey`
-- 不再把 `sb_publishable_...` 當成 `Authorization: Bearer`
-- 管理者登入後，才使用 Supabase Auth 回傳的 access token
+1. 覆蓋 GitHub 檔案，包含 api/supabase-proxy.js
+2. 等 Vercel 部署完成
+3. 打開 APP → 設定 → 雲端同步
+4. 按「測試雲端連線」
+5. 成功後按「重新讀取雲端」

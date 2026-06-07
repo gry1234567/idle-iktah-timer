@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "修正 Supabase publishable key Authorization header 的 REST 雲端版",
+  "description": "Vercel API 轉接 Supabase 雲端版",
   "id": "/",
   "start_url": "/",
   "scope": "/",
