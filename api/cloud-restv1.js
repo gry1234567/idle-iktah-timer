@@ -3,7 +3,7 @@ import https from "https";
 const SUPABASE_REST_URL = "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/";
 const SUPABASE_ROOT_URL = "https://oivbidfpeuddedsucwhg.supabase.co";
 const PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
-const API_VERSION = "OVERWRITE-UPLOAD-FIX-20260608-06";
+const API_VERSION = "NOTE-DEDUPE-FIX-20260608-08";
 
 function requestJson(path, options = {}) {
   return new Promise((resolve, reject) => {
@@ -168,10 +168,20 @@ async function deleteRecipe(id, token) {
   });
 }
 
+function normalizeTextForDedupe(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map(line => line.trim().replace(/\s+/g, " "))
+    .join("\n")
+    .trim();
+}
+
 function noteSignatureForUpload(note) {
   return JSON.stringify({
-    title: String(note?.title || "").trim(),
-    content: String(note?.content || "").trim()
+    title: normalizeTextForDedupe(note?.title || ""),
+    content: normalizeTextForDedupe(note?.content || "")
   });
 }
 
@@ -193,10 +203,19 @@ function recipeSignatureForUpload(recipe) {
 
 function uniqueBySignature(items, signatureFn) {
   const map = new Map();
+
   for (const item of items || []) {
     const key = signatureFn(item);
-    if (!map.has(key)) map.set(key, item);
+    const current = map.get(key);
+
+    const currentTime = current ? new Date(current.updated_at || current.updatedAt || current.created_at || current.createdAt || 0).getTime() : 0;
+    const nextTime = new Date(item.updated_at || item.updatedAt || item.created_at || item.createdAt || 0).getTime();
+
+    if (!current || nextTime >= currentTime) {
+      map.set(key, item);
+    }
   }
+
   return Array.from(map.values());
 }
 

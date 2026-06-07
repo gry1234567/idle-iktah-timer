@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "雲端覆蓋上傳修正版 OVERWRITE-UPLOAD-FIX-20260608-06",
+  "description": "記事本查重修正版 NOTE-DEDUPE-FIX-20260608-08",
   "id": "/",
   "start_url": "/",
   "scope": "/",
