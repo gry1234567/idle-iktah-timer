@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "固定儲存版：配方更新後不消失，支援備份匯出匯入",
+  "description": "記事本與配方備份，預設合併匯入",
   "id": "/",
   "start_url": "/",
   "scope": "/",

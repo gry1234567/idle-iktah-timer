@@ -500,6 +500,34 @@
             <h2>配方計算機</h2>
             <div class="sub">先選已儲存配方，再輸入實際重量換算。也可以新增或修改配方內容。</div>
 
+            <details style="margin-top:12px;">
+              <summary>快速批量匯入配方</summary>
+              <div class="note" style="margin-top:10px;">
+                你可以一次貼上單一配方或多個配方，按一次按鈕就自動建立。
+                多個配方建議用 "---" 分隔。
+              </div>
+              <div style="margin-top:12px;">
+                <label>快速貼上配方</label>
+                <textarea id="recipeBulkText" placeholder="配方名稱：滷汁
+基準重量：500
+糖 100 克
+鹽 20 克
+水 300 ml
+
+---
+配方名稱：醃肉醬
+基準重量：1000
+醬油 120 ml
+米酒 80 ml
+蒜泥 30 克"></textarea>
+              </div>
+              <div class="actions3">
+                <button id="bulkImportRecipeBtn">一鍵匯入貼上內容</button>
+                <button class="secondary" id="bulkFillExampleBtn">帶入範例</button>
+                <button class="secondary" id="bulkClearBtn">清空貼上內容</button>
+              </div>
+            </details>
+
             <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
             <div id="recipeList"></div>
 
@@ -586,16 +614,17 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">資料備份</div>
-            <div class="actions">
-              <button class="secondary" id="exportDataBtn">匯出資料</button>
-              <button class="secondary" id="importDataBtn">匯入資料</button>
+            <div class="sectionTitle">記事本／配方備份</div>
+            <div class="actions3">
+              <button class="secondary" id="exportDataBtn">匯出記事本與配方</button>
+              <button class="secondary" id="importDataBtn">合併匯入記事本與配方</button>
+              <button class="danger" id="overwriteImportDataBtn">覆蓋匯入</button>
             </div>
             <div style="margin-top:12px;">
-              <label>備份資料文字</label>
-              <textarea id="backupText" placeholder="匯出後會出現在這裡；要匯入時把備份文字貼回來"></textarea>
+              <label>記事本／配方備份文字</label>
+              <textarea id="backupText" placeholder="這裡只會匯出記事本與配方計算機內容；要匯入時把備份文字貼回來"></textarea>
             </div>
-            <div class="note">配方會固定存在同一個網址底下。若你換了 Vercel 網址，瀏覽器會視為不同網站，資料仍可能不同；可用這裡手動備份。</div>
+            <div class="note">這個備份只包含記事本與配方計算機。預設匯入會合併，不會刪掉目前資料；只有按「覆蓋匯入」才會取代目前資料。</div>
           </div>
         </section>
 
@@ -1025,12 +1054,173 @@ function renderNotes() {
   `).join("");
 }
 
+
+function splitRecipeBlocks(text) {
+  const normalized = String(text || "").replace(/\r/g, "").trim();
+  if (!normalized) return [];
+
+  if (/^\s*(---+|===+)\s*$/m.test(normalized)) {
+    return normalized.split(/^\s*(?:---+|===+)\s*$/m).map(x => x.trim()).filter(Boolean);
+  }
+
+  const lines = normalized.split("\n");
+  const blocks = [];
+  let current = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (/^配方名稱\s*[:：]/.test(line) && current.length) {
+      blocks.push(current.join("\n").trim());
+      current = [rawLine];
+    } else {
+      current.push(rawLine);
+    }
+  }
+
+  if (current.length) blocks.push(current.join("\n").trim());
+  return blocks.filter(Boolean);
+}
+
+function parseIngredientLine(line) {
+  let s = String(line || "").trim();
+  if (!s) return null;
+
+  s = s.replace(/[\t]+/g, " ").replace(/\s+/g, " ");
+  s = s.replace(/[，]/g, ",").replace(/[／]/g, "/").replace(/[：]/g, ":");
+
+  let name = "";
+  let amount = null;
+  let unit = "";
+
+  if (s.includes(",")) {
+    const parts = s.split(",").map(x => x.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      name = parts[0] || "";
+      amount = Number(parts[1]);
+      unit = parts[2] || "克";
+    }
+  } else if (s.includes("/") && !/^https?:/i.test(s)) {
+    const parts = s.split("/").map(x => x.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      name = parts[0] || "";
+      amount = Number(parts[1]);
+      unit = parts[2] || "克";
+    }
+  } else if (s.includes(":") && !/^配方名稱\s*:/.test(s) && !/^基準(?:重量|原材料重量)?\s*:/.test(s)) {
+    const parts = s.split(":");
+    if (parts.length >= 2) {
+      name = parts[0].trim();
+      const right = parts.slice(1).join(":").trim();
+      const match = right.match(/^(-?\d+(?:\.\d+)?)\s*(.*)$/);
+      if (match) {
+        amount = Number(match[1]);
+        unit = (match[2] || "").trim() || "克";
+      }
+    }
+  } else {
+    const match = s.match(/^(.*?)(-?\d+(?:\.\d+)?)\s*([^\d].*)?$/);
+    if (match) {
+      name = (match[1] || "").trim();
+      amount = Number(match[2]);
+      unit = (match[3] || "").trim() || "克";
+    }
+  }
+
+  if (!name || !Number.isFinite(amount)) return null;
+  return { name, amount, unit: unit || "克" };
+}
+
+function parseRecipeBlock(blockText, index) {
+  const lines = String(blockText || "").replace(/\r/g, "").split("\n").map(x => x.trim()).filter(Boolean);
+  let name = "";
+  let baseWeight = null;
+  const ingredients = [];
+
+  lines.forEach(line => {
+    const normalized = line.replace(/[：]/g, ":");
+    const nameMatch = normalized.match(/^配方名稱\s*:\s*(.+)$/i);
+    if (nameMatch) {
+      name = nameMatch[1].trim();
+      return;
+    }
+
+    const baseMatch = normalized.match(/^基準(?:重量|原材料重量)?\s*:\s*(-?\d+(?:\.\d+)?)/i);
+    if (baseMatch) {
+      baseWeight = Number(baseMatch[1]);
+      return;
+    }
+
+    const ingredient = parseIngredientLine(normalized);
+    if (ingredient) ingredients.push(ingredient);
+  });
+
+  if (!ingredients.length) return null;
+
+  return {
+    name: name || `未命名配方 ${index + 1}`,
+    baseWeight: Number.isFinite(baseWeight) && baseWeight > 0 ? baseWeight : 500,
+    ingredients
+  };
+}
+
+function bulkImportRecipes() {
+  const text = $("recipeBulkText").value.trim();
+  if (!text) return alert("請先貼上配方內容。");
+
+  const blocks = splitRecipeBlocks(text);
+  const parsed = blocks.map((block, idx) => parseRecipeBlock(block, idx)).filter(Boolean);
+
+  if (!parsed.length) {
+    return alert("沒有解析到可用配方。請確認格式像：配方名稱、基準重量、材料 數量 單位。");
+  }
+
+  const now = Date.now();
+  const imported = parsed.map((item, idx) => ({
+    id: String(now + idx) + Math.random().toString(16).slice(2),
+    name: item.name,
+    baseWeight: item.baseWeight,
+    ingredients: item.ingredients,
+    createdAt: now + idx,
+    updatedAt: now + idx
+  }));
+
+  recipes = [...imported, ...recipes];
+  selectedRecipeId = imported[0].id;
+  saveRecipes();
+  renderRecipeList();
+  selectRecipe(selectedRecipeId);
+  $("recipeBulkText").value = "";
+
+  alert(`已匯入 ${imported.length} 個配方。`);
+}
+
+function fillBulkRecipeExample() {
+  $("recipeBulkText").value = `配方名稱：滷汁
+基準重量：500
+糖 100 克
+鹽 20 克
+水 300 ml
+醬油 50 ml
+
+---
+配方名稱：醃肉醬
+基準重量：1000
+醬油 120 ml
+米酒 80 ml
+蒜泥 30 克
+糖 50 克`;
+}
+
+
 function initRecipe() {
   $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
   $("newRecipeBtn").addEventListener("click", newRecipeForm);
   $("saveRecipeBtn").addEventListener("click", () => saveRecipe(false));
   $("saveAsRecipeBtn").addEventListener("click", () => saveRecipe(true));
   $("deleteRecipeBtn").addEventListener("click", deleteRecipe);
+  $("bulkImportRecipeBtn").addEventListener("click", bulkImportRecipes);
+  $("bulkFillExampleBtn").addEventListener("click", fillBulkRecipeExample);
+  $("bulkClearBtn").addEventListener("click", () => { $("recipeBulkText").value = ""; });
   ["recipeBase", "recipeTarget"].forEach(id => $(id).addEventListener("input", calculateRecipe));
 
   if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
@@ -1201,48 +1391,80 @@ function renderRecipeList() {
 
 function exportData() {
   const data = {
+    type: "iktah_notes_and_recipes_backup",
     version: 1,
     exportedAt: Date.now(),
-    timers,
     notes,
     recipes,
     selectedNoteId,
     selectedRecipeId
   };
-  $("backupText").value = JSON.stringify(data);
-  alert("資料已匯出。請複製備份文字保存。");
+
+  $("backupText").value = JSON.stringify(data, null, 2);
+  alert(`已匯出記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。請複製備份文字保存。`);
 }
 
-function importData() {
+function importData(mode = "merge") {
   const text = $("backupText").value.trim();
-  if (!text) return alert("請先貼上備份資料文字。");
+  if (!text) return alert("請先貼上記事本／配方備份文字。");
 
   try {
     const data = JSON.parse(text);
     if (!data || typeof data !== "object") throw new Error("格式錯誤");
 
-    if (Array.isArray(data.timers)) timers = data.timers;
-    if (Array.isArray(data.notes)) notes = data.notes;
-    if (Array.isArray(data.recipes)) recipes = data.recipes;
-    if (typeof data.selectedNoteId === "string") selectedNoteId = data.selectedNoteId;
-    if (typeof data.selectedRecipeId === "string") selectedRecipeId = data.selectedRecipeId;
+    const incomingNotes = Array.isArray(data.notes) ? data.notes : [];
+    const incomingRecipes = Array.isArray(data.recipes) ? data.recipes : [];
 
-    saveTimers();
+    if (!incomingNotes.length && !incomingRecipes.length) {
+      return alert("這份備份裡沒有記事本或配方資料。");
+    }
+
+    if (mode === "overwrite") {
+      if (!confirm(`覆蓋匯入會清掉目前記事本與配方，改成備份內容。\n\n備份內含：記事本 ${incomingNotes.length} 筆、配方 ${incomingRecipes.length} 筆。\n\n確定要覆蓋嗎？`)) {
+        return;
+      }
+
+      notes = incomingNotes;
+      recipes = incomingRecipes;
+    } else {
+      const existingNoteIds = new Set(notes.map(n => n.id));
+      const existingRecipeIds = new Set(recipes.map(r => r.id));
+
+      incomingNotes.forEach(n => {
+        const copy = {...n};
+        if (!copy.id || existingNoteIds.has(copy.id)) {
+          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
+        }
+        notes.unshift(copy);
+      });
+
+      incomingRecipes.forEach(r => {
+        const copy = {...r};
+        if (!copy.id || existingRecipeIds.has(copy.id)) {
+          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
+        }
+        recipes.unshift(copy);
+      });
+    }
+
+    selectedNoteId = notes[0]?.id || "";
+    selectedRecipeId = recipes[0]?.id || "";
+
     saveNotes();
     saveRecipes();
 
-    renderTimers();
     renderNotes();
     renderRecipeList();
 
-    if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
     if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
+    if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
 
-    alert("資料已匯入。");
+    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}完成：記事本 ${incomingNotes.length} 筆、配方 ${incomingRecipes.length} 筆。`);
   } catch (e) {
     alert("匯入失敗，備份文字格式不正確。");
   }
 }
+
 
 
 function initSettings() {
@@ -1250,7 +1472,8 @@ function initSettings() {
   updateBg();
 
   if ($("exportDataBtn")) $("exportDataBtn").addEventListener("click", exportData);
-  if ($("importDataBtn")) $("importDataBtn").addEventListener("click", importData);
+  if ($("importDataBtn")) $("importDataBtn").addEventListener("click", () => importData("merge"));
+  if ($("overwriteImportDataBtn")) $("overwriteImportDataBtn").addEventListener("click", () => importData("overwrite"));
 
   $("soundFile").addEventListener("change", () => {
     const file = $("soundFile").files?.[0];
