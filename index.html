@@ -454,7 +454,7 @@
   <div class="wrap">
     <header>
       <h1>IDLE iktah 工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 RESTV1-URL-TEST-20260608-01</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 PUBLIC-SCHEMA-FORCED-20260608-04</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -717,10 +717,10 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜乾淨重建版</div>
+            <div class="sectionTitle">雲端同步｜PUBLIC-SCHEMA-FORCED-20260608-04</div>
             <div class="note">
-              版本：RESTV1-URL-TEST-20260608-01<br>
-              這版不需要填 Supabase URL / key。APP 只連自己的 Vercel API，再由 Vercel 使用 Supabase /rest/v1/ URL 連線測試。
+              版本：PUBLIC-SCHEMA-FORCED-20260608-04<br>
+              這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud-restv1，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
               <div>
@@ -1986,7 +1986,7 @@ function cleanUpdateEditLock() {
 function cleanXhr(action, payload = {}) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${location.origin}/api/cloud?t=${Date.now()}`, true);
+    xhr.open("POST", `${location.origin}/api/cloud-restv1?t=${Date.now()}`, true);
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.timeout = 25000;
 
@@ -2003,7 +2003,7 @@ function cleanXhr(action, payload = {}) {
       }
     };
 
-    xhr.onerror = () => reject(new Error("無法連線到同網域 API /api/cloud。請確認 api/cloud.js 已上傳並部署。"));
+    xhr.onerror = () => reject(new Error("無法連線到同網域 API /api/cloud-restv1。請確認 api/cloud-restv1.js 已上傳並部署。"));
     xhr.ontimeout = () => reject(new Error("連線逾時。請稍後再試。"));
     xhr.onabort = () => reject(new Error("連線中止。"));
     xhr.send(JSON.stringify({ action, token: cleanAccessToken, ...payload }));

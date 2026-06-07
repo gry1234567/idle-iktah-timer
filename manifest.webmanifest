@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "Supabase /rest/v1/ URL 測試版",
+  "description": "強制 public schema 版 PUBLIC-SCHEMA-FORCED-20260608-04",
   "id": "/",
   "start_url": "/",
   "scope": "/",
