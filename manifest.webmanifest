@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "XHR 代理雲端同步版，避開 fetch failed",
+  "description": "強制清除 Service Worker 快取版 FORCE-NO-SW-20260608-01",
   "id": "/",
   "start_url": "/",
   "scope": "/",

@@ -438,6 +438,29 @@
   </style>
 </head>
 <body>
+
+<script>
+(function() {
+  window.IDLE_IKTAH_VERSION = "FORCE-NO-SW-20260608-01";
+  async function clearOldPwaCache() {
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) await reg.unregister();
+      }
+      if ("caches" in window) {
+        const names = await caches.keys();
+        for (const name of names) await caches.delete(name);
+      }
+      console.log("PWA cache cleared for version FORCE-NO-SW-20260608-01");
+    } catch (e) {
+      console.warn("PWA cache cleanup failed", e);
+    }
+  }
+  clearOldPwaCache();
+})();
+</script>
+
   <div id="appBg"></div>
   <div id="appDim"></div>
   <div id="toast" class="toast">已點擊</div>
@@ -454,7 +477,7 @@
   <div class="wrap">
     <header>
       <h1>IDLE iktah 工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span id="cloudStatusBadge" class="cloudBadge">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span id="forceVersionBadge" class="cloudBadge on">版本 FORCE-NO-SW-20260608-01</span> <span id="cloudStatusBadge" class="cloudBadge">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -2057,7 +2080,7 @@ function xhrPostJson(url, payload) {
       }
     };
 
-    xhr.onerror = () => reject(new Error("XMLHttpRequest network error"));
+    xhr.onerror = () => reject(new Error("XMLHttpRequest network error｜版本 FORCE-NO-SW-20260608-01｜代表目前新版已載入，但手機仍無法 POST 到 /api/supabase-proxy"));
     xhr.ontimeout = () => reject(new Error("XMLHttpRequest timeout"));
     xhr.onabort = () => reject(new Error("XMLHttpRequest aborted"));
 
@@ -2068,7 +2091,7 @@ function xhrPostJson(url, payload) {
 async function cloudFetch(path, options = {}, useAdmin = false) {
   if (!cloudReady) throw new Error("尚未設定 Supabase URL 或 publishable key。");
 
-  const proxyUrl = `${location.origin}/api/supabase-proxy?t=${Date.now()}`;
+  const proxyUrl = `${location.protocol}//${location.host}/api/supabase-proxy?t=${Date.now()}&v=FORCE-NO-SW-20260608-01`;
   const payload = {
     path,
     method: options.method || "GET",
@@ -2151,7 +2174,7 @@ async function testCloudConnectionRest() {
   } catch (e) {
     const reason = describeCloudError(e);
     cloudMessage("cloudStatusText", `狀態：XHR 雲端連線失敗。\n原因：${reason}`, "bad");
-    alert(`測試雲端連線失敗。\n\n${reason}`);
+    alert(`新版測試雲端連線失敗。\n\n${reason}`);
   } finally {
     if (btn) btn.textContent = old;
   }
