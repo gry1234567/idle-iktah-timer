@@ -1,4 +1,4 @@
-const CACHE_NAME = "idle-iktah-cloud-prefilled-url-key-only-v3";
+const CACHE_NAME = "idle-iktah-cloud-auth-header-fix-v4";
 const FILES = [
   "/",
   "/index.html",

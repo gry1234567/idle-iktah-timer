@@ -2014,12 +2014,20 @@ function initCloudReady() {
 }
 
 function cloudHeaders(useAdmin = false) {
-  const token = useAdmin && adminAccessToken ? adminAccessToken : supabaseAnonKey;
-  return {
+  const headers = {
     "apikey": supabaseAnonKey,
-    "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json"
   };
+
+  // 重要：
+  // sb_publishable_... 是 API key，不是使用者 JWT。
+  // 一般公開讀取只放 apikey，不放 Authorization。
+  // 只有管理者登入後，才使用 Supabase Auth 回傳的 access_token 當 Authorization。
+  if (useAdmin && adminAccessToken) {
+    headers["Authorization"] = `Bearer ${adminAccessToken}`;
+  }
+
+  return headers;
 }
 
 async function cloudFetch(path, options = {}, useAdmin = false) {
@@ -2050,7 +2058,8 @@ function describeCloudError(error) {
   if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "fetch 無法連線。這通常是 Data API 沒開 public schema/table、網路阻擋，或瀏覽器/PWA 無法打到 Supabase REST API。";
   if (msg.includes("relation") && msg.includes("does not exist")) return "找不到資料表。請確認 SQL 已用 postgres 執行成功，並有 iktah_notes / iktah_recipes / iktah_recipe_ingredients。";
   if (msg.includes("permission denied") || msg.includes("row-level security") || msg.includes("RLS")) return "資料庫權限被拒絕。請確認 RLS policies 已建立，Data API 的 public schema 與資料表已開放。";
-  if (msg.includes("Invalid API key") || msg.includes("JWT") || msg.includes("apikey")) return "API key 可能錯誤。請貼完整 sb_publishable_...，不要貼 sb_secret_...。";
+  if (msg.includes("Invalid API key") || msg.includes("apikey")) return "API key 可能錯誤。請確認使用的是完整 sb_publishable_...。";
+  if (msg.includes("JWT") || msg.includes("invalid claim") || msg.includes("missing sub")) return "Authorization token 錯誤。這版已修正 publishable key 不再放進 Authorization；請更新後重新測試。";
   if (msg.includes("schema") || msg.includes("exposed") || msg.includes("No API key found")) return "Data API schema/table 尚未開放。請到 Data API → Settings 選 public 並開啟資料表。";
   return msg;
 }

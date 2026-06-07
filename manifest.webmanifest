@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "預填 Supabase URL 與 key，管理者 Email 自行輸入",
+  "description": "修正 Supabase publishable key Authorization header 的 REST 雲端版",
   "id": "/",
   "start_url": "/",
   "scope": "/",

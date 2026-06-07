@@ -26,3 +26,11 @@
 - 記事本／配方分開備份
 - 管理者登入／登出
 - 本機資料上傳雲端
+
+
+## 本版修正
+
+- 修正 REST API headers
+- 一般讀取只使用 `apikey`
+- 不再把 `sb_publishable_...` 當成 `Authorization: Bearer`
+- 管理者登入後，才使用 Supabase Auth 回傳的 access token
