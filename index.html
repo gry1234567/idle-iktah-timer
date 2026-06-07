@@ -719,7 +719,7 @@
 
             <div class="sectionTitle">雲端同步與登入 REST 版</div>
             <div class="note">
-              這版已預填 Supabase URL 與 publishable key，管理者 Email 需自行輸入，改用 Vercel API 轉接。同步對象：記事本與配方。其他人只能查看；你登入管理者後才能新增、修改、刪除或上傳本機資料。
+              這版已預填 Supabase URL 與 publishable key，管理者 Email 需自行輸入，改用 Vercel API 轉接 XHR。同步對象：記事本與配方。其他人只能查看；你登入管理者後才能新增、修改、刪除或上傳本機資料。
             </div>
             <div class="grid" style="margin-top:12px;">
               <div>
@@ -2034,31 +2034,54 @@ function cloudHeaders(useAdmin = false) {
   return headers;
 }
 
+function xhrPostJson(url, payload) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = 20000;
+
+    xhr.onload = () => {
+      let data = null;
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+      } catch {
+        data = xhr.responseText;
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        const msg = (data && (data.message || data.error || data.details)) || xhr.responseText || `HTTP ${xhr.status}`;
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("XMLHttpRequest network error"));
+    xhr.ontimeout = () => reject(new Error("XMLHttpRequest timeout"));
+    xhr.onabort = () => reject(new Error("XMLHttpRequest aborted"));
+
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
 async function cloudFetch(path, options = {}, useAdmin = false) {
   if (!cloudReady) throw new Error("尚未設定 Supabase URL 或 publishable key。");
 
   const proxyUrl = `${location.origin}/api/supabase-proxy?t=${Date.now()}`;
-  const response = await fetch(proxyUrl, {
-    method: "POST",
-    cache: "no-store",
-    credentials: "omit",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      path,
-      method: options.method || "GET",
-      headers: options.headers || {},
-      body: options.body ? JSON.parse(options.body) : null,
-      useAdmin,
-      adminAccessToken: useAdmin ? adminAccessToken : ""
-    })
-  });
+  const payload = {
+    path,
+    method: options.method || "GET",
+    headers: options.headers || {},
+    body: options.body ? JSON.parse(options.body) : null,
+    useAdmin,
+    adminAccessToken: useAdmin ? adminAccessToken : ""
+  };
 
-  const data = await response.json().catch(() => null);
+  const data = await xhrPostJson(proxyUrl, payload);
 
-  if (!response.ok || (data && data.error)) {
-    const msg = (data && (data.message || data.error || data.details)) || `HTTP ${response.status}`;
+  if (data && data.error) {
+    const msg = data.message || data.error || data.details || "Proxy error";
     throw new Error(msg);
   }
 
@@ -2067,7 +2090,7 @@ async function cloudFetch(path, options = {}, useAdmin = false) {
 
 function describeCloudError(error) {
   const msg = String((error && error.message) || error || "未知錯誤");
-  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "前端無法連到 /api/supabase-proxy。請確認：1. GitHub 有 api/supabase-proxy.js；2. Vercel 已重新部署成功；3. 手機已清除舊 PWA 快取或重新安裝；4. 本版 service worker 已更新。";
+  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "前端無法連到 /api/supabase-proxy。這版已改用 XMLHttpRequest；若仍失敗，請按「測試代理網址」確認能看到 Method not allowed，並確認不是已安裝 APP 舊快取。";
   if (msg.includes("relation") && msg.includes("does not exist")) return "找不到資料表。請確認 SQL 已用 postgres 執行成功，並有 iktah_notes / iktah_recipes / iktah_recipe_ingredients。";
   if (msg.includes("permission denied") || msg.includes("row-level security") || msg.includes("RLS")) return "資料庫權限被拒絕。請確認 RLS policies 已建立，Data API 的 public schema 與資料表已開放。";
   if (msg.includes("Invalid API key") || msg.includes("apikey")) return "API key 可能錯誤。請確認使用的是完整 sb_publishable_...。";
@@ -2121,13 +2144,13 @@ async function testCloudConnectionRest() {
   showToast("正在測試雲端連線...");
 
   try {
-    cloudMessage("cloudStatusText", "狀態：正在測試 REST API 連線...", "");
+    cloudMessage("cloudStatusText", "狀態：正在測試 XHR 雲端連線...", "");
     await cloudFetch("/rest/v1/iktah_notes?select=id&limit=1", { method: "GET" }, false);
-    cloudMessage("cloudStatusText", "狀態：REST API 連線成功。可以嘗試重新讀取雲端。", "good");
+    cloudMessage("cloudStatusText", "狀態：XHR 雲端連線成功。可以嘗試重新讀取雲端。", "good");
     showToast("雲端連線成功");
   } catch (e) {
     const reason = describeCloudError(e);
-    cloudMessage("cloudStatusText", `狀態：REST API 連線失敗。\n原因：${reason}`, "bad");
+    cloudMessage("cloudStatusText", `狀態：XHR 雲端連線失敗。\n原因：${reason}`, "bad");
     alert(`測試雲端連線失敗。\n\n${reason}`);
   } finally {
     if (btn) btn.textContent = old;
@@ -2147,7 +2170,7 @@ async function loadCloudDataRest() {
   showToast("正在讀取雲端...");
 
   try {
-    cloudMessage("cloudStatusText", "狀態：正在讀取 REST 雲端記事本與配方...", "");
+    cloudMessage("cloudStatusText", "狀態：正在讀取 XHR 雲端記事本與配方...", "");
 
     const noteRows = await cloudFetch("/rest/v1/iktah_notes?select=*&order=updated_at.desc", { method: "GET" }, false);
     const recipeRows = await cloudFetch("/rest/v1/iktah_recipes?select=*,ingredients:iktah_recipe_ingredients(*)&order=updated_at.desc", { method: "GET" }, false);

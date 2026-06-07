@@ -1,4 +1,4 @@
-const CACHE_NAME = "idle-iktah-cloud-cache-reset-v5";
+const CACHE_NAME = "idle-iktah-cloud-xhr-proxy-v6";
 const ASSETS = [
   "/",
   "/index.html",

@@ -1,11 +1,14 @@
-# IDLE iktah 工具箱｜快取重置 + Vercel API 修正版
+# IDLE iktah 工具箱｜XHR 代理雲端版
+
+這版是為了解決手機 / PWA 的 fetch failed。
 
 修正：
-- 新增「清除 APP 快取並重載」按鈕
-- 新增「測試代理網址」按鈕
-- `/api/supabase-proxy` 改成完整同網域網址
-- service worker 完全不攔截 `/api/`
-- service worker 改成更保守，避免舊快取造成 fetch failed
+- 不再用 fetch() 呼叫 /api/supabase-proxy
+- 改用 XMLHttpRequest
+- 仍然透過 Vercel API 轉接到 Supabase
+- service worker 不攔截 /api/
+- 保留清除 APP 快取並重載
+- 保留測試代理網址
 
 這版仍需要上傳：
 - index.html
@@ -17,10 +20,11 @@
 - README.md
 - api/supabase-proxy.js
 
-更新後建議：
-1. 先用 Chrome 開 APP
-2. 到設定 → 雲端同步
-3. 按「清除 APP 快取並重載」
-4. 重載後按「測試代理網址」
-5. 應該看到 Method not allowed
-6. 回 APP 按「測試雲端連線」
+測試順序：
+1. 覆蓋 GitHub，包含 api/supabase-proxy.js
+2. 等 Vercel 部署完成
+3. 手機 Chrome 開 APP
+4. 設定 → 雲端同步
+5. 先按「清除 APP 快取並重載」
+6. 再按「測試代理網址」
+7. 看到 Method not allowed 後，回 APP 按「測試雲端連線」

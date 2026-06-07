@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "快取重置 + Vercel API 雲端同步修正版",
+  "description": "XHR 代理雲端同步版，避開 fetch failed",
   "id": "/",
   "start_url": "/",
   "scope": "/",
