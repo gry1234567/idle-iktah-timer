@@ -533,7 +533,7 @@
   <div id="youtubeAlarmOverlay" class="youtubeAlarmOverlay">
     <div class="youtubeAlarmCard">
       <h2>時間到了</h2>
-      <p class="note">YouTube 鈴聲已準備開啟。若瀏覽器阻擋自動開啟，請手動點下面按鈕。</p>
+      <p class="note">YouTube 鈴聲只會開啟一次。若瀏覽器阻擋自動開啟，請手動點下面按鈕。</p>
       <div class="actions">
         <button id="openYoutubeAlarmBtn">開啟 YouTube 鈴聲</button>
         <button class="secondary" id="closeYoutubeAlarmBtn">關閉提示</button>
@@ -554,7 +554,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-LINK-ALARM-20260608-15</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-ONCE-SETTINGS-20260608-16</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -572,70 +572,7 @@
         <button class="menuBtn" data-page="settingsPage" data-short="設"><span class="menuText">設定</span></button>
       </nav>
 
-      <div class="youtubeAlarmPanel" id="youtubeAlarmSettingsPanel">
-              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">YouTube 鈴聲連動</div>
-              <label>鈴聲類型</label>
-              <select id="alarmSoundType">
-                <option value="builtin">內建鈴聲</option>
-                <option value="youtube">YouTube 網址</option>
-              </select>
-              <label style="margin-top:10px;">YouTube 鈴聲網址</label>
-              <input id="youtubeAlarmUrlInput" placeholder="貼上 YouTube 影片或播放清單網址" />
-              <div class="actions">
-                <button class="secondary" id="saveYoutubeAlarmBtn">儲存 YouTube 鈴聲</button>
-                <button class="secondary" id="testYoutubeAlarmBtn">測試開啟 YouTube</button>
-              </div>
-              <div class="note">
-                若你有 YouTube Premium，開啟 YouTube App 後可由 YouTube 自己背景播放。網頁 APP 會負責提醒與開啟連動。
-              </div>
-            </div>
-            
-<main>
-        <section class="page active" id="craftPage">
-          <div class="card">
-            <h2>開始倒數</h2>
-            <div class="grid3">
-              <div>
-                <label>製作名稱</label>
-                <input id="craftName" value="製作項目" />
-              </div>
-              <div>
-                <label>材料／次數</label>
-                <input id="craftCount" type="number" min="1" value="100" />
-              </div>
-              <div>
-                <label>每個耗時（秒）</label>
-                <input id="craftSeconds" type="number" min="0.1" step="0.1" value="3.9" />
-              </div>
-            </div>
-
-            <div class="grid" style="margin-top:12px;">
-              <div>
-                <label>（秒）</label>
-                <input id="craftOffset" type="number" step="1" value="20" />
-              </div>
-              <div>
-                <label>校正方式</label>
-                <select id="craftOffsetMode">
-                  <option value="add">遊戲比較慢：加上</option>
-                  <option value="subtract">遊戲比較快：扣掉</option>
-                  <option value="none">不校正</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="actions">
-              <button id="startCraftBtn">開始倒數</button>
-              <button class="secondary" id="notifyBtn">開啟通知權限</button>
-            </div>
-
-            <div class="resultBox">
-              <div class="muted">預估總時間</div>
-              <div class="bigtime" id="craftPreview">6 分 50 秒</div>
-              <div class="muted" id="craftDetail"></div>
-            </div>
-          </div>
-        </section>
+      </section>
 
         <section class="page" id="longmenPage">
           <div class="card">
@@ -836,6 +773,70 @@
 
         <section class="page" id="settingsPage">
           <div class="card">
+            <div class="youtubeAlarmPanel" id="youtubeAlarmSettingsPanel">
+              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">YouTube 鈴聲設定</div>
+              <label>鈴聲類型</label>
+              <select id="alarmSoundType">
+                <option value="builtin">內建鈴聲</option>
+                <option value="youtube">YouTube 網址</option>
+              </select>
+              <label style="margin-top:10px;">YouTube 鈴聲網址</label>
+              <input id="youtubeAlarmUrlInput" placeholder="貼上 YouTube 影片或播放清單網址" />
+              <div class="actions">
+                <button class="secondary" id="saveYoutubeAlarmBtn">儲存 YouTube 鈴聲</button>
+                <button class="secondary" id="testYoutubeAlarmBtn">測試開啟 YouTube</button>
+              </div>
+              <div class="note">
+                選擇 YouTube 時，時間到只會開啟一次 YouTube，不播放內建鈴聲；背景播放由 YouTube App / Premium 處理。
+              </div>
+            </div>
+            
+<main>
+        <section class="page active" id="craftPage">
+          <div class="card">
+            <h2>開始倒數</h2>
+            <div class="grid3">
+              <div>
+                <label>製作名稱</label>
+                <input id="craftName" value="製作項目" />
+              </div>
+              <div>
+                <label>材料／次數</label>
+                <input id="craftCount" type="number" min="1" value="100" />
+              </div>
+              <div>
+                <label>每個耗時（秒）</label>
+                <input id="craftSeconds" type="number" min="0.1" step="0.1" value="3.9" />
+              </div>
+            </div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>（秒）</label>
+                <input id="craftOffset" type="number" step="1" value="20" />
+              </div>
+              <div>
+                <label>校正方式</label>
+                <select id="craftOffsetMode">
+                  <option value="add">遊戲比較慢：加上</option>
+                  <option value="subtract">遊戲比較快：扣掉</option>
+                  <option value="none">不校正</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="startCraftBtn">開始倒數</button>
+              <button class="secondary" id="notifyBtn">開啟通知權限</button>
+            </div>
+
+            <div class="resultBox">
+              <div class="muted">預估總時間</div>
+              <div class="bigtime" id="craftPreview">6 分 50 秒</div>
+              <div class="muted" id="craftDetail"></div>
+            </div>
+          </div>
+        
             <h2>設定</h2>
 
             <div class="sectionTitle">自訂鈴聲</div>
@@ -871,9 +872,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜YOUTUBE-LINK-ALARM-20260608-15</div>
+            <div class="sectionTitle">雲端同步｜YOUTUBE-ONCE-SETTINGS-20260608-16</div>
             <div class="note">
-              版本：YOUTUBE-LINK-ALARM-20260608-15<br>
+              版本：YOUTUBE-ONCE-SETTINGS-20260608-16<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -2958,6 +2959,7 @@ setTimeout(initRecipeMaterialBulkTools, 100);
 
 const YOUTUBE_ALARM_KEY_URL = "longmen_youtube_alarm_url_v1";
 const YOUTUBE_ALARM_KEY_TYPE = "longmen_alarm_sound_type_v1";
+let youtubeAlarmOpenedForCurrentRing = false;
 
 function normalizeYoutubeUrl(url) {
   return String(url || "").trim();
@@ -2998,8 +3000,14 @@ function openYoutubeAlarmUrl() {
 
 function showYoutubeAlarmPrompt() {
   if (!isYoutubeAlarmEnabled()) return;
+  if (youtubeAlarmOpenedForCurrentRing) return;
+
+  youtubeAlarmOpenedForCurrentRing = true;
+
   const overlay = $("youtubeAlarmOverlay");
   if (overlay) overlay.classList.add("show");
+
+  // 只開啟一次 YouTube；若被阻擋，使用者可手動點按鈕。
   setTimeout(() => {
     try { openYoutubeAlarmUrl(); } catch {}
   }, 150);
@@ -3008,6 +3016,34 @@ function showYoutubeAlarmPrompt() {
 function closeYoutubeAlarmPrompt() {
   const overlay = $("youtubeAlarmOverlay");
   if (overlay) overlay.classList.remove("show");
+}
+
+
+function isBuiltinAlarmDisabledByYoutube() {
+  return isYoutubeAlarmEnabled();
+}
+
+function stopBuiltinAlarmIfYoutubeMode() {
+  if (!isBuiltinAlarmDisabledByYoutube()) return;
+
+  // 嘗試停止常見內建鈴聲 / audio / interval，不保證命名但不會破壞其他功能。
+  try {
+    document.querySelectorAll("audio").forEach(a => {
+      try { a.pause(); a.currentTime = 0; } catch {}
+    });
+  } catch {}
+
+  const stopNames = ["stopAlarm", "stopRinging", "stopSound", "pauseAlarm", "cancelAlarmSound"];
+  stopNames.forEach(name => {
+    try {
+      const fn = window[name] || globalThis[name];
+      if (typeof fn === "function") fn();
+    } catch {}
+  });
+}
+
+function resetYoutubeOnceFlagForNewTimer() {
+  youtubeAlarmOpenedForCurrentRing = false;
 }
 
 function initYoutubeAlarmLink() {
@@ -3027,12 +3063,30 @@ function initYoutubeAlarmLink() {
     "finishTimer", "completeTimer"
   ];
 
+
+  const resetHookNames = ["startTimer", "resumeTimer", "setTimer", "startPresetTimer"];
+  resetHookNames.forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__youtubeResetHooked) {
+        const wrapped = function(...args) {
+          resetYoutubeOnceFlagForNewTimer();
+          return fn.apply(this, args);
+        };
+        wrapped.__youtubeResetHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
+
   hookNames.forEach(name => {
     try {
       const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
       if (typeof fn === "function" && !fn.__youtubeHooked) {
         const wrapped = function(...args) {
           const result = fn.apply(this, args);
+          stopBuiltinAlarmIfYoutubeMode();
           showYoutubeAlarmPrompt();
           return result;
         };
@@ -3054,6 +3108,7 @@ function initYoutubeAlarmLink() {
     const text = document.body ? document.body.innerText : "";
     if (hasAlarmUi && /時間到|完成|提醒|鬧鐘/.test(text)) {
       lastPromptAt = now;
+      stopBuiltinAlarmIfYoutubeMode();
       showYoutubeAlarmPrompt();
     }
   });
