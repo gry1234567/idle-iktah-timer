@@ -3,7 +3,7 @@ import https from "https";
 const SUPABASE_REST_URL = "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/";
 const SUPABASE_ROOT_URL = "https://oivbidfpeuddedsucwhg.supabase.co";
 const PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
-const API_VERSION = "SETTINGS-RESTORE-20260608-14";
+const API_VERSION = "YOUTUBE-LINK-ALARM-20260608-15";
 
 function requestJson(path, options = {}) {
   return new Promise((resolve, reject) => {

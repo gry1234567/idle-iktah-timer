@@ -494,11 +494,52 @@
     .ingredientSelectCell input {
       width: auto !important;
     }
+
+    /* YOUTUBE_ALARM_CSS */
+    .youtubeAlarmPanel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .youtubeAlarmOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0,0,0,.78);
+    }
+    .youtubeAlarmOverlay.show { display: flex; }
+    .youtubeAlarmCard {
+      width: min(520px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+      padding: 18px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      text-align: center;
+    }
+    .youtubeAlarmCard h2 { margin-top: 0; }
+    .youtubeAlarmCard .actions { justify-content: center; }
   </style>
 </head>
 <body>
   <div id="appBg"></div>
   <div id="appDim"></div>
+  <div id="youtubeAlarmOverlay" class="youtubeAlarmOverlay">
+    <div class="youtubeAlarmCard">
+      <h2>時間到了</h2>
+      <p class="note">YouTube 鈴聲已準備開啟。若瀏覽器阻擋自動開啟，請手動點下面按鈕。</p>
+      <div class="actions">
+        <button id="openYoutubeAlarmBtn">開啟 YouTube 鈴聲</button>
+        <button class="secondary" id="closeYoutubeAlarmBtn">關閉提示</button>
+      </div>
+    </div>
+  </div>
   <div id="toast" class="toast">已點擊</div>
 
   <div class="alarmOverlay" id="alarmOverlay">
@@ -513,7 +554,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SETTINGS-RESTORE-20260608-14</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-LINK-ALARM-20260608-15</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -531,7 +572,25 @@
         <button class="menuBtn" data-page="settingsPage" data-short="設"><span class="menuText">設定</span></button>
       </nav>
 
-      <main>
+      <div class="youtubeAlarmPanel" id="youtubeAlarmSettingsPanel">
+              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">YouTube 鈴聲連動</div>
+              <label>鈴聲類型</label>
+              <select id="alarmSoundType">
+                <option value="builtin">內建鈴聲</option>
+                <option value="youtube">YouTube 網址</option>
+              </select>
+              <label style="margin-top:10px;">YouTube 鈴聲網址</label>
+              <input id="youtubeAlarmUrlInput" placeholder="貼上 YouTube 影片或播放清單網址" />
+              <div class="actions">
+                <button class="secondary" id="saveYoutubeAlarmBtn">儲存 YouTube 鈴聲</button>
+                <button class="secondary" id="testYoutubeAlarmBtn">測試開啟 YouTube</button>
+              </div>
+              <div class="note">
+                若你有 YouTube Premium，開啟 YouTube App 後可由 YouTube 自己背景播放。網頁 APP 會負責提醒與開啟連動。
+              </div>
+            </div>
+            
+<main>
         <section class="page active" id="craftPage">
           <div class="card">
             <h2>開始倒數</h2>
@@ -812,9 +871,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜SETTINGS-RESTORE-20260608-14</div>
+            <div class="sectionTitle">雲端同步｜YOUTUBE-LINK-ALARM-20260608-15</div>
             <div class="note">
-              版本：SETTINGS-RESTORE-20260608-14<br>
+              版本：YOUTUBE-LINK-ALARM-20260608-15<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -2895,6 +2954,114 @@ function initRecipeMaterialBulkTools() {
   }, 100);
 }
 setTimeout(initRecipeMaterialBulkTools, 100);
+
+
+const YOUTUBE_ALARM_KEY_URL = "longmen_youtube_alarm_url_v1";
+const YOUTUBE_ALARM_KEY_TYPE = "longmen_alarm_sound_type_v1";
+
+function normalizeYoutubeUrl(url) {
+  return String(url || "").trim();
+}
+
+function saveYoutubeAlarmSettings() {
+  const type = $("alarmSoundType") ? $("alarmSoundType").value : "builtin";
+  const url = $("youtubeAlarmUrlInput") ? normalizeYoutubeUrl($("youtubeAlarmUrlInput").value) : "";
+  localStorage.setItem(YOUTUBE_ALARM_KEY_TYPE, type);
+  localStorage.setItem(YOUTUBE_ALARM_KEY_URL, url);
+  showToast("YouTube 鈴聲設定已儲存");
+}
+
+function loadYoutubeAlarmSettings() {
+  const type = localStorage.getItem(YOUTUBE_ALARM_KEY_TYPE) || "builtin";
+  const url = localStorage.getItem(YOUTUBE_ALARM_KEY_URL) || "";
+  if ($("alarmSoundType")) $("alarmSoundType").value = type;
+  if ($("youtubeAlarmUrlInput")) $("youtubeAlarmUrlInput").value = url;
+}
+
+function getYoutubeAlarmUrl() {
+  return normalizeYoutubeUrl(localStorage.getItem(YOUTUBE_ALARM_KEY_URL) || "");
+}
+
+function isYoutubeAlarmEnabled() {
+  return (localStorage.getItem(YOUTUBE_ALARM_KEY_TYPE) || "builtin") === "youtube" && !!getYoutubeAlarmUrl();
+}
+
+function openYoutubeAlarmUrl() {
+  const url = getYoutubeAlarmUrl();
+  if (!url) {
+    alert("請先設定 YouTube 鈴聲網址。");
+    return false;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+  return true;
+}
+
+function showYoutubeAlarmPrompt() {
+  if (!isYoutubeAlarmEnabled()) return;
+  const overlay = $("youtubeAlarmOverlay");
+  if (overlay) overlay.classList.add("show");
+  setTimeout(() => {
+    try { openYoutubeAlarmUrl(); } catch {}
+  }, 150);
+}
+
+function closeYoutubeAlarmPrompt() {
+  const overlay = $("youtubeAlarmOverlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function initYoutubeAlarmLink() {
+  loadYoutubeAlarmSettings();
+
+  if ($("saveYoutubeAlarmBtn")) $("saveYoutubeAlarmBtn").addEventListener("click", saveYoutubeAlarmSettings);
+  if ($("testYoutubeAlarmBtn")) $("testYoutubeAlarmBtn").addEventListener("click", () => {
+    saveYoutubeAlarmSettings();
+    openYoutubeAlarmUrl();
+  });
+  if ($("openYoutubeAlarmBtn")) $("openYoutubeAlarmBtn").addEventListener("click", openYoutubeAlarmUrl);
+  if ($("closeYoutubeAlarmBtn")) $("closeYoutubeAlarmBtn").addEventListener("click", closeYoutubeAlarmPrompt);
+
+  const hookNames = [
+    "triggerAlarm", "startAlarm", "playAlarm", "ringAlarm",
+    "timerDone", "onTimerDone", "handleTimerDone",
+    "finishTimer", "completeTimer"
+  ];
+
+  hookNames.forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__youtubeHooked) {
+        const wrapped = function(...args) {
+          const result = fn.apply(this, args);
+          showYoutubeAlarmPrompt();
+          return result;
+        };
+        wrapped.__youtubeHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
+
+  // 備援：監測鬧鐘 UI 出現。避免太頻繁，每 15 秒最多觸發一次。
+  let lastPromptAt = 0;
+  const observer = new MutationObserver(() => {
+    if (!isYoutubeAlarmEnabled()) return;
+    const now = Date.now();
+    if (now - lastPromptAt < 15000) return;
+
+    const hasAlarmUi = document.querySelector(".alarm, .timerAlert, .ringing, [id*='alarm'], [class*='alarm']");
+    const text = document.body ? document.body.innerText : "";
+    if (hasAlarmUi && /時間到|完成|提醒|鬧鐘/.test(text)) {
+      lastPromptAt = now;
+      showYoutubeAlarmPrompt();
+    }
+  });
+
+  if (document.body) observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+setTimeout(initYoutubeAlarmLink, 200);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
