@@ -397,26 +397,7 @@
       font-size: 13px;
     }
 
-    .cloudBadge {
-      display: inline-block;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: var(--card2);
-      color: var(--muted);
-      border: 1px solid var(--line);
-      font-size: 12px;
-      font-weight: 900;
-      margin-left: 6px;
-    }
-    .cloudBadge.on {
-      background: var(--accent);
-      color: #10140f;
-    }
-    .cloudBadge.admin {
-      background: #b7d7a8;
-      color: #10140f;
-    }
-    .cloudPanel {
+    .cloudPanelClean {
       margin-top: 12px;
       padding: 12px;
       border: 1px solid var(--line);
@@ -427,40 +408,36 @@
       font-size: 13px;
       white-space: pre-wrap;
     }
-    .cloudPanel.good {
+    .cloudPanelClean.good {
       border-color: rgba(183,215,168,.55);
       color: var(--text);
     }
-    .cloudPanel.bad {
+    .cloudPanelClean.bad {
       border-color: rgba(255,167,153,.55);
       color: var(--danger);
+    }
+    .cloudBadgeClean {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--card2);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 900;
+      margin-left: 6px;
+    }
+    .cloudBadgeClean.on {
+      background: var(--accent);
+      color: #10140f;
+    }
+    .cloudBadgeClean.admin {
+      background: #b7d7a8;
+      color: #10140f;
     }
   </style>
 </head>
 <body>
-
-<script>
-(function() {
-  window.IDLE_IKTAH_VERSION = "FORCE-NO-SW-20260608-01";
-  async function clearOldPwaCache() {
-    try {
-      if ("serviceWorker" in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        for (const reg of regs) await reg.unregister();
-      }
-      if ("caches" in window) {
-        const names = await caches.keys();
-        for (const name of names) await caches.delete(name);
-      }
-      console.log("PWA cache cleared for version FORCE-NO-SW-20260608-01");
-    } catch (e) {
-      console.warn("PWA cache cleanup failed", e);
-    }
-  }
-  clearOldPwaCache();
-})();
-</script>
-
   <div id="appBg"></div>
   <div id="appDim"></div>
   <div id="toast" class="toast">已點擊</div>
@@ -477,7 +454,7 @@
   <div class="wrap">
     <header>
       <h1>IDLE iktah 工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span id="forceVersionBadge" class="cloudBadge on">版本 FORCE-NO-SW-20260608-01</span> <span id="cloudStatusBadge" class="cloudBadge">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CLOUD-CLEAN-REBUILD-20260608-01</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -740,46 +717,32 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步與登入 REST 版</div>
+            <div class="sectionTitle">雲端同步｜乾淨重建版</div>
             <div class="note">
-              這版已預填 Supabase URL 與 publishable key，管理者 Email 需自行輸入，改用 Vercel API 轉接 XHR。同步對象：記事本與配方。其他人只能查看；你登入管理者後才能新增、修改、刪除或上傳本機資料。
-            </div>
-            <div class="grid" style="margin-top:12px;">
-              <div>
-                <label>Supabase URL</label>
-                <input id="supabaseUrlInput" placeholder="已預填 Supabase URL" />
-              </div>
-              <div>
-                <label>Supabase publishable key</label>
-                <input id="supabaseAnonKeyInput" placeholder="已預填 Supabase publishable key" />
-              </div>
+              版本：CLOUD-CLEAN-REBUILD-20260608-01<br>
+              這版不需要填 Supabase URL / key。APP 只連自己的 Vercel API，再由 Vercel 連 Supabase。
             </div>
             <div class="grid" style="margin-top:12px;">
               <div>
                 <label>管理者 Email</label>
-                <input id="adminEmailInput" placeholder="請輸入管理者 Email" />
+                <input id="cleanAdminEmailInput" placeholder="請輸入管理者 Email" />
               </div>
               <div>
                 <label>管理者密碼</label>
-                <input id="adminPasswordInput" type="password" placeholder="Supabase Auth 使用者密碼" />
+                <input id="cleanAdminPasswordInput" type="password" placeholder="請輸入管理者密碼" />
               </div>
             </div>
             <div class="actions3">
-              <button class="secondary" id="saveCloudConfigBtn">儲存雲端設定</button>
-              <button class="secondary" id="testCloudBtn">測試雲端連線</button>
-              <button class="secondary" id="loadCloudBtn">重新讀取雲端</button>
+              <button class="secondary" id="cleanTestCloudBtn">測試雲端</button>
+              <button class="secondary" id="cleanLoadCloudBtn">讀取雲端</button>
+              <button id="cleanLoginBtn">管理者登入</button>
             </div>
             <div class="actions">
-              <button class="danger" id="resetAppCacheBtn">清除 APP 快取並重載</button>
-              <button class="secondary" id="openProxyTestBtn">測試代理網址</button>
+              <button class="secondary" id="cleanLogoutBtn">登出管理者</button>
+              <button class="secondary" id="cleanUploadBtn">本機資料上傳雲端</button>
             </div>
-            <div class="actions3">
-              <button id="adminLoginBtn">管理者登入</button>
-              <button class="secondary" id="adminLogoutBtn">登出管理者</button>
-              <button class="secondary" id="uploadLocalToCloudBtn">本機資料上傳雲端</button>
-            </div>
-            <div class="cloudPanel" id="cloudStatusText">狀態：尚未讀取雲端。此版不會自動檢查雲端。</div>
-            <div class="cloudPanel" id="loginStatusText">登入狀態：未登入管理者。</div>
+            <div class="cloudPanelClean" id="cleanCloudStatus">狀態：尚未測試雲端。</div>
+            <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div>
 
             <div class="sectionTitle">記事本備份</div>
             <div class="actions3">
@@ -834,10 +797,8 @@ const KEY = {
   bgDim: "iktah_toolbox_bg_dim_v1",
   cardOpacity: "iktah_toolbox_card_opacity_v1",
   menuCollapsed: "iktah_toolbox_menu_collapsed_v1",
-  supabaseUrl: "iktah_toolbox_supabase_url_v1",
-  supabaseAnonKey: "iktah_toolbox_supabase_anon_key_v1",
-  adminEmail: "iktah_toolbox_admin_email_v1",
-  adminAccessToken: "iktah_toolbox_admin_access_token_v1"
+  cleanAdminEmail: "iktah_clean_admin_email_v1",
+  cleanAccessToken: "iktah_clean_access_token_v1"
 };
 
 const LEGACY_KEYS = {
@@ -882,33 +843,10 @@ let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
 let recipes = JSON.parse(localStorage.getItem(KEY.recipes) || "[]");
 let selectedNoteId = localStorage.getItem(KEY.selectedNote) || "";
 let selectedRecipeId = localStorage.getItem(KEY.selectedRecipe) || "";
-const DEFAULT_SUPABASE_URL = "https://oivbidfpeudddesucwhg.supabase.co";
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
-const DEFAULT_ADMIN_EMAIL = "";
-
-function isValidSupabaseUrlValue(value) {
-  return /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(String(value || "").trim());
-}
-
-function isValidPublishableKeyValue(value) {
-  return String(value || "").trim().startsWith("sb_publishable_");
-}
-
-let savedSupabaseUrl = localStorage.getItem(KEY.supabaseUrl) || "";
-let savedSupabaseKey = localStorage.getItem(KEY.supabaseAnonKey) || "";
-let savedAdminEmail = localStorage.getItem(KEY.adminEmail) || "";
-
-let supabaseUrl = isValidSupabaseUrlValue(savedSupabaseUrl) ? savedSupabaseUrl : DEFAULT_SUPABASE_URL;
-let supabaseAnonKey = isValidPublishableKeyValue(savedSupabaseKey) ? savedSupabaseKey : DEFAULT_SUPABASE_PUBLISHABLE_KEY;
-let adminEmail = savedAdminEmail || DEFAULT_ADMIN_EMAIL;
-let adminAccessToken = localStorage.getItem(KEY.adminAccessToken) || "";
-let cloudReady = false;
-let adminLoggedIn = false;
-
-// 直接把正確預設值寫回本機，避免舊版錯誤 URL / key 殘留。
-localStorage.setItem(KEY.supabaseUrl, supabaseUrl);
-localStorage.setItem(KEY.supabaseAnonKey, supabaseAnonKey);
-localStorage.setItem(KEY.adminEmail, adminEmail);
+let cleanCloudMode = false;
+let cleanAdminEmail = localStorage.getItem(KEY.cleanAdminEmail) || "";
+let cleanAccessToken = localStorage.getItem(KEY.cleanAccessToken) || "";
+let cleanAdminLoggedIn = !!cleanAccessToken;
 let customSound = localStorage.getItem(KEY.sound) || "";
 let customSoundName = localStorage.getItem(KEY.soundName) || "";
 let customBg = localStorage.getItem(KEY.bg) || "";
@@ -1997,19 +1935,7 @@ setTimeout(() => {
 
 
 
-function normalizeSupabaseUrl(value) {
-  return String(value || "")
-    .trim()
-    .replace(/[)\s]+$/g, "")
-    .replace(/\/rest\/v1\/?$/i, "")
-    .replace(/\/+$/g, "");
-}
-
-function normalizeKey(value) {
-  return String(value || "").trim().replace(/[)\s]+$/g, "");
-}
-
-function cloudMessage(id, text, mode = "") {
+function cleanSetPanel(id, text, mode = "") {
   const el = $(id);
   if (!el) return;
   el.textContent = text;
@@ -2017,125 +1943,35 @@ function cloudMessage(id, text, mode = "") {
   if (mode) el.classList.add(mode);
 }
 
-function updateCloudBadge() {
-  const badge = $("cloudStatusBadge");
+function cleanUpdateBadge() {
+  const badge = $("cleanCloudBadge");
   if (!badge) return;
   badge.classList.remove("on", "admin");
-  if (cloudReady && adminLoggedIn) {
+  if (cleanAdminLoggedIn) {
     badge.textContent = "雲端管理者";
     badge.classList.add("admin");
-  } else if (cloudReady) {
-    badge.textContent = "雲端 REST";
+  } else if (cleanCloudMode) {
+    badge.textContent = "雲端唯讀";
     badge.classList.add("on");
   } else {
     badge.textContent = "本機模式";
   }
 }
 
-function initCloudReady() {
-  supabaseUrl = normalizeSupabaseUrl(supabaseUrl);
-  supabaseAnonKey = normalizeKey(supabaseAnonKey);
-  cloudReady = !!(supabaseUrl && supabaseAnonKey);
-  updateCloudBadge();
-  updateEditLock();
+function cleanCanEdit() {
+  return !cleanCloudMode || cleanAdminLoggedIn;
 }
 
-function cloudHeaders(useAdmin = false) {
-  const headers = {
-    "apikey": supabaseAnonKey,
-    "Content-Type": "application/json"
-  };
-
-  // 重要：
-  // sb_publishable_... 是 API key，不是使用者 JWT。
-  // 一般公開讀取只放 apikey，不放 Authorization。
-  // 只有管理者登入後，才使用 Supabase Auth 回傳的 access_token 當 Authorization。
-  if (useAdmin && adminAccessToken) {
-    headers["Authorization"] = `Bearer ${adminAccessToken}`;
-  }
-
-  return headers;
-}
-
-function xhrPostJson(url, payload) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url, true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.timeout = 20000;
-
-    xhr.onload = () => {
-      let data = null;
-      try {
-        data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
-      } catch {
-        data = xhr.responseText;
-      }
-
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(data);
-      } else {
-        const msg = (data && (data.message || data.error || data.details)) || xhr.responseText || `HTTP ${xhr.status}`;
-        reject(new Error(msg));
-      }
-    };
-
-    xhr.onerror = () => reject(new Error("XMLHttpRequest network error｜版本 FORCE-NO-SW-20260608-01｜代表目前新版已載入，但手機仍無法 POST 到 /api/supabase-proxy"));
-    xhr.ontimeout = () => reject(new Error("XMLHttpRequest timeout"));
-    xhr.onabort = () => reject(new Error("XMLHttpRequest aborted"));
-
-    xhr.send(JSON.stringify(payload));
-  });
-}
-
-async function cloudFetch(path, options = {}, useAdmin = false) {
-  if (!cloudReady) throw new Error("尚未設定 Supabase URL 或 publishable key。");
-
-  const proxyUrl = `${location.protocol}//${location.host}/api/supabase-proxy?t=${Date.now()}&v=FORCE-NO-SW-20260608-01`;
-  const payload = {
-    path,
-    method: options.method || "GET",
-    headers: options.headers || {},
-    body: options.body ? JSON.parse(options.body) : null,
-    useAdmin,
-    adminAccessToken: useAdmin ? adminAccessToken : ""
-  };
-
-  const data = await xhrPostJson(proxyUrl, payload);
-
-  if (data && data.error) {
-    const msg = data.message || data.error || data.details || "Proxy error";
-    throw new Error(msg);
-  }
-
-  return data && "data" in data ? data.data : data;
-}
-
-function describeCloudError(error) {
-  const msg = String((error && error.message) || error || "未知錯誤");
-  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "前端無法連到 /api/supabase-proxy。這版已改用 XMLHttpRequest；若仍失敗，請按「測試代理網址」確認能看到 Method not allowed，並確認不是已安裝 APP 舊快取。";
-  if (msg.includes("relation") && msg.includes("does not exist")) return "找不到資料表。請確認 SQL 已用 postgres 執行成功，並有 iktah_notes / iktah_recipes / iktah_recipe_ingredients。";
-  if (msg.includes("permission denied") || msg.includes("row-level security") || msg.includes("RLS")) return "資料庫權限被拒絕。請確認 RLS policies 已建立，Data API 的 public schema 與資料表已開放。";
-  if (msg.includes("Invalid API key") || msg.includes("apikey")) return "API key 可能錯誤。請確認使用的是完整 sb_publishable_...。";
-  if (msg.includes("JWT") || msg.includes("invalid claim") || msg.includes("missing sub")) return "Authorization token 錯誤。這版已修正 publishable key 不再放進 Authorization；請更新後重新測試。";
-  if (msg.includes("schema") || msg.includes("exposed") || msg.includes("No API key found")) return "Data API schema/table 尚未開放。請到 Data API → Settings 選 public 並開啟資料表。";
-  return msg;
-}
-
-function canEditSharedData() {
-  return !cloudReady || adminLoggedIn;
-}
-
-function requireSharedEdit() {
-  if (!canEditSharedData()) {
-    alert("目前是雲端唯讀模式。只有管理者登入後可以修改記事本與配方。");
+function cleanRequireEdit() {
+  if (!cleanCanEdit()) {
+    alert("目前是雲端唯讀模式。請先登入管理者。");
     return false;
   }
   return true;
 }
 
-function updateEditLock() {
-  const disabled = cloudReady && !adminLoggedIn;
+function cleanUpdateEditLock() {
+  const disabled = cleanCloudMode && !cleanAdminLoggedIn;
   [
     "newNoteBtn", "saveNoteBtn", "deleteNoteBtn", "noteTitle", "noteContent",
     "newRecipeBtn", "saveRecipeBtn", "saveAsRecipeBtn", "deleteRecipeBtn", "addIngredientBtn",
@@ -2144,287 +1980,187 @@ function updateEditLock() {
     const el = $(id);
     if (el) el.disabled = disabled;
   });
-
-  if (disabled) {
-    cloudMessage("loginStatusText", "登入狀態：雲端唯讀模式。可以查看、搜尋、換算，但不能修改。", "");
-  }
+  cleanUpdateBadge();
 }
 
-function isUuid(id) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ""));
+function cleanXhr(action, payload = {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${location.origin}/api/cloud?t=${Date.now()}`, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = 25000;
+
+    xhr.onload = () => {
+      let data = null;
+      try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; }
+      catch { data = xhr.responseText; }
+
+      if (xhr.status >= 200 && xhr.status < 300 && !(data && data.error)) {
+        resolve(data);
+      } else {
+        const msg = (data && (data.error || data.message || data.details)) || xhr.responseText || `HTTP ${xhr.status}`;
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("無法連線到同網域 API /api/cloud。請確認 api/cloud.js 已上傳並部署。"));
+    xhr.ontimeout = () => reject(new Error("連線逾時。請稍後再試。"));
+    xhr.onabort = () => reject(new Error("連線中止。"));
+    xhr.send(JSON.stringify({ action, token: cleanAccessToken, ...payload }));
+  });
 }
 
-async function testCloudConnectionRest() {
-  if (!cloudReady) {
-    cloudMessage("cloudStatusText", "狀態：請先儲存 Supabase URL 與 publishable key。", "bad");
-    alert("請先儲存 Supabase URL 與 publishable key。");
-    return;
-  }
+function cleanDescribeError(e) {
+  const msg = String((e && e.message) || e || "未知錯誤");
+  if (msg.includes("Method not allowed")) return "API 有部署，但呼叫方式不正確。請確認 APP 已更新到乾淨重建版。";
+  if (msg.includes("no such table") || msg.includes("does not exist") || msg.includes("relation")) return "Supabase 資料表不存在。請確認 SQL 已用 postgres 執行成功。";
+  if (msg.includes("permission") || msg.includes("RLS") || msg.includes("row-level")) return "Supabase 權限被拒絕。請確認 RLS policies 與 app_admins。";
+  if (msg.includes("Invalid login") || msg.includes("invalid_credentials")) return "管理者 Email 或密碼錯誤。";
+  return msg;
+}
 
-  const btn = $("testCloudBtn");
+async function cleanTestCloud() {
+  const btn = $("cleanTestCloudBtn");
   const old = btn ? btn.textContent : "";
   if (btn) btn.textContent = "測試中...";
-  showToast("正在測試雲端連線...");
+  showToast("正在測試雲端...");
 
   try {
-    cloudMessage("cloudStatusText", "狀態：正在測試 XHR 雲端連線...", "");
-    await cloudFetch("/rest/v1/iktah_notes?select=id&limit=1", { method: "GET" }, false);
-    cloudMessage("cloudStatusText", "狀態：XHR 雲端連線成功。可以嘗試重新讀取雲端。", "good");
-    showToast("雲端連線成功");
+    cleanSetPanel("cleanCloudStatus", "狀態：正在測試 Vercel API 與 Supabase...", "");
+    const result = await cleanXhr("test");
+    cleanCloudMode = true;
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端測試成功。\nAPI：${result.api || "ok"}\nSupabase：${result.supabase || "ok"}`, "good");
+    showToast("雲端測試成功");
   } catch (e) {
-    const reason = describeCloudError(e);
-    cloudMessage("cloudStatusText", `狀態：XHR 雲端連線失敗。\n原因：${reason}`, "bad");
-    alert(`新版測試雲端連線失敗。\n\n${reason}`);
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端測試失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`雲端測試失敗。\n\n${cleanDescribeError(e)}`);
   } finally {
     if (btn) btn.textContent = old;
+    cleanUpdateEditLock();
   }
 }
 
-async function loadCloudDataRest() {
-  if (!cloudReady) {
-    cloudMessage("cloudStatusText", "狀態：尚未設定 Supabase URL / publishable key，無法讀取雲端。", "bad");
-    alert("請先儲存 Supabase URL 與 publishable key。");
-    return;
-  }
+function cleanNormalizeCloudData(data) {
+  const noteRows = data.notes || [];
+  const recipeRows = data.recipes || [];
 
-  const btn = $("loadCloudBtn");
+  notes = noteRows.map(n => ({
+    id: n.id,
+    title: n.title || "",
+    content: n.content || "",
+    createdAt: new Date(n.created_at || Date.now()).getTime(),
+    updatedAt: new Date(n.updated_at || Date.now()).getTime()
+  }));
+
+  recipes = recipeRows.map(r => ({
+    id: r.id,
+    name: r.name || "",
+    baseWeight: Number(r.base_weight || 500),
+    ingredients: (r.ingredients || [])
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map(i => ({
+        name: i.name || "",
+        amount: Number(i.amount || 0),
+        unit: i.unit || "克"
+      })),
+    createdAt: new Date(r.created_at || Date.now()).getTime(),
+    updatedAt: new Date(r.updated_at || Date.now()).getTime()
+  }));
+
+  saveNotes();
+  saveRecipes();
+  selectedNoteId = notes[0]?.id || "";
+  selectedRecipeId = recipes[0]?.id || "";
+  renderNotes();
+  renderRecipeList();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  if (selectedRecipeId) selectRecipe(selectedRecipeId);
+}
+
+async function cleanLoadCloud() {
+  const btn = $("cleanLoadCloudBtn");
   const old = btn ? btn.textContent : "";
   if (btn) btn.textContent = "讀取中...";
   showToast("正在讀取雲端...");
 
   try {
-    cloudMessage("cloudStatusText", "狀態：正在讀取 XHR 雲端記事本與配方...", "");
-
-    const noteRows = await cloudFetch("/rest/v1/iktah_notes?select=*&order=updated_at.desc", { method: "GET" }, false);
-    const recipeRows = await cloudFetch("/rest/v1/iktah_recipes?select=*,ingredients:iktah_recipe_ingredients(*)&order=updated_at.desc", { method: "GET" }, false);
-
-    notes = (noteRows || []).map(n => ({
-      id: n.id,
-      title: n.title || "",
-      content: n.content || "",
-      createdAt: new Date(n.created_at || Date.now()).getTime(),
-      updatedAt: new Date(n.updated_at || Date.now()).getTime()
-    }));
-
-    recipes = (recipeRows || []).map(r => ({
-      id: r.id,
-      name: r.name || "",
-      baseWeight: Number(r.base_weight || 500),
-      ingredients: (r.ingredients || [])
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-        .map(i => ({
-          name: i.name || "",
-          amount: Number(i.amount || 0),
-          unit: i.unit || "克"
-        })),
-      createdAt: new Date(r.created_at || Date.now()).getTime(),
-      updatedAt: new Date(r.updated_at || Date.now()).getTime()
-    }));
-
-    saveNotes();
-    saveRecipes();
-
-    selectedNoteId = notes[0]?.id || "";
-    selectedRecipeId = recipes[0]?.id || "";
-
-    renderNotes();
-    renderRecipeList();
-    if (selectedNoteId) selectNote(selectedNoteId);
-    if (selectedRecipeId) selectRecipe(selectedRecipeId);
-
-    cloudMessage("cloudStatusText", `狀態：雲端讀取成功。記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。`, "good");
+    cleanSetPanel("cleanCloudStatus", "狀態：正在讀取雲端資料...", "");
+    const result = await cleanXhr("read");
+    cleanCloudMode = true;
+    cleanNormalizeCloudData(result);
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端讀取成功。\n記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。`, "good");
     showToast("雲端讀取成功");
   } catch (e) {
-    const reason = describeCloudError(e);
-    cloudMessage("cloudStatusText", `狀態：雲端讀取失敗。\n原因：${reason}`, "bad");
-    alert(`讀取雲端失敗。\n\n${reason}`);
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端讀取失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`雲端讀取失敗。\n\n${cleanDescribeError(e)}`);
   } finally {
     if (btn) btn.textContent = old;
-    updateEditLock();
+    cleanUpdateEditLock();
   }
 }
 
-async function loginAdminRest() {
-  if (!cloudReady) return alert("請先儲存 Supabase URL 與 publishable key。");
-
-  const email = $("adminEmailInput").value.trim();
-  const password = $("adminPasswordInput").value;
+async function cleanLogin() {
+  const email = $("cleanAdminEmailInput").value.trim();
+  const password = $("cleanAdminPasswordInput").value;
   if (!email || !password) return alert("請輸入管理者 Email 與密碼。");
 
-  const btn = $("adminLoginBtn");
+  const btn = $("cleanLoginBtn");
   const old = btn ? btn.textContent : "";
   if (btn) btn.textContent = "登入中...";
   showToast("管理者登入中...");
 
   try {
-    const data = await cloudFetch("/auth/v1/token?grant_type=password", {
-      method: "POST",
-      body: JSON.stringify({ email, password })
-    }, false);
-
-    adminAccessToken = data.access_token || "";
-    if (!adminAccessToken) throw new Error("登入成功但沒有取得 access token。");
-
-    adminEmail = email;
-    localStorage.setItem(KEY.adminEmail, adminEmail);
-    localStorage.setItem(KEY.adminAccessToken, adminAccessToken);
-
-    // Verify admin by checking app_admins with authenticated token
-    const adminRows = await cloudFetch(`/rest/v1/app_admins?email=eq.${encodeURIComponent(email)}&select=email&limit=1`, { method: "GET" }, true);
-
-    if (Array.isArray(adminRows) && adminRows.length) {
-      adminLoggedIn = true;
-      cloudMessage("loginStatusText", `登入狀態：管理者登入成功。\n目前帳號：${email}\n你現在可以修改雲端記事本與配方。`, "good");
-      showToast("管理者登入成功");
-      alert("管理者登入成功。");
-    } else {
-      adminLoggedIn = false;
-      cloudMessage("loginStatusText", "登入狀態：登入成功，但這個 Email 不在 app_admins 管理者清單中。", "bad");
-      alert("登入成功，但不是管理者。請確認 app_admins 表內有這個 Email。");
-    }
+    const result = await cleanXhr("login", { email, password });
+    cleanAccessToken = result.token || "";
+    cleanAdminEmail = email;
+    cleanAdminLoggedIn = !!cleanAccessToken;
+    localStorage.setItem(KEY.cleanAccessToken, cleanAccessToken);
+    localStorage.setItem(KEY.cleanAdminEmail, cleanAdminEmail);
+    cleanCloudMode = true;
+    cleanSetPanel("cleanLoginStatus", `登入狀態：管理者登入成功。\n目前帳號：${email}`, "good");
+    showToast("管理者登入成功");
+    alert("管理者登入成功。");
   } catch (e) {
-    adminLoggedIn = false;
-    adminAccessToken = "";
-    localStorage.removeItem(KEY.adminAccessToken);
-    const reason = describeCloudError(e);
-    cloudMessage("loginStatusText", `登入狀態：管理者登入失敗。\n原因：${reason}`, "bad");
-    alert(`管理者登入失敗。\n\n${reason}`);
+    cleanAdminLoggedIn = false;
+    cleanAccessToken = "";
+    localStorage.removeItem(KEY.cleanAccessToken);
+    cleanSetPanel("cleanLoginStatus", `登入狀態：管理者登入失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`管理者登入失敗。\n\n${cleanDescribeError(e)}`);
   } finally {
-    updateCloudBadge();
-    updateEditLock();
     if (btn) btn.textContent = old;
+    cleanUpdateEditLock();
   }
 }
 
-async function logoutAdminRest() {
-  const btn = $("adminLogoutBtn");
-  const old = btn ? btn.textContent : "";
-  if (btn) btn.textContent = "登出中...";
-  showToast("正在登出管理者...");
-
-  try {
-    if (adminAccessToken) {
-      await fetch(`${supabaseUrl}/auth/v1/logout`, {
-        method: "POST",
-        headers: cloudHeaders(true)
-      });
-    }
-  } catch {}
-
-  adminAccessToken = "";
-  adminLoggedIn = false;
-  localStorage.removeItem(KEY.adminAccessToken);
-  updateCloudBadge();
-  updateEditLock();
-  cloudMessage("loginStatusText", "登入狀態：已登出管理者。現在為雲端唯讀模式。", "");
-  if (btn) btn.textContent = old;
+async function cleanLogout() {
+  cleanAccessToken = "";
+  cleanAdminLoggedIn = false;
+  localStorage.removeItem(KEY.cleanAccessToken);
+  cleanSetPanel("cleanLoginStatus", "登入狀態：已登出管理者。現在為雲端唯讀模式。", "");
+  cleanUpdateEditLock();
+  showToast("已登出管理者");
   alert("已登出管理者。");
 }
 
-async function saveNoteToCloudRest(note) {
-  if (!cloudReady) return false;
-  if (!adminLoggedIn) return requireSharedEdit();
-
-  const payload = {
-    title: note.title || "未命名記事",
-    content: note.content || "",
-    updated_at: new Date().toISOString()
+function cleanCurrentRecipeFromForm(forceNew = false) {
+  const name = $("recipeName").value.trim() || "未命名配方";
+  const base = Number($("recipeBase").value || 0);
+  const ingredients = getIngredients();
+  if (base <= 0) throw new Error("請輸入正確的基準原材料重量。");
+  if (!ingredients.length) throw new Error("請至少新增一個材料。");
+  const now = Date.now();
+  return {
+    id: forceNew ? "" : selectedRecipeId,
+    name,
+    baseWeight: base,
+    ingredients,
+    createdAt: now,
+    updatedAt: now
   };
-
-  if (isUuid(note.id)) {
-    await cloudFetch(`/rest/v1/iktah_notes?id=eq.${encodeURIComponent(note.id)}`, {
-      method: "PATCH",
-      headers: { "Prefer": "return=minimal" },
-      body: JSON.stringify(payload)
-    }, true);
-  } else {
-    await cloudFetch("/rest/v1/iktah_notes", {
-      method: "POST",
-      headers: { "Prefer": "return=minimal" },
-      body: JSON.stringify(payload)
-    }, true);
-  }
-
-  await loadCloudDataRest();
-  return true;
 }
 
-async function deleteNoteFromCloudRest(id) {
-  if (!cloudReady) return false;
-  if (!adminLoggedIn) return requireSharedEdit();
-  await cloudFetch(`/rest/v1/iktah_notes?id=eq.${encodeURIComponent(id)}`, {
-    method: "DELETE",
-    headers: { "Prefer": "return=minimal" }
-  }, true);
-  await loadCloudDataRest();
-  return true;
-}
-
-async function saveRecipeToCloudRest(recipe) {
-  if (!cloudReady) return false;
-  if (!adminLoggedIn) return requireSharedEdit();
-
-  let recipeId = recipe.id;
-  const payload = {
-    name: recipe.name || "未命名配方",
-    base_weight: Number(recipe.baseWeight || 500),
-    updated_at: new Date().toISOString()
-  };
-
-  if (isUuid(recipeId)) {
-    await cloudFetch(`/rest/v1/iktah_recipes?id=eq.${encodeURIComponent(recipeId)}`, {
-      method: "PATCH",
-      headers: { "Prefer": "return=minimal" },
-      body: JSON.stringify(payload)
-    }, true);
-
-    await cloudFetch(`/rest/v1/iktah_recipe_ingredients?recipe_id=eq.${encodeURIComponent(recipeId)}`, {
-      method: "DELETE",
-      headers: { "Prefer": "return=minimal" }
-    }, true);
-  } else {
-    const inserted = await cloudFetch("/rest/v1/iktah_recipes", {
-      method: "POST",
-      headers: { "Prefer": "return=representation" },
-      body: JSON.stringify(payload)
-    }, true);
-    recipeId = inserted && inserted[0] && inserted[0].id;
-  }
-
-  const rows = (recipe.ingredients || []).map((i, index) => ({
-    recipe_id: recipeId,
-    name: i.name || "",
-    amount: Number(i.amount || 0),
-    unit: i.unit || "克",
-    sort_order: index
-  }));
-
-  if (rows.length) {
-    await cloudFetch("/rest/v1/iktah_recipe_ingredients", {
-      method: "POST",
-      headers: { "Prefer": "return=minimal" },
-      body: JSON.stringify(rows)
-    }, true);
-  }
-
-  await loadCloudDataRest();
-  return true;
-}
-
-async function deleteRecipeFromCloudRest(id) {
-  if (!cloudReady) return false;
-  if (!adminLoggedIn) return requireSharedEdit();
-  await cloudFetch(`/rest/v1/iktah_recipes?id=eq.${encodeURIComponent(id)}`, {
-    method: "DELETE",
-    headers: { "Prefer": "return=minimal" }
-  }, true);
-  await loadCloudDataRest();
-  return true;
-}
-
-/* Cloud-aware overrides */
 async function saveCurrentNote() {
-  if (!requireSharedEdit()) return;
+  if (!cleanRequireEdit()) return;
 
   const title = $("noteTitle").value.trim() || "未命名記事";
   const content = $("noteContent").value || "";
@@ -2439,13 +2175,14 @@ async function saveCurrentNote() {
     note = { id: String(now) + Math.random().toString(16).slice(2), title, content, createdAt: now, updatedAt: now };
   }
 
-  if (cloudReady) {
+  if (cleanCloudMode && cleanAdminLoggedIn) {
     try {
-      await saveNoteToCloudRest(note);
-      showToast("記事已儲存到雲端");
+      await cleanXhr("saveNote", { note });
+      showToast("雲端記事已儲存");
+      await cleanLoadCloud();
       return;
     } catch (e) {
-      alert(`雲端儲存失敗。\n\n${describeCloudError(e)}`);
+      alert(`雲端記事儲存失敗。\n\n${cleanDescribeError(e)}`);
       return;
     }
   }
@@ -2459,17 +2196,18 @@ async function saveCurrentNote() {
 }
 
 async function deleteCurrentNote() {
-  if (!requireSharedEdit()) return;
+  if (!cleanRequireEdit()) return;
   if (!selectedNoteId) return alert("目前沒有選取記事。");
   if (!confirm("確定刪除這則記事嗎？")) return;
 
-  if (cloudReady) {
+  if (cleanCloudMode && cleanAdminLoggedIn) {
     try {
-      await deleteNoteFromCloudRest(selectedNoteId);
+      await cleanXhr("deleteNote", { id: selectedNoteId });
       showToast("雲端記事已刪除");
+      await cleanLoadCloud();
       return;
     } catch (e) {
-      alert(`雲端刪除失敗。\n\n${describeCloudError(e)}`);
+      alert(`雲端記事刪除失敗。\n\n${cleanDescribeError(e)}`);
       return;
     }
   }
@@ -2487,58 +2225,59 @@ async function deleteCurrentNote() {
 }
 
 async function saveRecipe(forceNew = false) {
-  if (!requireSharedEdit()) return;
+  if (!cleanRequireEdit()) return;
 
-  const name = $("recipeName").value.trim() || "未命名配方";
-  const base = Number($("recipeBase").value || 0);
-  const ingredients = getIngredients();
-  if (base <= 0) return alert("請輸入正確的基準原材料重量。");
-  if (!ingredients.length) return alert("請至少新增一個材料。");
-
-  const now = Date.now();
-  let recipe = !forceNew ? recipes.find(r => r.id === selectedRecipeId) : null;
-
-  if (recipe) {
-    recipe.name = name;
-    recipe.baseWeight = base;
-    recipe.ingredients = ingredients;
-    recipe.updatedAt = now;
-  } else {
-    recipe = { id: String(now) + Math.random().toString(16).slice(2), name, baseWeight: base, ingredients, createdAt: now, updatedAt: now };
+  let recipe;
+  try {
+    recipe = cleanCurrentRecipeFromForm(forceNew);
+  } catch (e) {
+    return alert(e.message);
   }
 
-  if (cloudReady) {
+  if (cleanCloudMode && cleanAdminLoggedIn) {
     try {
-      if (forceNew) recipe.id = "";
-      await saveRecipeToCloudRest(recipe);
-      showToast(forceNew ? "已另存為雲端配方" : "配方已儲存到雲端");
+      await cleanXhr("saveRecipe", { recipe });
+      showToast("雲端配方已儲存");
+      await cleanLoadCloud();
       return;
     } catch (e) {
-      alert(`雲端配方儲存失敗。\n\n${describeCloudError(e)}`);
+      alert(`雲端配方儲存失敗。\n\n${cleanDescribeError(e)}`);
       return;
     }
   }
 
-  if (!forceNew && recipes.some(r => r.id === recipe.id)) recipes = [recipe, ...recipes.filter(r => r.id !== recipe.id)];
-  else { recipe.id = String(now) + Math.random().toString(16).slice(2); recipes.unshift(recipe); selectedRecipeId = recipe.id; }
+  const now = Date.now();
+  let local = !forceNew ? recipes.find(r => r.id === selectedRecipeId) : null;
+  if (local) {
+    local.name = recipe.name;
+    local.baseWeight = recipe.baseWeight;
+    local.ingredients = recipe.ingredients;
+    local.updatedAt = now;
+  } else {
+    local = { ...recipe, id: String(now) + Math.random().toString(16).slice(2), createdAt: now, updatedAt: now };
+  }
+
+  if (!forceNew && recipes.some(r => r.id === local.id)) recipes = [local, ...recipes.filter(r => r.id !== local.id)];
+  else { recipes.unshift(local); selectedRecipeId = local.id; }
   saveRecipes();
   selectRecipe(selectedRecipeId);
   showToast(forceNew ? "已另存新配方" : "配方已儲存");
 }
 
 async function deleteRecipe() {
-  if (!requireSharedEdit()) return;
+  if (!cleanRequireEdit()) return;
   if (!selectedRecipeId) return alert("目前沒有選取配方。");
   const recipe = recipes.find(r => r.id === selectedRecipeId);
   if (!confirm(`確定刪除「${recipe ? recipe.name : "這個配方"}」嗎？`)) return;
 
-  if (cloudReady) {
+  if (cleanCloudMode && cleanAdminLoggedIn) {
     try {
-      await deleteRecipeFromCloudRest(selectedRecipeId);
+      await cleanXhr("deleteRecipe", { id: selectedRecipeId });
       showToast("雲端配方已刪除");
+      await cleanLoadCloud();
       return;
     } catch (e) {
-      alert(`雲端配方刪除失敗。\n\n${describeCloudError(e)}`);
+      alert(`雲端配方刪除失敗。\n\n${cleanDescribeError(e)}`);
       return;
     }
   }
@@ -2550,108 +2289,46 @@ async function deleteRecipe() {
   else newRecipeForm();
 }
 
-async function uploadLocalToCloudRest() {
-  if (!cloudReady) return alert("請先儲存雲端設定。");
-  if (!adminLoggedIn) return requireSharedEdit();
-
+async function cleanUploadLocal() {
+  if (!cleanAdminLoggedIn) return alert("請先登入管理者。");
   if (!confirm(`會把目前本機資料上傳到雲端。\n\n記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。\n\n確定繼續嗎？`)) return;
 
-  const btn = $("uploadLocalToCloudBtn");
+  const btn = $("cleanUploadBtn");
   const old = btn ? btn.textContent : "";
   if (btn) btn.textContent = "上傳中...";
   showToast("正在上傳雲端...");
 
   try {
-    for (const note of notes) await saveNoteToCloudRest({ ...note, id: "" });
-    for (const recipe of recipes) await saveRecipeToCloudRest({ ...recipe, id: "" });
-    await loadCloudDataRest();
-    cloudMessage("cloudStatusText", "狀態：本機資料已上傳雲端。", "good");
+    await cleanXhr("uploadAll", { notes, recipes });
+    cleanSetPanel("cleanCloudStatus", "狀態：本機資料已上傳雲端。", "good");
+    await cleanLoadCloud();
     alert("本機資料已上傳雲端。");
   } catch (e) {
-    alert(`上傳失敗。\n\n${describeCloudError(e)}`);
+    cleanSetPanel("cleanCloudStatus", `狀態：上傳失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`上傳失敗。\n\n${cleanDescribeError(e)}`);
   } finally {
     if (btn) btn.textContent = old;
   }
 }
 
+function initCleanCloud() {
+  if ($("cleanAdminEmailInput")) $("cleanAdminEmailInput").value = cleanAdminEmail;
 
-async function resetAppCacheAndReload() {
-  if (!confirm("確定要清除 APP 快取並重載嗎？\n\n這不會刪除你的記事本／配方本機資料，但會重置 PWA 舊快取。")) return;
-
-  showToast("正在清除 APP 快取...");
-
-  try {
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for (const reg of regs) await reg.unregister();
-    }
-
-    if ("caches" in window) {
-      const names = await caches.keys();
-      for (const name of names) await caches.delete(name);
-    }
-
-    alert("APP 快取已清除。接下來會重新載入。");
-    location.href = `${location.origin}${location.pathname}?fresh=${Date.now()}`;
-  } catch (e) {
-    alert("清除快取時發生錯誤：" + (e.message || e));
+  if (cleanAdminLoggedIn) {
+    cleanCloudMode = true;
+    cleanSetPanel("cleanLoginStatus", `登入狀態：偵測到已儲存管理者登入狀態。\n目前帳號：${cleanAdminEmail}`, "good");
   }
+
+  if ($("cleanTestCloudBtn")) $("cleanTestCloudBtn").addEventListener("click", cleanTestCloud);
+  if ($("cleanLoadCloudBtn")) $("cleanLoadCloudBtn").addEventListener("click", cleanLoadCloud);
+  if ($("cleanLoginBtn")) $("cleanLoginBtn").addEventListener("click", cleanLogin);
+  if ($("cleanLogoutBtn")) $("cleanLogoutBtn").addEventListener("click", cleanLogout);
+  if ($("cleanUploadBtn")) $("cleanUploadBtn").addEventListener("click", cleanUploadLocal);
+
+  cleanUpdateEditLock();
 }
 
-function openProxyTest() {
-  window.open(`${location.origin}/api/supabase-proxy`, "_blank");
-}
-
-function initCloudRest() {
-  if ($("supabaseUrlInput")) $("supabaseUrlInput").value = supabaseUrl;
-  if ($("supabaseAnonKeyInput")) $("supabaseAnonKeyInput").value = supabaseAnonKey;
-  if ($("adminEmailInput")) $("adminEmailInput").value = adminEmail;
-
-  cloudMessage("cloudStatusText", "狀態：已預填 Supabase 設定。此版不會自動讀取雲端，請按「測試雲端連線」或「重新讀取雲端」。", "good");
-
-  initCloudReady();
-  if (adminAccessToken && adminEmail) {
-    adminLoggedIn = true;
-    cloudMessage("loginStatusText", `登入狀態：偵測到已儲存的管理者登入狀態。\n目前帳號：${adminEmail}`, "good");
-  } else {
-    adminLoggedIn = false;
-    cloudMessage("loginStatusText", "登入狀態：未登入管理者。", "");
-  }
-  updateCloudBadge();
-  updateEditLock();
-
-  if ($("saveCloudConfigBtn")) $("saveCloudConfigBtn").addEventListener("click", () => {
-    supabaseUrl = normalizeSupabaseUrl($("supabaseUrlInput").value);
-    supabaseAnonKey = normalizeKey($("supabaseAnonKeyInput").value);
-    adminEmail = $("adminEmailInput").value.trim();
-
-    $("supabaseUrlInput").value = supabaseUrl;
-    $("supabaseAnonKeyInput").value = supabaseAnonKey;
-
-    localStorage.setItem(KEY.supabaseUrl, supabaseUrl);
-    localStorage.setItem(KEY.supabaseAnonKey, supabaseAnonKey);
-    localStorage.setItem(KEY.adminEmail, adminEmail);
-
-    adminAccessToken = "";
-    adminLoggedIn = false;
-    localStorage.removeItem(KEY.adminAccessToken);
-
-    initCloudReady();
-    cloudMessage("cloudStatusText", "狀態：雲端設定已儲存。此版不會自動讀取，請按「測試雲端連線」或「重新讀取雲端」。", "good");
-    cloudMessage("loginStatusText", "登入狀態：雲端設定更新後，請重新登入管理者。", "");
-    showToast("雲端設定已儲存");
-  });
-
-  if ($("testCloudBtn")) $("testCloudBtn").addEventListener("click", testCloudConnectionRest);
-  if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", loadCloudDataRest);
-  if ($("resetAppCacheBtn")) $("resetAppCacheBtn").addEventListener("click", resetAppCacheAndReload);
-  if ($("openProxyTestBtn")) $("openProxyTestBtn").addEventListener("click", openProxyTest);
-  if ($("adminLoginBtn")) $("adminLoginBtn").addEventListener("click", loginAdminRest);
-  if ($("adminLogoutBtn")) $("adminLogoutBtn").addEventListener("click", logoutAdminRest);
-  if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", uploadLocalToCloudRest);
-}
-
-setTimeout(initCloudRest, 0);
+setTimeout(initCleanCloud, 0);
 
 
 window.pauseTimer = pauseTimer;

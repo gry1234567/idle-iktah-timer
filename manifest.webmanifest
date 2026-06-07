@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "強制清除 Service Worker 快取版 FORCE-NO-SW-20260608-01",
+  "description": "乾淨重建雲端版 CLOUD-CLEAN-REBUILD-20260608-01",
   "id": "/",
   "start_url": "/",
   "scope": "/",

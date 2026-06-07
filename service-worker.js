@@ -1,7 +1,4 @@
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
-});
-
+self.addEventListener("install", (event) => self.skipWaiting());
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const names = await caches.keys();
@@ -10,8 +7,4 @@ self.addEventListener("activate", (event) => {
     await self.clients.claim();
   })());
 });
-
-self.addEventListener("fetch", (event) => {
-  // 這版完全不攔截任何請求。
-  return;
-});
+self.addEventListener("fetch", (event) => { return; });

@@ -1,23 +1,21 @@
-# IDLE iktah 工具箱｜強制清除 Service Worker / 快取版
+# IDLE iktah 工具箱｜乾淨重建雲端版
 
-版本：FORCE-NO-SW-20260608-01
+版本：CLOUD-CLEAN-REBUILD-20260608-01
 
-目的：
-- 解決 APP 一直跑舊版，導致明明 API 已存在卻仍顯示 fetch failed
-- 開啟 APP 時主動解除 service worker
-- 清除 caches
-- 畫面上顯示版本號，確認是否真的載入新版
+這版是從穩定版重新建立雲端功能，不沿用前面壞掉的雲端程式。
 
-重要：
-這版更新後，請用 Chrome 開：
-https://idle-iktah-timer.vercel.app/?v=FORCE-NO-SW-20260608-01
+架構：
+APP → /api/cloud → Supabase
 
-看到畫面上有：
-版本 FORCE-NO-SW-20260608-01
+特點：
+- APP 不需要填 Supabase URL
+- APP 不需要填 Supabase key
+- 只需要管理者 Email / 密碼
+- Vercel API 用 Node https 連 Supabase，不使用 fetch
+- 雲端功能獨立，不影響分類切換和本機功能
+- service worker 不攔截，也會自動解除註冊
 
-才代表真的進到新版。
-
-仍需上傳：
+一定要上傳：
 - index.html
 - manifest.webmanifest
 - service-worker.js
@@ -25,4 +23,10 @@ https://idle-iktah-timer.vercel.app/?v=FORCE-NO-SW-20260608-01
 - icon-512.png
 - vercel.json
 - README.md
-- api/supabase-proxy.js
+- api/cloud.js
+
+部署後測試：
+1. 打開 https://idle-iktah-timer.vercel.app/api/cloud
+2. 看到 Method not allowed 代表 API 存在
+3. 回 APP 按「測試雲端」
+4. 成功後按「讀取雲端」
