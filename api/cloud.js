@@ -184,13 +184,7 @@ export default async function handler(req, res) {
 
     if (action === "test") {
       const result = await requestJson("/rest/v1/iktah_notes?select=id&limit=1");
-      return res.status(200).json({
-        api: "ok",
-        supabase: "ok",
-        restUrl: "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/",
-        rootUrl: "https://oivbidfpeuddedsucwhg.supabase.co",
-        sample: result || []
-      });
+      return res.status(200).json({ api: "ok", supabase: "ok", sample: result || [] });
     }
 
     if (action === "read") {

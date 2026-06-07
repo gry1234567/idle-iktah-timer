@@ -1,20 +1,15 @@
-# IDLE iktah 工具箱｜/rest/v1/ URL 強制修正版
+# IDLE iktah 工具箱｜Supabase /rest/v1/ URL 測試版
 
-版本：RESTV1-FORCE-CORRECTED-20260608-02
+版本：RESTV1-URL-TEST-20260608-01
 
-本版已強制全檔替換 Supabase 專案 ID。
+這版依照你的要求，改成使用 Supabase 直接複製下來的 REST API URL：
 
-使用的 REST URL：
 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/
 
-使用的 Root URL：
-https://oivbidfpeuddedsucwhg.supabase.co
-
-修正目標：
-- 改成你指定的專案 ID：oivbidfpeuddedsucwhg
-- REST 資料表 API 使用 /rest/v1/
-- Auth 登入仍使用 root URL
-- 程式會避免 /rest/v1/rest/v1/ 重複
+技術處理：
+- REST 資料表請求使用：https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/
+- Auth 登入請求仍使用專案根網址：https://oivbidfpeuddedsucwhg.supabase.co
+- 程式會自動避免重複 `/rest/v1/rest/v1/`
 
 一定要上傳：
 - index.html
@@ -26,8 +21,8 @@ https://oivbidfpeuddedsucwhg.supabase.co
 - README.md
 - api/cloud.js
 
-部署後檢查：
+部署後測試：
 1. 打開 https://idle-iktah-timer.vercel.app/api/cloud
 2. 看到 Method not allowed 代表 API 存在
 3. 回 APP 按「測試雲端」
-4. 測試成功訊息裡應該會回傳 restUrl：https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/
+4. 成功後按「讀取雲端」
