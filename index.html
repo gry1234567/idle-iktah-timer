@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="提醒器" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>IDLE iktah 工具箱</title>
+  <title>龍門陣工具箱</title>
   <style>
     :root {
       --bg: #111318;
@@ -435,6 +435,28 @@
       background: #b7d7a8;
       color: #10140f;
     }
+
+    .bulkDeleteBox {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .bulkDeleteBox .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 6px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .dangerSoft {
+      background: rgba(255,167,153,.12) !important;
+      border-color: rgba(255,167,153,.35) !important;
+      color: var(--danger) !important;
+    }
   </style>
 </head>
 <body>
@@ -453,8 +475,8 @@
 
   <div class="wrap">
     <header>
-      <h1>IDLE iktah 工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 NOTE-DEDUPE-FIX-20260608-08</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <h1>龍門陣工具箱</h1>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 LONGMEN-TOOLBOX-REORG-20260608-09</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -493,9 +515,7 @@
 
             <div class="grid" style="margin-top:12px;">
               <div>
-                <label>時間校正（秒）</label>
-                <input id="craftOffset" type="number" step="1" value="20" />
-              </div>
+</div>
               <div>
                 <label>校正方式</label>
                 <select id="craftOffsetMode">
@@ -590,6 +610,19 @@
               <div class="searchHint" id="noteSearchHint">會搜尋所有記事本標題與內容。</div>
             </div>
             <div id="noteList"></div>
+            <div class="bulkDeleteBox" id="noteBulkDeleteBox">
+              <div class="row">
+                <span>記事本批量刪除</span>
+                <label style="display:flex; gap:6px; align-items:center; margin:0;">
+                  <input type="checkbox" id="noteBulkSelectAll" style="width:auto;" />
+                  全選
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="deleteSelectedNotesBtn">刪除勾選記事</button>
+                <button class="dangerSoft" id="deleteAllNotesBtn">刪除全部記事</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -633,6 +666,19 @@
               <div class="searchHint" id="recipeSearchHint">會搜尋配方名稱與材料名稱。</div>
             </div>
             <div id="recipeList"></div>
+            <div class="bulkDeleteBox" id="recipeBulkDeleteBox">
+              <div class="row">
+                <span>配方批量刪除</span>
+                <label style="display:flex; gap:6px; align-items:center; margin:0;">
+                  <input type="checkbox" id="recipeBulkSelectAll" style="width:auto;" />
+                  全選
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="deleteSelectedRecipesBtn">刪除勾選配方</button>
+                <button class="dangerSoft" id="deleteAllRecipesBtn">刪除全部配方</button>
+              </div>
+            </div>
 
             <div class="sectionTitle">2. 換算</div>
             <div class="grid">
@@ -717,9 +763,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜NOTE-DEDUPE-FIX-20260608-08</div>
+            <div class="sectionTitle">雲端同步｜LONGMEN-TOOLBOX-REORG-20260608-09</div>
             <div class="note">
-              版本：NOTE-DEDUPE-FIX-20260608-08<br>
+              版本：LONGMEN-TOOLBOX-REORG-20260608-09<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -742,33 +788,7 @@
               <button class="secondary" id="cleanUploadBtn">本機資料上傳雲端</button>
             </div>
             <div class="cloudPanelClean" id="cleanCloudStatus">狀態：尚未測試雲端。</div>
-            <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div>
-
-            <div class="sectionTitle">記事本備份</div>
-            <div class="actions3">
-              <button class="secondary" id="exportNotesBtn">匯出記事本</button>
-              <button class="secondary" id="importNotesBtn">合併匯入記事本</button>
-              <button class="danger" id="overwriteNotesBtn">覆蓋匯入記事本</button>
-            </div>
-            <div style="margin-top:12px;">
-              <label>記事本備份文字</label>
-              <textarea id="notesBackupText" placeholder="這裡只處理記事本備份"></textarea>
-            </div>
-            <div class="previewBox" id="notesPreviewBox">尚未偵測記事本備份內容。</div>
-            <div class="note">記事本備份只包含所有記事本內容。預設為合併匯入，不會刪除目前記事本。</div>
-
-            <div class="sectionTitle">配方備份</div>
-            <div class="actions3">
-              <button class="secondary" id="exportRecipesBtn">匯出配方</button>
-              <button class="secondary" id="importRecipesBtn">合併匯入配方</button>
-              <button class="danger" id="overwriteRecipesBtn">覆蓋匯入配方</button>
-            </div>
-            <div style="margin-top:12px;">
-              <label>配方備份文字</label>
-              <textarea id="recipesBackupText" placeholder="這裡只處理配方備份"></textarea>
-            </div>
-            <div class="previewBox" id="recipesPreviewBox">尚未偵測配方備份內容。</div>
-            <div class="note">配方備份只包含所有已儲存配方。預設為合併匯入，不會刪除目前配方。</div>
+            <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div></div>
           </div>
         </section>
 
@@ -1070,7 +1090,7 @@ function completeTimer(t) {
   saveTimers();
   startAlarm(t.name);
   if ("Notification" in window && Notification.permission === "granted") {
-    new Notification("IDLE iktah 提醒完成", { body: `${t.name} 時間到了。` });
+    new Notification("龍門陣工具箱 提醒完成", { body: `${t.name} 時間到了。` });
   }
 }
 
@@ -1531,9 +1551,14 @@ function renderRecipeList() {
   }
   box.innerHTML = recipes.map(r => `
     <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <input type="checkbox" class="recipeBulkCheck" value="${r.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
+        <div style="flex:1;">
+          <div class="itemTitle">${escapeHtml(r.name)}</div>
       <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
       <div class="muted">更新：${timeText(r.updatedAt)}</div>
+        </div>
+      </div>
     </div>
   `).join("");
 }
@@ -1876,9 +1901,14 @@ function renderNotes() {
 
   box.innerHTML = filtered.map(n => `
     <div class="item ${n.id === selectedNoteId ? "active" : ""}" onclick="selectNote('${n.id}')">
-      <div class="itemTitle">${escapeHtml(n.title)}</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <input type="checkbox" class="noteBulkCheck" value="${n.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
+        <div style="flex:1;">
+          <div class="itemTitle">${escapeHtml(n.title)}</div>
       <div class="muted">更新：${timeText(n.updatedAt)}</div>
       <div class="muted">${escapeHtml((n.content || "").slice(0, 80))}</div>
+        </div>
+      </div>
     </div>
   `).join("");
 }
@@ -1918,7 +1948,10 @@ function renderRecipeList() {
 
   box.innerHTML = filtered.map(r => `
     <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <input type="checkbox" class="recipeBulkCheck" value="${r.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
+        <div style="flex:1;">
+          <div class="itemTitle">${escapeHtml(r.name)}</div>
       <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
       <div class="muted">更新：${timeText(r.updatedAt)}</div>
     </div>
@@ -2353,6 +2386,89 @@ async function cleanUploadLocal() {
   }
 }
 
+
+function getCheckedValues(selector) {
+  return Array.from(document.querySelectorAll(selector + ":checked")).map(el => el.value);
+}
+
+function deleteSelectedNotesLocal() {
+  const ids = getCheckedValues(".noteBulkCheck");
+  if (!ids.length) return alert("請先勾選要刪除的記事。");
+  if (!confirm(`確定刪除 ${ids.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  notes = notes.filter(n => !ids.includes(n.id));
+  if (ids.includes(selectedNoteId)) selectedNoteId = notes[0]?.id || "";
+  saveNotes();
+
+  if (selectedNoteId) selectNote(selectedNoteId);
+  else {
+    if ($("noteTitle")) $("noteTitle").value = "";
+    if ($("noteContent")) $("noteContent").value = "";
+    if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
+    renderNotes();
+  }
+
+  showToast(`已刪除 ${ids.length} 筆本機記事`);
+}
+
+function deleteAllNotesLocal() {
+  if (!notes.length) return alert("目前沒有記事可刪除。");
+  if (!confirm(`確定刪除全部 ${notes.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  notes = [];
+  selectedNoteId = "";
+  saveNotes();
+
+  if ($("noteTitle")) $("noteTitle").value = "";
+  if ($("noteContent")) $("noteContent").value = "";
+  if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
+  renderNotes();
+  showToast("已刪除全部本機記事");
+}
+
+function deleteSelectedRecipesLocal() {
+  const ids = getCheckedValues(".recipeBulkCheck");
+  if (!ids.length) return alert("請先勾選要刪除的配方。");
+  if (!confirm(`確定刪除 ${ids.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  recipes = recipes.filter(r => !ids.includes(r.id));
+  if (ids.includes(selectedRecipeId)) selectedRecipeId = recipes[0]?.id || "";
+  saveRecipes();
+
+  if (selectedRecipeId) selectRecipe(selectedRecipeId);
+  else newRecipeForm();
+
+  renderRecipeList();
+  showToast(`已刪除 ${ids.length} 個本機配方`);
+}
+
+function deleteAllRecipesLocal() {
+  if (!recipes.length) return alert("目前沒有配方可刪除。");
+  if (!confirm(`確定刪除全部 ${recipes.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  recipes = [];
+  selectedRecipeId = "";
+  saveRecipes();
+  newRecipeForm();
+  renderRecipeList();
+  showToast("已刪除全部本機配方");
+}
+
+function initBulkDeleteControls() {
+  if ($("deleteSelectedNotesBtn")) $("deleteSelectedNotesBtn").addEventListener("click", deleteSelectedNotesLocal);
+  if ($("deleteAllNotesBtn")) $("deleteAllNotesBtn").addEventListener("click", deleteAllNotesLocal);
+  if ($("deleteSelectedRecipesBtn")) $("deleteSelectedRecipesBtn").addEventListener("click", deleteSelectedRecipesLocal);
+  if ($("deleteAllRecipesBtn")) $("deleteAllRecipesBtn").addEventListener("click", deleteAllRecipesLocal);
+
+  if ($("noteBulkSelectAll")) $("noteBulkSelectAll").addEventListener("change", (e) => {
+    document.querySelectorAll(".noteBulkCheck").forEach(el => el.checked = e.target.checked);
+  });
+
+  if ($("recipeBulkSelectAll")) $("recipeBulkSelectAll").addEventListener("change", (e) => {
+    document.querySelectorAll(".recipeBulkCheck").forEach(el => el.checked = e.target.checked);
+  });
+}
+
 function initCleanCloud() {
   if ($("cleanAdminEmailInput")) $("cleanAdminEmailInput").value = cleanAdminEmail;
 
@@ -2371,6 +2487,7 @@ function initCleanCloud() {
 }
 
 setTimeout(initCleanCloud, 0);
+setTimeout(initBulkDeleteControls, 0);
 
 
 window.pauseTimer = pauseTimer;

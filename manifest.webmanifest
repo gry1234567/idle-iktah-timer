@@ -1,7 +1,7 @@
 {
-  "name": "IDLE iktah 工具箱",
-  "short_name": "工具箱",
-  "description": "記事本查重修正版 NOTE-DEDUPE-FIX-20260608-08",
+  "name": "龍門陣工具箱",
+  "short_name": "龍門陣",
+  "description": "龍門陣工具箱整理版 LONGMEN-TOOLBOX-REORG-20260608-09",
   "id": "/",
   "start_url": "/",
   "scope": "/",
