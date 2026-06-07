@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "搜尋、Supabase 多人同步、雲端資料庫、管理者權限系統",
+  "description": "雲端同步版，不再開啟 APP 時自動跳讀取失敗",
   "id": "/",
   "start_url": "/",
   "scope": "/",

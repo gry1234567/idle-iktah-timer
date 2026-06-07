@@ -364,12 +364,56 @@
     }
     .cloudBadge.on { background: var(--accent); color: #10140f; }
     .adminOnlyHint { color: var(--danger); font-size: 13px; line-height: 1.6; margin-top: 10px; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(22px, env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      z-index: 10000;
+      background: rgba(20,24,32,.96);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      box-shadow: 0 14px 35px rgba(0,0,0,.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: .18s ease;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .statusPanel {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    button.isWorking {
+      opacity: .72;
+      transform: scale(.99);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="appBg"></div>
   <div id="appDim"></div>
+  <div id="toast" class="toast">已點擊</div>
 
   <div class="alarmOverlay" id="alarmOverlay">
     <div class="alarmBox">
@@ -677,7 +721,8 @@
               <button class="secondary" id="adminLogoutBtn">登出管理者</button>
               <button class="secondary" id="uploadLocalToCloudBtn">本機資料上傳雲端</button>
             </div>
-            <div class="note" id="cloudStatusText">尚未設定雲端同步。</div>
+            <div class="note" id="cloudStatusText">尚未設定雲端同步。此版不會在開啟 APP 時自動讀取雲端。</div>
+            <div class="statusPanel" id="operationStatus">操作狀態：尚未執行。</div>
             <div class="adminOnlyHint" id="adminOnlyHint"></div>
 
             <div class="sectionTitle">記事本備份</div>
@@ -1768,6 +1813,70 @@ function initPwa() {
 }
 
 
+
+let toastTimer = null;
+
+function showToast(message = "已點擊") {
+  const toast = $("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 1500);
+}
+
+function setOperationStatus(message) {
+  const box = $("operationStatus");
+  if (box) box.textContent = `操作狀態：${message}`;
+}
+
+function describeCloudError(error) {
+  const raw = error && (error.message || error.error_description || error.details || String(error));
+  const msg = String(raw || "未知錯誤");
+
+  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+    return "無法連線到 Supabase。請確認 Supabase URL 正確、Data API 已開啟，且手機網路正常。";
+  }
+
+  if (msg.includes("relation") && msg.includes("does not exist")) {
+    return "找不到資料表。請確認 supabase_schema.sql 已完整執行，Table Editor 裡有 iktah_notes、iktah_recipes、iktah_recipe_ingredients。";
+  }
+
+  if (msg.includes("permission denied") || msg.includes("RLS") || msg.includes("row-level security")) {
+    return "資料庫權限被拒絕。請確認 SQL 權限已建立，且 Data API 的 public schema / tables 已 exposed。";
+  }
+
+  if (msg.includes("schema") || msg.includes("exposed") || msg.includes("not exposed")) {
+    return "Data API schema 或 table 尚未開放。請到 Data API → Settings，Exposed schemas 選 public，Exposed tables 開啟資料表後 Save。";
+  }
+
+  if (msg.includes("Invalid API key") || msg.includes("JWT") || msg.includes("apikey")) {
+    return "API key 可能不正確。請確認 APP 裡貼的是 Publishable key，也就是 sb_publishable_...，不要貼 Secret key。";
+  }
+
+  return msg;
+}
+
+function withButtonFeedback(button, message = "處理中...") {
+  if (!button) return () => {};
+  const oldText = button.textContent;
+  button.classList.add("isWorking");
+  button.textContent = message;
+  showToast(message);
+  return () => {
+    button.classList.remove("isWorking");
+    button.textContent = oldText;
+  };
+}
+
+document.addEventListener("click", (event) => {
+  const btn = event.target.closest && event.target.closest("button");
+  if (!btn || btn.disabled) return;
+  const label = (btn.textContent || "按鈕").trim();
+  showToast(`已點擊：${label}`);
+});
+
+
 function initSupabaseClient() {
   cloudReady = false;
   supabaseClient = null;
@@ -1886,7 +1995,9 @@ async function loadCloudData() {
     applyEditPermissions();
   } catch(e) {
     console.error(e);
-    alert("讀取雲端失敗，請確認 Supabase 設定、資料表與權限。");
+    const reason = describeCloudError(e);
+    setOperationStatus(`讀取雲端失敗。\n原因：${reason}`);
+    alert(`讀取雲端失敗。\n\n${reason}`);
     updateCloudStatus("讀取雲端失敗。");
   }
 }
@@ -1985,7 +2096,7 @@ async function uploadLocalToCloud() {
     alert("本機記事本與配方已上傳到雲端。");
   } catch(e) {
     console.error(e);
-    alert("上傳失敗，請確認管理者權限。");
+    alert(`上傳失敗。\\n\\n${describeCloudError(e)}`);\n    setOperationStatus(`上傳失敗：${describeCloudError(e)}`);
   }
 }
 
@@ -1995,6 +2106,9 @@ function initCloudSettings() {
   if ($("adminEmailInput")) $("adminEmailInput").value = adminEmail;
 
   if ($("saveCloudConfigBtn")) $("saveCloudConfigBtn").addEventListener("click", async () => {
+    const done = withButtonFeedback($("saveCloudConfigBtn"), "儲存中...");
+    setOperationStatus("正在儲存雲端設定並測試連線...");
+
     supabaseUrl = $("supabaseUrlInput").value.trim();
     supabaseAnonKey = $("supabaseAnonKeyInput").value.trim();
     adminEmail = $("adminEmailInput").value.trim();
@@ -2006,28 +2120,49 @@ function initCloudSettings() {
     initSupabaseClient();
     await checkAdminSession();
     await loadCloudData();
+
+    if (cloudReady) setOperationStatus("雲端設定已儲存。若仍失敗，請檢查 Data API → Settings 的 public schema 與 tables。");
+    done();
   });
 
-  if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", loadCloudData);
+  if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", async () => {
+    const done = withButtonFeedback($("loadCloudBtn"), "讀取中...");
+    setOperationStatus("正在讀取雲端資料...");
+    await loadCloudData();
+    done();
+  });
 
   if ($("adminLoginBtn")) $("adminLoginBtn").addEventListener("click", async () => {
-    if (!cloudReady) return alert("請先儲存 Supabase URL 與 anon key。");
+    const done = withButtonFeedback($("adminLoginBtn"), "登入中...");
+    setOperationStatus("正在登入管理者...");
+
+    if (!cloudReady) {
+      done();
+      return alert("請先儲存 Supabase URL 與 anon key。");
+    }
 
     const email = $("adminEmailInput").value.trim();
     const password = $("adminPasswordInput").value;
-    if (!email || !password) return alert("請輸入管理者 Email 與密碼。");
+    if (!email || !password) {
+      done();
+      return alert("請輸入管理者 Email 與密碼。");
+    }
 
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
       adminLoggedIn = false;
       updateCloudStatus("管理者登入失敗。");
       applyEditPermissions();
-      return alert("管理者登入失敗，請確認 Email／密碼。");
+      setOperationStatus(`管理者登入失敗：${describeCloudError(error)}`);
+      done();
+      return alert(`管理者登入失敗。\n\n${describeCloudError(error)}`);
     }
 
     adminEmail = email;
     localStorage.setItem(KEY.adminEmail, adminEmail);
     await checkAdminSession();
+    setOperationStatus("管理者已登入，可以修改雲端記事本與配方。");
+    done();
     alert("管理者已登入。");
   });
 
@@ -2038,10 +2173,24 @@ function initCloudSettings() {
     applyEditPermissions();
   });
 
-  if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", uploadLocalToCloud);
+  if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", async () => {
+    const done = withButtonFeedback($("uploadLocalToCloudBtn"), "上傳中...");
+    setOperationStatus("正在把本機資料上傳到雲端...");
+    await uploadLocalToCloud();
+    done();
+  });
 
   initSupabaseClient();
-  checkAdminSession().then(loadCloudData);
+
+  // 不在 APP 開啟時自動讀取雲端，避免設定尚未完成時一進 APP 就跳錯誤。
+  // 需要同步時，請手動按「重新讀取雲端」或「儲存雲端設定」。
+  checkAdminSession().then(() => {
+    if (cloudReady) {
+      setOperationStatus("雲端設定已載入。請按「重新讀取雲端」手動同步資料。");
+    } else {
+      setOperationStatus("尚未設定雲端。");
+    }
+  });
 }
 
 /* Override: search-enabled note list */
@@ -2146,7 +2295,7 @@ async function saveCurrentNote() {
       return;
     } catch(e) {
       console.error(e);
-      alert("雲端儲存失敗，請確認管理者權限。");
+      alert(`雲端儲存失敗。\\n\\n${describeCloudError(e)}`);\n      setOperationStatus(`雲端儲存失敗：${describeCloudError(e)}`);
       return;
     }
   }
@@ -2173,7 +2322,7 @@ async function deleteCurrentNote() {
       return;
     } catch(e) {
       console.error(e);
-      alert("雲端刪除失敗，請確認管理者權限。");
+      alert(`雲端刪除失敗。\\n\\n${describeCloudError(e)}`);\n      setOperationStatus(`雲端刪除失敗：${describeCloudError(e)}`);
       return;
     }
   }
@@ -2220,7 +2369,7 @@ async function saveRecipe(forceNew = false) {
       return;
     } catch(e) {
       console.error(e);
-      alert("雲端配方儲存失敗，請確認管理者權限。");
+      alert(`雲端配方儲存失敗。\\n\\n${describeCloudError(e)}`);\n      setOperationStatus(`雲端配方儲存失敗：${describeCloudError(e)}`);
       return;
     }
   }
@@ -2247,7 +2396,7 @@ async function deleteRecipe() {
       return;
     } catch(e) {
       console.error(e);
-      alert("雲端配方刪除失敗，請確認管理者權限。");
+      alert(`雲端配方刪除失敗。\\n\\n${describeCloudError(e)}`);\n      setOperationStatus(`雲端配方刪除失敗：${describeCloudError(e)}`);
       return;
     }
   }
@@ -2302,7 +2451,7 @@ function bulkImportRecipes() {
         alert(`已匯入 ${imported.length} 個雲端配方。`);
       } catch(e) {
         console.error(e);
-        alert("雲端批量匯入失敗，請確認管理者權限。");
+        alert(`雲端批量匯入失敗。\\n\\n${describeCloudError(e)}`);\n        setOperationStatus(`雲端批量匯入失敗：${describeCloudError(e)}`);
       }
     })();
     return;
