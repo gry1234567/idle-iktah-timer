@@ -354,7 +354,18 @@
       line-height: 1.6;
       background: rgba(255,255,255,.03);
     }
+
+    .searchBox { margin-top: 12px; }
+    .searchHint { color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.5; }
+    .cloudBadge {
+      display: inline-block; padding: 4px 9px; border-radius: 999px;
+      background: var(--card2); color: var(--muted); border: 1px solid var(--line);
+      font-size: 12px; font-weight: 900; margin-left: 6px;
+    }
+    .cloudBadge.on { background: var(--accent); color: #10140f; }
+    .adminOnlyHint { color: var(--danger); font-size: 13px; line-height: 1.6; margin-top: 10px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="appBg"></div>
@@ -372,7 +383,7 @@
   <div class="wrap">
     <header>
       <h1>IDLE iktah 工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。</div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span id="cloudStatusBadge" class="cloudBadge">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -502,6 +513,11 @@
             </div>
 
             <div class="sectionTitle">記事列表</div>
+            <div class="searchBox">
+              <label>搜尋記事本</label>
+              <input id="noteSearchInput" placeholder="搜尋標題或內容，例如：菜單、材料、備註" />
+              <div class="searchHint" id="noteSearchHint">會搜尋所有記事本標題與內容。</div>
+            </div>
             <div id="noteList"></div>
           </div>
         </section>
@@ -540,6 +556,11 @@
             </details>
 
             <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
+            <div class="searchBox">
+              <label>搜尋配方</label>
+              <input id="recipeSearchInput" placeholder="搜尋配方名稱或材料，例如：糖、醬油、滷汁" />
+              <div class="searchHint" id="recipeSearchHint">會搜尋配方名稱與材料名稱。</div>
+            </div>
             <div id="recipeList"></div>
 
             <div class="sectionTitle">2. 換算</div>
@@ -625,6 +646,40 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
+            <div class="sectionTitle">雲端同步與權限</div>
+            <div class="note">同步對象：記事本與配方。其他人只能查看；你登入管理者後才能新增、修改、刪除。</div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>Supabase URL</label>
+                <input id="supabaseUrlInput" placeholder="https://xxxx.supabase.co" />
+              </div>
+              <div>
+                <label>Supabase anon key</label>
+                <input id="supabaseAnonKeyInput" placeholder="貼上 anon public key" />
+              </div>
+            </div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>管理者 Email</label>
+                <input id="adminEmailInput" placeholder="要和 Supabase Auth 使用者一致" />
+              </div>
+              <div>
+                <label>管理者密碼</label>
+                <input id="adminPasswordInput" type="password" placeholder="Supabase Auth 密碼" />
+              </div>
+            </div>
+            <div class="actions3">
+              <button class="secondary" id="saveCloudConfigBtn">儲存雲端設定</button>
+              <button class="secondary" id="loadCloudBtn">重新讀取雲端</button>
+              <button class="secondary" id="adminLoginBtn">管理者登入</button>
+            </div>
+            <div class="actions">
+              <button class="secondary" id="adminLogoutBtn">登出管理者</button>
+              <button class="secondary" id="uploadLocalToCloudBtn">本機資料上傳雲端</button>
+            </div>
+            <div class="note" id="cloudStatusText">尚未設定雲端同步。</div>
+            <div class="adminOnlyHint" id="adminOnlyHint"></div>
+
             <div class="sectionTitle">記事本備份</div>
             <div class="actions3">
               <button class="secondary" id="exportNotesBtn">匯出記事本</button>
@@ -677,7 +732,10 @@ const KEY = {
   bgName: "iktah_toolbox_bg_name_v1",
   bgDim: "iktah_toolbox_bg_dim_v1",
   cardOpacity: "iktah_toolbox_card_opacity_v1",
-  menuCollapsed: "iktah_toolbox_menu_collapsed_v1"
+  menuCollapsed: "iktah_toolbox_menu_collapsed_v1",
+  supabaseUrl: "iktah_toolbox_supabase_url_v1",
+  supabaseAnonKey: "iktah_toolbox_supabase_anon_key_v1",
+  adminEmail: "iktah_toolbox_admin_email_v1"
 };
 
 const LEGACY_KEYS = {
@@ -722,6 +780,12 @@ let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
 let recipes = JSON.parse(localStorage.getItem(KEY.recipes) || "[]");
 let selectedNoteId = localStorage.getItem(KEY.selectedNote) || "";
 let selectedRecipeId = localStorage.getItem(KEY.selectedRecipe) || "";
+let supabaseUrl = localStorage.getItem(KEY.supabaseUrl) || "";
+let supabaseAnonKey = localStorage.getItem(KEY.supabaseAnonKey) || "";
+let adminEmail = localStorage.getItem(KEY.adminEmail) || "";
+let supabaseClient = null;
+let cloudReady = false;
+let adminLoggedIn = false;
 let customSound = localStorage.getItem(KEY.sound) || "";
 let customSoundName = localStorage.getItem(KEY.soundName) || "";
 let customBg = localStorage.getItem(KEY.bg) || "";
@@ -1010,6 +1074,7 @@ function initNotes() {
   });
   $("saveNoteBtn").addEventListener("click", saveCurrentNote);
   $("deleteNoteBtn").addEventListener("click", deleteCurrentNote);
+  if ($("noteSearchInput")) $("noteSearchInput").addEventListener("input", renderNotes);
 
   if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
   else if (notes[0]) selectNote(notes[0].id);
@@ -1246,6 +1311,7 @@ function initRecipe() {
   $("bulkImportRecipeBtn").addEventListener("click", bulkImportRecipes);
   $("bulkFillExampleBtn").addEventListener("click", fillBulkRecipeExample);
   $("bulkClearBtn").addEventListener("click", () => { $("recipeBulkText").value = ""; });
+  if ($("recipeSearchInput")) $("recipeSearchInput").addEventListener("input", renderRecipeList);
   ["recipeBase", "recipeTarget"].forEach(id => $(id).addEventListener("input", calculateRecipe));
 
   if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
@@ -1701,6 +1767,557 @@ function initPwa() {
   }
 }
 
+
+function initSupabaseClient() {
+  cloudReady = false;
+  supabaseClient = null;
+  if (supabaseUrl && supabaseAnonKey && window.supabase && window.supabase.createClient) {
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    cloudReady = true;
+  }
+  updateCloudStatus();
+  applyEditPermissions();
+}
+
+function updateCloudStatus(text = "") {
+  const badge = $("cloudStatusBadge");
+  const status = $("cloudStatusText");
+  const hint = $("adminOnlyHint");
+
+  if (badge) {
+    badge.textContent = cloudReady ? (adminLoggedIn ? "雲端管理者" : "雲端唯讀") : "本機模式";
+    badge.classList.toggle("on", cloudReady);
+  }
+
+  if (status) {
+    status.textContent = text || (cloudReady
+      ? (adminLoggedIn ? "雲端已連線，管理者已登入，可修改記事本與配方。" : "雲端已連線，目前其他人僅能查看。")
+      : "尚未設定雲端同步，目前使用本機資料。");
+  }
+
+  if (hint) {
+    hint.textContent = cloudReady && !adminLoggedIn
+      ? "目前為唯讀模式：可以搜尋、查看、換算配方，但不能新增／修改／刪除記事本與配方。"
+      : "";
+  }
+}
+
+function canEditSharedData() { return !cloudReady || adminLoggedIn; }
+
+function requireSharedEdit() {
+  if (!canEditSharedData()) {
+    alert("目前是雲端唯讀模式。只有管理者登入後可以修改記事本與配方。");
+    return false;
+  }
+  return true;
+}
+
+function applyEditPermissions() {
+  const disabled = cloudReady && !adminLoggedIn;
+  [
+    "newNoteBtn","saveNoteBtn","deleteNoteBtn","noteTitle","noteContent",
+    "newRecipeBtn","saveRecipeBtn","saveAsRecipeBtn","deleteRecipeBtn","addIngredientBtn",
+    "recipeName","recipeBase","recipeBulkText","bulkImportRecipeBtn","bulkFillExampleBtn","bulkClearBtn"
+  ].forEach(id => { const el = $(id); if (el) el.disabled = disabled; });
+}
+
+async function checkAdminSession() {
+  if (!supabaseClient) {
+    adminLoggedIn = false;
+    updateCloudStatus();
+    applyEditPermissions();
+    return;
+  }
+  const { data } = await supabaseClient.auth.getSession();
+  const session = data && data.session;
+  adminLoggedIn = !!(session && session.user && session.user.email === adminEmail);
+  updateCloudStatus();
+  applyEditPermissions();
+}
+
+async function loadCloudData() {
+  if (!cloudReady || !supabaseClient) return;
+
+  try {
+    const { data: noteRows, error: noteError } = await supabaseClient
+      .from("iktah_notes")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    if (noteError) throw noteError;
+
+    const { data: recipeRows, error: recipeError } = await supabaseClient
+      .from("iktah_recipes")
+      .select("*, ingredients:iktah_recipe_ingredients(*)")
+      .order("updated_at", { ascending: false });
+    if (recipeError) throw recipeError;
+
+    notes = (noteRows || []).map(n => ({
+      id: n.id,
+      title: n.title || "",
+      content: n.content || "",
+      createdAt: new Date(n.created_at || Date.now()).getTime(),
+      updatedAt: new Date(n.updated_at || Date.now()).getTime()
+    }));
+
+    recipes = (recipeRows || []).map(r => ({
+      id: r.id,
+      name: r.name || "",
+      baseWeight: Number(r.base_weight || 500),
+      ingredients: (r.ingredients || [])
+        .sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0))
+        .map(i => ({ name: i.name || "", amount: Number(i.amount || 0), unit: i.unit || "克" })),
+      createdAt: new Date(r.created_at || Date.now()).getTime(),
+      updatedAt: new Date(r.updated_at || Date.now()).getTime()
+    }));
+
+    saveNotes();
+    saveRecipes();
+
+    selectedNoteId = notes[0]?.id || "";
+    selectedRecipeId = recipes[0]?.id || "";
+
+    renderNotes();
+    renderRecipeList();
+
+    if (selectedNoteId) selectNote(selectedNoteId);
+    if (selectedRecipeId) selectRecipe(selectedRecipeId);
+
+    updateCloudStatus(`雲端資料已讀取：記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。`);
+    applyEditPermissions();
+  } catch(e) {
+    console.error(e);
+    alert("讀取雲端失敗，請確認 Supabase 設定、資料表與權限。");
+    updateCloudStatus("讀取雲端失敗。");
+  }
+}
+
+function isUuid(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ""));
+}
+
+async function saveNoteToCloud(note) {
+  if (!cloudReady) return false;
+  if (!adminLoggedIn) return requireSharedEdit();
+
+  const payload = {
+    title: note.title || "未命名記事",
+    content: note.content || "",
+    updated_at: new Date().toISOString()
+  };
+
+  if (isUuid(note.id)) {
+    const { error } = await supabaseClient.from("iktah_notes").update(payload).eq("id", note.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseClient.from("iktah_notes").insert(payload);
+    if (error) throw error;
+  }
+  await loadCloudData();
+  return true;
+}
+
+async function deleteNoteFromCloud(id) {
+  if (!cloudReady) return false;
+  if (!adminLoggedIn) return requireSharedEdit();
+  const { error } = await supabaseClient.from("iktah_notes").delete().eq("id", id);
+  if (error) throw error;
+  await loadCloudData();
+  return true;
+}
+
+async function saveRecipeToCloud(recipe) {
+  if (!cloudReady) return false;
+  if (!adminLoggedIn) return requireSharedEdit();
+
+  let recipeId = recipe.id;
+  const payload = {
+    name: recipe.name || "未命名配方",
+    base_weight: Number(recipe.baseWeight || 500),
+    updated_at: new Date().toISOString()
+  };
+
+  if (isUuid(recipeId)) {
+    const { error } = await supabaseClient.from("iktah_recipes").update(payload).eq("id", recipeId);
+    if (error) throw error;
+    await supabaseClient.from("iktah_recipe_ingredients").delete().eq("recipe_id", recipeId);
+  } else {
+    const { data, error } = await supabaseClient.from("iktah_recipes").insert(payload).select().single();
+    if (error) throw error;
+    recipeId = data.id;
+  }
+
+  const rows = (recipe.ingredients || []).map((i, index) => ({
+    recipe_id: recipeId,
+    name: i.name || "",
+    amount: Number(i.amount || 0),
+    unit: i.unit || "克",
+    sort_order: index
+  }));
+
+  if (rows.length) {
+    const { error } = await supabaseClient.from("iktah_recipe_ingredients").insert(rows);
+    if (error) throw error;
+  }
+
+  await loadCloudData();
+  return true;
+}
+
+async function deleteRecipeFromCloud(id) {
+  if (!cloudReady) return false;
+  if (!adminLoggedIn) return requireSharedEdit();
+  const { error } = await supabaseClient.from("iktah_recipes").delete().eq("id", id);
+  if (error) throw error;
+  await loadCloudData();
+  return true;
+}
+
+async function uploadLocalToCloud() {
+  if (!cloudReady) return alert("請先設定雲端同步。");
+  if (!adminLoggedIn) return requireSharedEdit();
+
+  if (!confirm(`會把目前本機資料上傳到雲端。\n\n記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。\n\n確定繼續嗎？`)) return;
+
+  try {
+    for (const note of notes) await saveNoteToCloud({ ...note, id: "" });
+    for (const recipe of recipes) await saveRecipeToCloud({ ...recipe, id: "" });
+    await loadCloudData();
+    alert("本機記事本與配方已上傳到雲端。");
+  } catch(e) {
+    console.error(e);
+    alert("上傳失敗，請確認管理者權限。");
+  }
+}
+
+function initCloudSettings() {
+  if ($("supabaseUrlInput")) $("supabaseUrlInput").value = supabaseUrl;
+  if ($("supabaseAnonKeyInput")) $("supabaseAnonKeyInput").value = supabaseAnonKey;
+  if ($("adminEmailInput")) $("adminEmailInput").value = adminEmail;
+
+  if ($("saveCloudConfigBtn")) $("saveCloudConfigBtn").addEventListener("click", async () => {
+    supabaseUrl = $("supabaseUrlInput").value.trim();
+    supabaseAnonKey = $("supabaseAnonKeyInput").value.trim();
+    adminEmail = $("adminEmailInput").value.trim();
+
+    localStorage.setItem(KEY.supabaseUrl, supabaseUrl);
+    localStorage.setItem(KEY.supabaseAnonKey, supabaseAnonKey);
+    localStorage.setItem(KEY.adminEmail, adminEmail);
+
+    initSupabaseClient();
+    await checkAdminSession();
+    await loadCloudData();
+  });
+
+  if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", loadCloudData);
+
+  if ($("adminLoginBtn")) $("adminLoginBtn").addEventListener("click", async () => {
+    if (!cloudReady) return alert("請先儲存 Supabase URL 與 anon key。");
+
+    const email = $("adminEmailInput").value.trim();
+    const password = $("adminPasswordInput").value;
+    if (!email || !password) return alert("請輸入管理者 Email 與密碼。");
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      adminLoggedIn = false;
+      updateCloudStatus("管理者登入失敗。");
+      applyEditPermissions();
+      return alert("管理者登入失敗，請確認 Email／密碼。");
+    }
+
+    adminEmail = email;
+    localStorage.setItem(KEY.adminEmail, adminEmail);
+    await checkAdminSession();
+    alert("管理者已登入。");
+  });
+
+  if ($("adminLogoutBtn")) $("adminLogoutBtn").addEventListener("click", async () => {
+    if (supabaseClient) await supabaseClient.auth.signOut();
+    adminLoggedIn = false;
+    updateCloudStatus("已登出管理者，目前為雲端唯讀。");
+    applyEditPermissions();
+  });
+
+  if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", uploadLocalToCloud);
+
+  initSupabaseClient();
+  checkAdminSession().then(loadCloudData);
+}
+
+/* Override: search-enabled note list */
+function renderNotes() {
+  const box = $("noteList");
+  if (!notes.length) {
+    box.innerHTML = `<div class="muted">還沒有記事。</div>`;
+    if ($("noteSearchHint")) $("noteSearchHint").textContent = "目前沒有記事可搜尋。";
+    return;
+  }
+
+  const query = $("noteSearchInput") ? $("noteSearchInput").value.trim().toLowerCase() : "";
+  const filtered = query
+    ? notes.filter(n =>
+        String(n.title || "").toLowerCase().includes(query) ||
+        String(n.content || "").toLowerCase().includes(query)
+      )
+    : notes;
+
+  if ($("noteSearchHint")) {
+    $("noteSearchHint").textContent = query
+      ? `搜尋結果：${filtered.length} / ${notes.length} 筆記事。`
+      : `共有 ${notes.length} 筆記事。`;
+  }
+
+  if (!filtered.length) {
+    box.innerHTML = `<div class="muted">沒有符合搜尋的記事。</div>`;
+    return;
+  }
+
+  box.innerHTML = filtered.map(n => `
+    <div class="item ${n.id === selectedNoteId ? "active" : ""}" onclick="selectNote('${n.id}')">
+      <div class="itemTitle">${escapeHtml(n.title)}</div>
+      <div class="muted">更新：${timeText(n.updatedAt)}</div>
+      <div class="muted">${escapeHtml((n.content || "").slice(0, 80))}</div>
+    </div>
+  `).join("");
+}
+
+/* Override: search-enabled recipe list */
+function renderRecipeList() {
+  const box = $("recipeList");
+  if (!recipes.length) {
+    box.innerHTML = `<div class="muted">尚未儲存配方。請到下方「配方內容」建立第一個配方。</div>`;
+    if ($("recipeSearchHint")) $("recipeSearchHint").textContent = "目前沒有配方可搜尋。";
+    return;
+  }
+
+  const query = $("recipeSearchInput") ? $("recipeSearchInput").value.trim().toLowerCase() : "";
+  const filtered = query
+    ? recipes.filter(r => {
+        const nameMatch = String(r.name || "").toLowerCase().includes(query);
+        const ingredientMatch = (r.ingredients || []).some(i =>
+          String(i.name || "").toLowerCase().includes(query) ||
+          String(i.unit || "").toLowerCase().includes(query)
+        );
+        return nameMatch || ingredientMatch;
+      })
+    : recipes;
+
+  if ($("recipeSearchHint")) {
+    $("recipeSearchHint").textContent = query
+      ? `搜尋結果：${filtered.length} / ${recipes.length} 筆配方。`
+      : `共有 ${recipes.length} 筆配方。`;
+  }
+
+  if (!filtered.length) {
+    box.innerHTML = `<div class="muted">沒有符合搜尋的配方。</div>`;
+    return;
+  }
+
+  box.innerHTML = filtered.map(r => `
+    <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
+      <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
+      <div class="muted">更新：${timeText(r.updatedAt)}</div>
+    </div>
+  `).join("");
+}
+
+/* Override: cloud-aware note save */
+async function saveCurrentNote() {
+  if (!requireSharedEdit()) return;
+
+  const title = $("noteTitle").value.trim() || "未命名記事";
+  const content = $("noteContent").value || "";
+  const now = Date.now();
+
+  let note = notes.find(n => n.id === selectedNoteId);
+  if (note) {
+    note.title = title;
+    note.content = content;
+    note.updatedAt = now;
+  } else {
+    note = { id: String(now) + Math.random().toString(16).slice(2), title, content, createdAt: now, updatedAt: now };
+  }
+
+  if (cloudReady) {
+    try {
+      await saveNoteToCloud(note);
+      alert("記事已儲存到雲端。");
+      return;
+    } catch(e) {
+      console.error(e);
+      alert("雲端儲存失敗，請確認管理者權限。");
+      return;
+    }
+  }
+
+  if (notes.some(n => n.id === note.id)) notes = [note, ...notes.filter(n => n.id !== note.id)];
+  else { notes.unshift(note); selectedNoteId = note.id; }
+
+  saveNotes();
+  renderNotes();
+  $("noteCurrent").value = title;
+  alert("記事已儲存。");
+}
+
+/* Override: cloud-aware note delete */
+async function deleteCurrentNote() {
+  if (!requireSharedEdit()) return;
+  if (!selectedNoteId) return alert("目前沒有選取記事。");
+  if (!confirm("確定刪除這則記事嗎？")) return;
+
+  if (cloudReady) {
+    try {
+      await deleteNoteFromCloud(selectedNoteId);
+      alert("雲端記事已刪除。");
+      return;
+    } catch(e) {
+      console.error(e);
+      alert("雲端刪除失敗，請確認管理者權限。");
+      return;
+    }
+  }
+
+  notes = notes.filter(n => n.id !== selectedNoteId);
+  selectedNoteId = notes[0]?.id || "";
+  saveNotes();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  else {
+    $("noteTitle").value = "";
+    $("noteContent").value = "";
+    $("noteCurrent").value = "尚未選取記事";
+    renderNotes();
+  }
+}
+
+/* Override: cloud-aware recipe save */
+async function saveRecipe(forceNew = false) {
+  if (!requireSharedEdit()) return;
+
+  const name = $("recipeName").value.trim() || "未命名配方";
+  const base = Number($("recipeBase").value || 0);
+  const ingredients = getIngredients();
+  if (base <= 0) return alert("請輸入正確的基準原材料重量。");
+  if (!ingredients.length) return alert("請至少新增一個材料。");
+
+  const now = Date.now();
+  let recipe = !forceNew ? recipes.find(r => r.id === selectedRecipeId) : null;
+
+  if (recipe) {
+    recipe.name = name;
+    recipe.baseWeight = base;
+    recipe.ingredients = ingredients;
+    recipe.updatedAt = now;
+  } else {
+    recipe = { id: String(now) + Math.random().toString(16).slice(2), name, baseWeight: base, ingredients, createdAt: now, updatedAt: now };
+  }
+
+  if (cloudReady) {
+    try {
+      if (forceNew) recipe.id = "";
+      await saveRecipeToCloud(recipe);
+      alert(forceNew ? "已另存為新雲端配方。" : "配方已儲存到雲端。");
+      return;
+    } catch(e) {
+      console.error(e);
+      alert("雲端配方儲存失敗，請確認管理者權限。");
+      return;
+    }
+  }
+
+  if (!forceNew && recipes.some(r => r.id === recipe.id)) recipes = [recipe, ...recipes.filter(r => r.id !== recipe.id)];
+  else { recipe.id = String(now) + Math.random().toString(16).slice(2); recipes.unshift(recipe); selectedRecipeId = recipe.id; }
+
+  saveRecipes();
+  selectRecipe(selectedRecipeId);
+  alert(forceNew ? "已另存為新配方。" : "配方已儲存。");
+}
+
+/* Override: cloud-aware recipe delete */
+async function deleteRecipe() {
+  if (!requireSharedEdit()) return;
+  if (!selectedRecipeId) return alert("目前沒有選取配方。");
+  const recipe = recipes.find(r => r.id === selectedRecipeId);
+  if (!confirm(`確定刪除「${recipe ? recipe.name : "這個配方"}」嗎？`)) return;
+
+  if (cloudReady) {
+    try {
+      await deleteRecipeFromCloud(selectedRecipeId);
+      alert("雲端配方已刪除。");
+      return;
+    } catch(e) {
+      console.error(e);
+      alert("雲端配方刪除失敗，請確認管理者權限。");
+      return;
+    }
+  }
+
+  recipes = recipes.filter(r => r.id !== selectedRecipeId);
+  selectedRecipeId = recipes[0]?.id || "";
+  saveRecipes();
+  if (selectedRecipeId) selectRecipe(selectedRecipeId);
+  else newRecipeForm();
+}
+
+/* Override: guard new recipe in cloud read-only */
+function newRecipeForm() {
+  if (!requireSharedEdit()) return;
+  selectedRecipeId = "";
+  $("recipeName").value = "";
+  $("recipeBase").value = 500;
+  $("recipeTarget").value = 340;
+  clearIngredients();
+  addIngredientRow("糖", 100, "克");
+  saveRecipes();
+  renderRecipeList();
+  calculateRecipe();
+}
+
+/* Override: cloud-aware bulk recipe import */
+function bulkImportRecipes() {
+  if (!requireSharedEdit()) return;
+
+  const text = $("recipeBulkText").value.trim();
+  if (!text) return alert("請先貼上配方內容。");
+
+  const blocks = splitRecipeBlocks(text);
+  const parsed = blocks.map((block, idx) => parseRecipeBlock(block, idx)).filter(Boolean);
+  if (!parsed.length) return alert("沒有解析到可用配方。請確認格式像：配方名稱、基準重量、材料 數量 單位。");
+
+  const now = Date.now();
+  const imported = parsed.map((item, idx) => ({
+    id: String(now + idx) + Math.random().toString(16).slice(2),
+    name: item.name,
+    baseWeight: item.baseWeight,
+    ingredients: item.ingredients,
+    createdAt: now + idx,
+    updatedAt: now + idx
+  }));
+
+  if (cloudReady) {
+    (async () => {
+      try {
+        for (const recipe of imported) await saveRecipeToCloud({ ...recipe, id: "" });
+        $("recipeBulkText").value = "";
+        alert(`已匯入 ${imported.length} 個雲端配方。`);
+      } catch(e) {
+        console.error(e);
+        alert("雲端批量匯入失敗，請確認管理者權限。");
+      }
+    })();
+    return;
+  }
+
+  recipes = [...imported, ...recipes];
+  selectedRecipeId = imported[0].id;
+  saveRecipes();
+  renderRecipeList();
+  selectRecipe(selectedRecipeId);
+  $("recipeBulkText").value = "";
+  alert(`已匯入 ${imported.length} 個配方。`);
+}
+
+
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
 window.deleteTimer = deleteTimer;
@@ -1716,6 +2333,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initNotes();
   initRecipe();
   initSettings();
+  initCloudSettings();
   $("stopAlarmBtn").addEventListener("click", stopAlarm);
   renderTimers();
   setInterval(tickTimers, 1000);

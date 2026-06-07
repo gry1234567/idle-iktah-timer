@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "記事本與配方分開備份匯入匯出版",
+  "description": "搜尋、Supabase 多人同步、雲端資料庫、管理者權限系統",
   "id": "/",
   "start_url": "/",
   "scope": "/",

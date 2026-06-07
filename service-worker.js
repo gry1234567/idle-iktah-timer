@@ -1,4 +1,4 @@
-const CACHE_NAME = "idle-iktah-separate-backup-v8";
+const CACHE_NAME = "idle-iktah-cloud-sync-permissions-v1";
 const FILES = [
   "/",
   "/index.html",
