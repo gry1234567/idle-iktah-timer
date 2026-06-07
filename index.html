@@ -2033,8 +2033,9 @@ function cloudHeaders(useAdmin = false) {
 async function cloudFetch(path, options = {}, useAdmin = false) {
   if (!cloudReady) throw new Error("尚未設定 Supabase URL 或 publishable key。");
 
-  const response = await fetch("/api/supabase-proxy", {
+  const response = await fetch(`/api/supabase-proxy?t=${Date.now()}`, {
     method: "POST",
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json"
     },
@@ -2060,7 +2061,7 @@ async function cloudFetch(path, options = {}, useAdmin = false) {
 
 function describeCloudError(error) {
   const msg = String((error && error.message) || error || "未知錯誤");
-  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "前端無法連線。這版已改由 Vercel API 轉接；若仍失敗，請確認 Vercel 是否已部署 api/supabase-proxy.js，以及不是只覆蓋 7 個檔案漏掉 api 資料夾。";
+  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "前端無法連到 /api/supabase-proxy。請確認：1. GitHub 有 api/supabase-proxy.js；2. Vercel 已重新部署成功；3. 手機已清除舊 PWA 快取或重新安裝；4. 本版 service worker 已更新。";
   if (msg.includes("relation") && msg.includes("does not exist")) return "找不到資料表。請確認 SQL 已用 postgres 執行成功，並有 iktah_notes / iktah_recipes / iktah_recipe_ingredients。";
   if (msg.includes("permission denied") || msg.includes("row-level security") || msg.includes("RLS")) return "資料庫權限被拒絕。請確認 RLS policies 已建立，Data API 的 public schema 與資料表已開放。";
   if (msg.includes("Invalid API key") || msg.includes("apikey")) return "API key 可能錯誤。請確認使用的是完整 sb_publishable_...。";

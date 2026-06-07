@@ -1,21 +1,11 @@
-# IDLE iktah 工具箱｜Vercel API 轉接雲端版
-
-這版是為了解決手機 / PWA 直接 fetch Supabase 失敗。
+# IDLE iktah 工具箱｜Vercel API 轉接 + Service Worker 修正版
 
 修正：
-- 手機 APP 不再直接連 Supabase REST API
-- 改成連自己的 Vercel 網址 `/api/supabase-proxy`
-- 由 Vercel API 再去連 Supabase
-- 可以避開手機瀏覽器 / PWA 對外部 API 的 fetch 問題
+- service-worker.js 不再攔截 `/api/`
+- `/api/supabase-proxy` fetch 加上 no-store 與 cache busting
+- 避免 PWA 舊快取造成 fetch failed
 
-重要：
-這版除了原本 7 個檔案，還多一個資料夾：
-
-api/supabase-proxy.js
-
-更新 GitHub 時一定要把 api 資料夾也上傳，不然雲端測試一定會失敗。
-
-要覆蓋 / 上傳：
+這版仍需要上傳：
 - index.html
 - manifest.webmanifest
 - service-worker.js
@@ -25,9 +15,16 @@ api/supabase-proxy.js
 - README.md
 - api/supabase-proxy.js
 
-使用方式：
-1. 覆蓋 GitHub 檔案，包含 api/supabase-proxy.js
-2. 等 Vercel 部署完成
-3. 打開 APP → 設定 → 雲端同步
-4. 按「測試雲端連線」
-5. 成功後按「重新讀取雲端」
+重要：
+如果手機已安裝成 APP，更新後建議：
+1. 刪掉手機上的舊 APP
+2. 用 Chrome 直接打開 Vercel 網址
+3. 確認測試雲端連線成功
+4. 再重新安裝成 APP
+
+快速檢查：
+在瀏覽器打開：
+https://你的網址/api/supabase-proxy
+
+如果看到 Method not allowed，代表 API 有部署成功。
+如果看到 404，代表 api/supabase-proxy.js 沒有上傳或 Vercel 沒部署到。
