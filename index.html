@@ -437,9 +437,7 @@
     }
 
     /* LONGMEN_STABLE_REPAIR_CSS */
-    [id*="calib"], [id*="Calib"], [id*="offset"], [id*="Offset"],
-    [id*="correction"], [id*="Correction"], [class*="calib"], [class*="Calib"],
-    [class*="offset"], [class*="Offset"], [class*="correction"], [class*="Correction"] {
+    [id*="calib"], [id*="Calib"], [class*="calib"], [class*="Calib"] {
       display: none !important;
     }
 
@@ -515,7 +513,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 AUTO-NEXT-MATERIAL-20260608-13</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SETTINGS-RESTORE-20260608-14</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -814,9 +812,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜AUTO-NEXT-MATERIAL-20260608-13</div>
+            <div class="sectionTitle">雲端同步｜SETTINGS-RESTORE-20260608-14</div>
             <div class="note">
-              版本：AUTO-NEXT-MATERIAL-20260608-13<br>
+              版本：SETTINGS-RESTORE-20260608-14<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -2633,11 +2631,54 @@ function deleteAllRecipesLocal() {
   showToast("已刪除全部本機配方");
 }
 
+
+function repairHideBackupSectionsSafely() {
+  // 只隱藏「備份小區塊」，不要再用大範圍文字搜尋，避免把整個設定頁藏掉。
+  const titles = ["記事本備份", "配方備份"];
+  const headings = Array.from(document.querySelectorAll(".sectionTitle, h1, h2, h3, h4, label, strong"));
+
+  headings.forEach(h => {
+    const text = (h.textContent || "").trim();
+    if (!titles.includes(text)) return;
+
+    let node = h;
+    let box = h.parentElement;
+
+    // 找一個較小的父層，不要吃到整個設定頁。
+    for (let i = 0; i < 3 && box; i++) {
+      const txt = (box.textContent || "");
+      if (txt.length < 1200) break;
+      box = box.parentElement;
+    }
+
+    if (box && (box.textContent || "").length < 1500) {
+      box.classList.add("hiddenByRepair");
+    } else {
+      // 如果找不到安全父層，只隱藏標題本身，不隱藏整個設定。
+      node.classList.add("hiddenByRepair");
+    }
+  });
+}
+
+function repairEnsureSettingsVisible() {
+  // 防止設定區被 previous repair 加到 hiddenByRepair。
+  Array.from(document.querySelectorAll("section, .panel, .card, main > div, div")).forEach(el => {
+    const txt = el.textContent || "";
+    const hasCloud = txt.includes("雲端") || txt.includes("管理者") || txt.includes("設定");
+    const hugePanel = txt.length > 1500;
+    if (hasCloud && hugePanel) {
+      el.classList.remove("hiddenByRepair");
+      el.style.display = "";
+    }
+  });
+}
+
 function initStableRepairControls() {
+  repairEnsureSettingsVisible();
   repairPatchRenderLists();
   repairHideCalibrationText();
   repairMoveLongmenIntoTimer();
-  repairHideTextSections(["記事本備份", "配方備份"]);
+  repairHideBackupSectionsSafely();
 
   if ($("deleteSelectedNotesBtn")) $("deleteSelectedNotesBtn").addEventListener("click", deleteSelectedNotesLocal);
   if ($("deleteAllNotesBtn")) $("deleteAllNotesBtn").addEventListener("click", deleteAllNotesLocal);
