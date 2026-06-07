@@ -435,12 +435,7 @@
       border-color: rgba(255,167,153,.55);
       color: var(--danger);
     }
-    .loginState {
-      font-weight: 900;
-      color: var(--text);
-    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="appBg"></div>
@@ -722,24 +717,24 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步與登入</div>
+            <div class="sectionTitle">雲端同步與登入 REST 版</div>
             <div class="note">
-              同步對象：記事本與配方。其他人只能查看；你登入管理者後才能新增、修改、刪除或上傳本機資料。
+              這版已預填 Supabase URL 與 publishable key，管理者 Email 需自行輸入，改用 REST API 直連。同步對象：記事本與配方。其他人只能查看；你登入管理者後才能新增、修改、刪除或上傳本機資料。
             </div>
             <div class="grid" style="margin-top:12px;">
               <div>
                 <label>Supabase URL</label>
-                <input id="supabaseUrlInput" placeholder="https://xxxx.supabase.co" />
+                <input id="supabaseUrlInput" placeholder="已預填 Supabase URL" />
               </div>
               <div>
                 <label>Supabase publishable key</label>
-                <input id="supabaseAnonKeyInput" placeholder="貼上 sb_publishable_...，不要貼 secret key" />
+                <input id="supabaseAnonKeyInput" placeholder="已預填 Supabase publishable key" />
               </div>
             </div>
             <div class="grid" style="margin-top:12px;">
               <div>
                 <label>管理者 Email</label>
-                <input id="adminEmailInput" placeholder="例如：power739hot@gmail.com" />
+                <input id="adminEmailInput" placeholder="請輸入管理者 Email" />
               </div>
               <div>
                 <label>管理者密碼</label>
@@ -748,10 +743,11 @@
             </div>
             <div class="actions3">
               <button class="secondary" id="saveCloudConfigBtn">儲存雲端設定</button>
+              <button class="secondary" id="testCloudBtn">測試雲端連線</button>
               <button class="secondary" id="loadCloudBtn">重新讀取雲端</button>
-              <button id="adminLoginBtn">管理者登入</button>
             </div>
-            <div class="actions">
+            <div class="actions3">
+              <button id="adminLoginBtn">管理者登入</button>
               <button class="secondary" id="adminLogoutBtn">登出管理者</button>
               <button class="secondary" id="uploadLocalToCloudBtn">本機資料上傳雲端</button>
             </div>
@@ -813,7 +809,8 @@ const KEY = {
   menuCollapsed: "iktah_toolbox_menu_collapsed_v1",
   supabaseUrl: "iktah_toolbox_supabase_url_v1",
   supabaseAnonKey: "iktah_toolbox_supabase_anon_key_v1",
-  adminEmail: "iktah_toolbox_admin_email_v1"
+  adminEmail: "iktah_toolbox_admin_email_v1",
+  adminAccessToken: "iktah_toolbox_admin_access_token_v1"
 };
 
 const LEGACY_KEYS = {
@@ -858,12 +855,33 @@ let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
 let recipes = JSON.parse(localStorage.getItem(KEY.recipes) || "[]");
 let selectedNoteId = localStorage.getItem(KEY.selectedNote) || "";
 let selectedRecipeId = localStorage.getItem(KEY.selectedRecipe) || "";
-let supabaseUrl = localStorage.getItem(KEY.supabaseUrl) || "";
-let supabaseAnonKey = localStorage.getItem(KEY.supabaseAnonKey) || "";
-let adminEmail = localStorage.getItem(KEY.adminEmail) || "";
-let supabaseClient = null;
+const DEFAULT_SUPABASE_URL = "https://oivbidfpeudddesucwhg.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
+const DEFAULT_ADMIN_EMAIL = "";
+
+function isValidSupabaseUrlValue(value) {
+  return /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(String(value || "").trim());
+}
+
+function isValidPublishableKeyValue(value) {
+  return String(value || "").trim().startsWith("sb_publishable_");
+}
+
+let savedSupabaseUrl = localStorage.getItem(KEY.supabaseUrl) || "";
+let savedSupabaseKey = localStorage.getItem(KEY.supabaseAnonKey) || "";
+let savedAdminEmail = localStorage.getItem(KEY.adminEmail) || "";
+
+let supabaseUrl = isValidSupabaseUrlValue(savedSupabaseUrl) ? savedSupabaseUrl : DEFAULT_SUPABASE_URL;
+let supabaseAnonKey = isValidPublishableKeyValue(savedSupabaseKey) ? savedSupabaseKey : DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+let adminEmail = savedAdminEmail || DEFAULT_ADMIN_EMAIL;
+let adminAccessToken = localStorage.getItem(KEY.adminAccessToken) || "";
 let cloudReady = false;
 let adminLoggedIn = false;
+
+// 直接把正確預設值寫回本機，避免舊版錯誤 URL / key 殘留。
+localStorage.setItem(KEY.supabaseUrl, supabaseUrl);
+localStorage.setItem(KEY.supabaseAnonKey, supabaseAnonKey);
+localStorage.setItem(KEY.adminEmail, adminEmail);
 let customSound = localStorage.getItem(KEY.sound) || "";
 let customSoundName = localStorage.getItem(KEY.soundName) || "";
 let customBg = localStorage.getItem(KEY.bg) || "";
@@ -1952,6 +1970,18 @@ setTimeout(() => {
 
 
 
+function normalizeSupabaseUrl(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[)\s]+$/g, "")
+    .replace(/\/rest\/v1\/?$/i, "")
+    .replace(/\/+$/g, "");
+}
+
+function normalizeKey(value) {
+  return String(value || "").trim().replace(/[)\s]+$/g, "");
+}
+
 function cloudMessage(id, text, mode = "") {
   const el = $(id);
   if (!el) return;
@@ -1968,38 +1998,61 @@ function updateCloudBadge() {
     badge.textContent = "雲端管理者";
     badge.classList.add("admin");
   } else if (cloudReady) {
-    badge.textContent = "雲端唯讀";
+    badge.textContent = "雲端 REST";
     badge.classList.add("on");
   } else {
     badge.textContent = "本機模式";
   }
 }
 
-function describeCloudError(error) {
-  const msg = String((error && (error.message || error.error_description || error.details)) || error || "未知錯誤");
-  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "無法連線到 Supabase。請確認 URL 正確、Data API 已開啟、手機網路正常。";
-  if (msg.includes("relation") && msg.includes("does not exist")) return "找不到資料表。請確認 SQL 已用 postgres 執行成功，並有 iktah_notes / iktah_recipes / iktah_recipe_ingredients。";
-  if (msg.includes("permission denied") || msg.includes("row-level security") || msg.includes("RLS")) return "資料庫權限被拒絕。請確認 RLS policies 已建立，Data API 的 public schema 與資料表已開放。";
-  if (msg.includes("JWT") || msg.includes("apikey") || msg.includes("Invalid API key")) return "API key 可能錯誤。請貼 sb_publishable_...，不要貼 sb_secret_...。";
-  if (msg.includes("schema") || msg.includes("exposed")) return "Data API schema/table 尚未開放。請到 Data API → Settings 選 public 並開啟資料表。";
-  return msg;
-}
-
-function isUuid(id) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ""));
-}
-
-function initSupabaseClientSafe() {
-  cloudReady = false;
-  supabaseClient = null;
-
-  if (supabaseUrl && supabaseAnonKey && window.supabase && window.supabase.createClient) {
-    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-    cloudReady = true;
-  }
-
+function initCloudReady() {
+  supabaseUrl = normalizeSupabaseUrl(supabaseUrl);
+  supabaseAnonKey = normalizeKey(supabaseAnonKey);
+  cloudReady = !!(supabaseUrl && supabaseAnonKey);
   updateCloudBadge();
   updateEditLock();
+}
+
+function cloudHeaders(useAdmin = false) {
+  const token = useAdmin && adminAccessToken ? adminAccessToken : supabaseAnonKey;
+  return {
+    "apikey": supabaseAnonKey,
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json"
+  };
+}
+
+async function cloudFetch(path, options = {}, useAdmin = false) {
+  if (!cloudReady) throw new Error("尚未設定 Supabase URL 或 publishable key。");
+  const url = `${supabaseUrl}${path}`;
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...cloudHeaders(useAdmin),
+      ...(options.headers || {})
+    }
+  });
+
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+  if (!response.ok) {
+    const msg = (data && (data.message || data.error_description || data.details || data.hint)) || text || `HTTP ${response.status}`;
+    throw new Error(msg);
+  }
+
+  return data;
+}
+
+function describeCloudError(error) {
+  const msg = String((error && error.message) || error || "未知錯誤");
+  if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "fetch 無法連線。這通常是 Data API 沒開 public schema/table、網路阻擋，或瀏覽器/PWA 無法打到 Supabase REST API。";
+  if (msg.includes("relation") && msg.includes("does not exist")) return "找不到資料表。請確認 SQL 已用 postgres 執行成功，並有 iktah_notes / iktah_recipes / iktah_recipe_ingredients。";
+  if (msg.includes("permission denied") || msg.includes("row-level security") || msg.includes("RLS")) return "資料庫權限被拒絕。請確認 RLS policies 已建立，Data API 的 public schema 與資料表已開放。";
+  if (msg.includes("Invalid API key") || msg.includes("JWT") || msg.includes("apikey")) return "API key 可能錯誤。請貼完整 sb_publishable_...，不要貼 sb_secret_...。";
+  if (msg.includes("schema") || msg.includes("exposed") || msg.includes("No API key found")) return "Data API schema/table 尚未開放。請到 Data API → Settings 選 public 並開啟資料表。";
+  return msg;
 }
 
 function canEditSharedData() {
@@ -2030,31 +2083,38 @@ function updateEditLock() {
   }
 }
 
-async function checkAdminSessionSafe() {
-  if (!supabaseClient) {
-    adminLoggedIn = false;
-    cloudMessage("loginStatusText", "登入狀態：未設定雲端。", "");
-    updateCloudBadge();
-    updateEditLock();
+function isUuid(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ""));
+}
+
+async function testCloudConnectionRest() {
+  if (!cloudReady) {
+    cloudMessage("cloudStatusText", "狀態：請先儲存 Supabase URL 與 publishable key。", "bad");
+    alert("請先儲存 Supabase URL 與 publishable key。");
     return;
   }
 
-  const { data } = await supabaseClient.auth.getSession();
-  const session = data && data.session;
-  adminLoggedIn = !!(session && session.user && session.user.email === adminEmail);
+  const btn = $("testCloudBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "測試中...";
+  showToast("正在測試雲端連線...");
 
-  if (adminLoggedIn) {
-    cloudMessage("loginStatusText", `登入狀態：已登入管理者 ${adminEmail}。可以修改雲端資料。`, "good");
-  } else {
-    cloudMessage("loginStatusText", "登入狀態：未登入管理者。其他人僅能查看。", "");
+  try {
+    cloudMessage("cloudStatusText", "狀態：正在測試 REST API 連線...", "");
+    await cloudFetch("/rest/v1/iktah_notes?select=id&limit=1", { method: "GET" }, false);
+    cloudMessage("cloudStatusText", "狀態：REST API 連線成功。可以嘗試重新讀取雲端。", "good");
+    showToast("雲端連線成功");
+  } catch (e) {
+    const reason = describeCloudError(e);
+    cloudMessage("cloudStatusText", `狀態：REST API 連線失敗。\n原因：${reason}`, "bad");
+    alert(`測試雲端連線失敗。\n\n${reason}`);
+  } finally {
+    if (btn) btn.textContent = old;
   }
-
-  updateCloudBadge();
-  updateEditLock();
 }
 
-async function loadCloudDataSafe() {
-  if (!cloudReady || !supabaseClient) {
+async function loadCloudDataRest() {
+  if (!cloudReady) {
     cloudMessage("cloudStatusText", "狀態：尚未設定 Supabase URL / publishable key，無法讀取雲端。", "bad");
     alert("請先儲存 Supabase URL 與 publishable key。");
     return;
@@ -2066,19 +2126,10 @@ async function loadCloudDataSafe() {
   showToast("正在讀取雲端...");
 
   try {
-    cloudMessage("cloudStatusText", "狀態：正在讀取雲端記事本與配方...", "");
+    cloudMessage("cloudStatusText", "狀態：正在讀取 REST 雲端記事本與配方...", "");
 
-    const { data: noteRows, error: noteError } = await supabaseClient
-      .from("iktah_notes")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (noteError) throw noteError;
-
-    const { data: recipeRows, error: recipeError } = await supabaseClient
-      .from("iktah_recipes")
-      .select("*, ingredients:iktah_recipe_ingredients(*)")
-      .order("updated_at", { ascending: false });
-    if (recipeError) throw recipeError;
+    const noteRows = await cloudFetch("/rest/v1/iktah_notes?select=*&order=updated_at.desc", { method: "GET" }, false);
+    const recipeRows = await cloudFetch("/rest/v1/iktah_recipes?select=*,ingredients:iktah_recipe_ingredients(*)&order=updated_at.desc", { method: "GET" }, false);
 
     notes = (noteRows || []).map(n => ({
       id: n.id,
@@ -2117,7 +2168,6 @@ async function loadCloudDataSafe() {
     cloudMessage("cloudStatusText", `狀態：雲端讀取成功。記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。`, "good");
     showToast("雲端讀取成功");
   } catch (e) {
-    console.error(e);
     const reason = describeCloudError(e);
     cloudMessage("cloudStatusText", `狀態：雲端讀取失敗。\n原因：${reason}`, "bad");
     alert(`讀取雲端失敗。\n\n${reason}`);
@@ -2127,7 +2177,84 @@ async function loadCloudDataSafe() {
   }
 }
 
-async function saveNoteToCloudSafe(note) {
+async function loginAdminRest() {
+  if (!cloudReady) return alert("請先儲存 Supabase URL 與 publishable key。");
+
+  const email = $("adminEmailInput").value.trim();
+  const password = $("adminPasswordInput").value;
+  if (!email || !password) return alert("請輸入管理者 Email 與密碼。");
+
+  const btn = $("adminLoginBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "登入中...";
+  showToast("管理者登入中...");
+
+  try {
+    const data = await cloudFetch("/auth/v1/token?grant_type=password", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    }, false);
+
+    adminAccessToken = data.access_token || "";
+    if (!adminAccessToken) throw new Error("登入成功但沒有取得 access token。");
+
+    adminEmail = email;
+    localStorage.setItem(KEY.adminEmail, adminEmail);
+    localStorage.setItem(KEY.adminAccessToken, adminAccessToken);
+
+    // Verify admin by checking app_admins with authenticated token
+    const adminRows = await cloudFetch(`/rest/v1/app_admins?email=eq.${encodeURIComponent(email)}&select=email&limit=1`, { method: "GET" }, true);
+
+    if (Array.isArray(adminRows) && adminRows.length) {
+      adminLoggedIn = true;
+      cloudMessage("loginStatusText", `登入狀態：管理者登入成功。\n目前帳號：${email}\n你現在可以修改雲端記事本與配方。`, "good");
+      showToast("管理者登入成功");
+      alert("管理者登入成功。");
+    } else {
+      adminLoggedIn = false;
+      cloudMessage("loginStatusText", "登入狀態：登入成功，但這個 Email 不在 app_admins 管理者清單中。", "bad");
+      alert("登入成功，但不是管理者。請確認 app_admins 表內有這個 Email。");
+    }
+  } catch (e) {
+    adminLoggedIn = false;
+    adminAccessToken = "";
+    localStorage.removeItem(KEY.adminAccessToken);
+    const reason = describeCloudError(e);
+    cloudMessage("loginStatusText", `登入狀態：管理者登入失敗。\n原因：${reason}`, "bad");
+    alert(`管理者登入失敗。\n\n${reason}`);
+  } finally {
+    updateCloudBadge();
+    updateEditLock();
+    if (btn) btn.textContent = old;
+  }
+}
+
+async function logoutAdminRest() {
+  const btn = $("adminLogoutBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "登出中...";
+  showToast("正在登出管理者...");
+
+  try {
+    if (adminAccessToken) {
+      await fetch(`${supabaseUrl}/auth/v1/logout`, {
+        method: "POST",
+        headers: cloudHeaders(true)
+      });
+    }
+  } catch {}
+
+  adminAccessToken = "";
+  adminLoggedIn = false;
+  localStorage.removeItem(KEY.adminAccessToken);
+  updateCloudBadge();
+  updateEditLock();
+  cloudMessage("loginStatusText", "登入狀態：已登出管理者。現在為雲端唯讀模式。", "");
+  if (btn) btn.textContent = old;
+  alert("已登出管理者。");
+}
+
+async function saveNoteToCloudRest(note) {
   if (!cloudReady) return false;
   if (!adminLoggedIn) return requireSharedEdit();
 
@@ -2138,26 +2265,35 @@ async function saveNoteToCloudSafe(note) {
   };
 
   if (isUuid(note.id)) {
-    const { error } = await supabaseClient.from("iktah_notes").update(payload).eq("id", note.id);
-    if (error) throw error;
+    await cloudFetch(`/rest/v1/iktah_notes?id=eq.${encodeURIComponent(note.id)}`, {
+      method: "PATCH",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify(payload)
+    }, true);
   } else {
-    const { error } = await supabaseClient.from("iktah_notes").insert(payload);
-    if (error) throw error;
+    await cloudFetch("/rest/v1/iktah_notes", {
+      method: "POST",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify(payload)
+    }, true);
   }
-  await loadCloudDataSafe();
+
+  await loadCloudDataRest();
   return true;
 }
 
-async function deleteNoteFromCloudSafe(id) {
+async function deleteNoteFromCloudRest(id) {
   if (!cloudReady) return false;
   if (!adminLoggedIn) return requireSharedEdit();
-  const { error } = await supabaseClient.from("iktah_notes").delete().eq("id", id);
-  if (error) throw error;
-  await loadCloudDataSafe();
+  await cloudFetch(`/rest/v1/iktah_notes?id=eq.${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { "Prefer": "return=minimal" }
+  }, true);
+  await loadCloudDataRest();
   return true;
 }
 
-async function saveRecipeToCloudSafe(recipe) {
+async function saveRecipeToCloudRest(recipe) {
   if (!cloudReady) return false;
   if (!adminLoggedIn) return requireSharedEdit();
 
@@ -2169,13 +2305,23 @@ async function saveRecipeToCloudSafe(recipe) {
   };
 
   if (isUuid(recipeId)) {
-    const { error } = await supabaseClient.from("iktah_recipes").update(payload).eq("id", recipeId);
-    if (error) throw error;
-    await supabaseClient.from("iktah_recipe_ingredients").delete().eq("recipe_id", recipeId);
+    await cloudFetch(`/rest/v1/iktah_recipes?id=eq.${encodeURIComponent(recipeId)}`, {
+      method: "PATCH",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify(payload)
+    }, true);
+
+    await cloudFetch(`/rest/v1/iktah_recipe_ingredients?recipe_id=eq.${encodeURIComponent(recipeId)}`, {
+      method: "DELETE",
+      headers: { "Prefer": "return=minimal" }
+    }, true);
   } else {
-    const { data, error } = await supabaseClient.from("iktah_recipes").insert(payload).select().single();
-    if (error) throw error;
-    recipeId = data.id;
+    const inserted = await cloudFetch("/rest/v1/iktah_recipes", {
+      method: "POST",
+      headers: { "Prefer": "return=representation" },
+      body: JSON.stringify(payload)
+    }, true);
+    recipeId = inserted && inserted[0] && inserted[0].id;
   }
 
   const rows = (recipe.ingredients || []).map((i, index) => ({
@@ -2187,24 +2333,29 @@ async function saveRecipeToCloudSafe(recipe) {
   }));
 
   if (rows.length) {
-    const { error } = await supabaseClient.from("iktah_recipe_ingredients").insert(rows);
-    if (error) throw error;
+    await cloudFetch("/rest/v1/iktah_recipe_ingredients", {
+      method: "POST",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify(rows)
+    }, true);
   }
 
-  await loadCloudDataSafe();
+  await loadCloudDataRest();
   return true;
 }
 
-async function deleteRecipeFromCloudSafe(id) {
+async function deleteRecipeFromCloudRest(id) {
   if (!cloudReady) return false;
   if (!adminLoggedIn) return requireSharedEdit();
-  const { error } = await supabaseClient.from("iktah_recipes").delete().eq("id", id);
-  if (error) throw error;
-  await loadCloudDataSafe();
+  await cloudFetch(`/rest/v1/iktah_recipes?id=eq.${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { "Prefer": "return=minimal" }
+  }, true);
+  await loadCloudDataRest();
   return true;
 }
 
-/* 覆蓋儲存與刪除：本機模式照舊，雲端模式需管理者 */
+/* Cloud-aware overrides */
 async function saveCurrentNote() {
   if (!requireSharedEdit()) return;
 
@@ -2223,7 +2374,7 @@ async function saveCurrentNote() {
 
   if (cloudReady) {
     try {
-      await saveNoteToCloudSafe(note);
+      await saveNoteToCloudRest(note);
       showToast("記事已儲存到雲端");
       return;
     } catch (e) {
@@ -2247,7 +2398,7 @@ async function deleteCurrentNote() {
 
   if (cloudReady) {
     try {
-      await deleteNoteFromCloudSafe(selectedNoteId);
+      await deleteNoteFromCloudRest(selectedNoteId);
       showToast("雲端記事已刪除");
       return;
     } catch (e) {
@@ -2292,7 +2443,7 @@ async function saveRecipe(forceNew = false) {
   if (cloudReady) {
     try {
       if (forceNew) recipe.id = "";
-      await saveRecipeToCloudSafe(recipe);
+      await saveRecipeToCloudRest(recipe);
       showToast(forceNew ? "已另存為雲端配方" : "配方已儲存到雲端");
       return;
     } catch (e) {
@@ -2316,7 +2467,7 @@ async function deleteRecipe() {
 
   if (cloudReady) {
     try {
-      await deleteRecipeFromCloudSafe(selectedRecipeId);
+      await deleteRecipeFromCloudRest(selectedRecipeId);
       showToast("雲端配方已刪除");
       return;
     } catch (e) {
@@ -2332,7 +2483,7 @@ async function deleteRecipe() {
   else newRecipeForm();
 }
 
-async function uploadLocalToCloudSafe() {
+async function uploadLocalToCloudRest() {
   if (!cloudReady) return alert("請先儲存雲端設定。");
   if (!adminLoggedIn) return requireSharedEdit();
 
@@ -2344,9 +2495,9 @@ async function uploadLocalToCloudSafe() {
   showToast("正在上傳雲端...");
 
   try {
-    for (const note of notes) await saveNoteToCloudSafe({ ...note, id: "" });
-    for (const recipe of recipes) await saveRecipeToCloudSafe({ ...recipe, id: "" });
-    await loadCloudDataSafe();
+    for (const note of notes) await saveNoteToCloudRest({ ...note, id: "" });
+    for (const recipe of recipes) await saveRecipeToCloudRest({ ...recipe, id: "" });
+    await loadCloudDataRest();
     cloudMessage("cloudStatusText", "狀態：本機資料已上傳雲端。", "good");
     alert("本機資料已上傳雲端。");
   } catch (e) {
@@ -2356,88 +2507,54 @@ async function uploadLocalToCloudSafe() {
   }
 }
 
-function initCloudSafe() {
+function initCloudRest() {
   if ($("supabaseUrlInput")) $("supabaseUrlInput").value = supabaseUrl;
   if ($("supabaseAnonKeyInput")) $("supabaseAnonKeyInput").value = supabaseAnonKey;
   if ($("adminEmailInput")) $("adminEmailInput").value = adminEmail;
 
-  initSupabaseClientSafe();
-  checkAdminSessionSafe();
+  cloudMessage("cloudStatusText", "狀態：已預填 Supabase 設定。此版不會自動讀取雲端，請按「測試雲端連線」或「重新讀取雲端」。", "good");
 
-  if ($("saveCloudConfigBtn")) $("saveCloudConfigBtn").addEventListener("click", async () => {
-    supabaseUrl = $("supabaseUrlInput").value.trim();
-    supabaseAnonKey = $("supabaseAnonKeyInput").value.trim();
+  initCloudReady();
+  if (adminAccessToken && adminEmail) {
+    adminLoggedIn = true;
+    cloudMessage("loginStatusText", `登入狀態：偵測到已儲存的管理者登入狀態。\n目前帳號：${adminEmail}`, "good");
+  } else {
+    adminLoggedIn = false;
+    cloudMessage("loginStatusText", "登入狀態：未登入管理者。", "");
+  }
+  updateCloudBadge();
+  updateEditLock();
+
+  if ($("saveCloudConfigBtn")) $("saveCloudConfigBtn").addEventListener("click", () => {
+    supabaseUrl = normalizeSupabaseUrl($("supabaseUrlInput").value);
+    supabaseAnonKey = normalizeKey($("supabaseAnonKeyInput").value);
     adminEmail = $("adminEmailInput").value.trim();
+
+    $("supabaseUrlInput").value = supabaseUrl;
+    $("supabaseAnonKeyInput").value = supabaseAnonKey;
 
     localStorage.setItem(KEY.supabaseUrl, supabaseUrl);
     localStorage.setItem(KEY.supabaseAnonKey, supabaseAnonKey);
     localStorage.setItem(KEY.adminEmail, adminEmail);
 
-    initSupabaseClientSafe();
-    await checkAdminSessionSafe();
-    cloudMessage("cloudStatusText", "狀態：雲端設定已儲存。此版不會自動讀取，請手動按「重新讀取雲端」。", "good");
+    adminAccessToken = "";
+    adminLoggedIn = false;
+    localStorage.removeItem(KEY.adminAccessToken);
+
+    initCloudReady();
+    cloudMessage("cloudStatusText", "狀態：雲端設定已儲存。此版不會自動讀取，請按「測試雲端連線」或「重新讀取雲端」。", "good");
+    cloudMessage("loginStatusText", "登入狀態：雲端設定更新後，請重新登入管理者。", "");
     showToast("雲端設定已儲存");
   });
 
-  if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", loadCloudDataSafe);
-
-  if ($("adminLoginBtn")) $("adminLoginBtn").addEventListener("click", async () => {
-    if (!cloudReady) return alert("請先儲存 Supabase URL 與 publishable key。");
-
-    const email = $("adminEmailInput").value.trim();
-    const password = $("adminPasswordInput").value;
-    if (!email || !password) return alert("請輸入管理者 Email 與密碼。");
-
-    const btn = $("adminLoginBtn");
-    const old = btn ? btn.textContent : "";
-    if (btn) btn.textContent = "登入中...";
-    showToast("管理者登入中...");
-
-    try {
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      adminEmail = email;
-      localStorage.setItem(KEY.adminEmail, adminEmail);
-      await checkAdminSessionSafe();
-
-      if (adminLoggedIn) {
-        cloudMessage("loginStatusText", `登入狀態：管理者登入成功。\n目前帳號：${adminEmail}\n你現在可以修改雲端記事本與配方。`, "good");
-        alert("管理者登入成功。");
-      } else {
-        cloudMessage("loginStatusText", "登入狀態：登入成功，但這個 Email 不在 app_admins 管理者清單中。", "bad");
-        alert("登入成功，但不是管理者。請確認 app_admins 表內有這個 Email。");
-      }
-    } catch (e) {
-      adminLoggedIn = false;
-      updateCloudBadge();
-      updateEditLock();
-      cloudMessage("loginStatusText", `登入狀態：管理者登入失敗。\n原因：${describeCloudError(e)}`, "bad");
-      alert(`管理者登入失敗。\n\n${describeCloudError(e)}`);
-    } finally {
-      if (btn) btn.textContent = old;
-    }
-  });
-
-  if ($("adminLogoutBtn")) $("adminLogoutBtn").addEventListener("click", async () => {
-    const btn = $("adminLogoutBtn");
-    const old = btn ? btn.textContent : "";
-    if (btn) btn.textContent = "登出中...";
-    showToast("正在登出管理者...");
-
-    if (supabaseClient) await supabaseClient.auth.signOut();
-    adminLoggedIn = false;
-    updateCloudBadge();
-    updateEditLock();
-    cloudMessage("loginStatusText", "登入狀態：已登出管理者。現在為雲端唯讀模式。", "");
-    if (btn) btn.textContent = old;
-    alert("已登出管理者。");
-  });
-
-  if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", uploadLocalToCloudSafe);
+  if ($("testCloudBtn")) $("testCloudBtn").addEventListener("click", testCloudConnectionRest);
+  if ($("loadCloudBtn")) $("loadCloudBtn").addEventListener("click", loadCloudDataRest);
+  if ($("adminLoginBtn")) $("adminLoginBtn").addEventListener("click", loginAdminRest);
+  if ($("adminLogoutBtn")) $("adminLogoutBtn").addEventListener("click", logoutAdminRest);
+  if ($("uploadLocalToCloudBtn")) $("uploadLocalToCloudBtn").addEventListener("click", uploadLocalToCloudRest);
 }
 
-setTimeout(initCloudSafe, 0);
+setTimeout(initCloudRest, 0);
 
 
 window.pauseTimer = pauseTimer;
