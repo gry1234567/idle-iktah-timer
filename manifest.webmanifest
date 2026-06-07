@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "緊急穩定修復版：恢復分類切換，保留搜尋與本機備份",
+  "description": "安全雲端同步版：手動同步、登入登出明顯回饋",
   "id": "/",
   "start_url": "/",
   "scope": "/",
