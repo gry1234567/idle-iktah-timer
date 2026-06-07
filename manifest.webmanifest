@@ -1,7 +1,7 @@
 {
   "name": "IDLE iktah 工具箱",
   "short_name": "工具箱",
-  "description": "雲端同步版，不再開啟 APP 時自動跳讀取失敗",
+  "description": "緊急穩定修復版：恢復分類切換，保留搜尋與本機備份",
   "id": "/",
   "start_url": "/",
   "scope": "/",
