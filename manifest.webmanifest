@@ -1,7 +1,7 @@
 {
   "name": "龍門陣工具箱",
   "short_name": "龍門陣",
-  "description": "原始碼清理與換算修正版 SOURCE-CLEANUP-CONVERSION-20260608-21",
+  "description": "自訂配方分類版 CUSTOM-RECIPE-CATEGORIES-20260608-23",
   "id": "/",
   "start_url": "/",
   "scope": "/",

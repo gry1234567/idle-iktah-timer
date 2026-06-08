@@ -525,6 +525,37 @@
     }
     .youtubeAlarmCard h2 { margin-top: 0; }
     .youtubeAlarmCard .actions { justify-content: center; }
+
+    /* CUSTOM_RECIPE_CATEGORY_CSS */
+    .categoryManagerBox {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .categoryPill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      margin: 4px 4px 0 0;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+      font-size: 13px;
+    }
+    .recipeCategoryTag {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      background: rgba(255,255,255,.03);
+    }
   </style>
 </head>
 <body>
@@ -554,7 +585,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SOURCE-CLEANUP-CONVERSION-20260608-21</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CUSTOM-RECIPE-CATEGORIES-20260608-23</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -714,7 +745,25 @@
             <div class="searchBox">
               <label>搜尋配方</label>
               <input id="recipeSearchInput" placeholder="搜尋配方名稱或材料，例如：糖、醬油、滷汁" />
-              <div class="searchHint" id="recipeSearchHint">會搜尋配方名稱與材料名稱。</div>
+              <div class="searchHint" id="recipeSearchHint">會搜尋配方名稱、材料名稱與分類。</div>
+            </div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>分類篩選</label>
+                <select id="recipeCategoryFilter"></select>
+              </div>
+              <div>
+                <label>分類管理</label>
+                <div class="actions">
+                  <button class="secondary" id="addRecipeCategoryBtn">新增分類</button>
+                  <button class="secondary" id="renameRecipeCategoryBtn">改名分類</button>
+                  <button class="dangerSoft" id="deleteRecipeCategoryBtn">刪除分類</button>
+                </div>
+              </div>
+            </div>
+            <div class="categoryManagerBox">
+              <div class="note">刪除分類不會刪除配方，原本使用該分類的配方會改為「未分類」。</div>
+              <div id="recipeCategoryPills"></div>
             </div>
             <div id="recipeList"></div>
             <div class="bulkDeleteBox" id="recipeBulkDeleteBox">
@@ -750,6 +799,10 @@
               <div>
                 <label>配方名稱</label>
                 <input id="recipeName" placeholder="例如：醃料、菜單配方" />
+              </div>
+              <div>
+                <label>配方分類</label>
+                <select id="recipeCategorySelect"></select>
               </div>
               <div>
                 <label>基準原材料重量（克）</label>
@@ -819,9 +872,9 @@
               <button class="danger" id="clearSoundBtn">清除</button>
             </div>
             <div class="note" id="soundStatus">目前：預設提示音</div>
-<div class="sectionTitle">雲端同步｜SOURCE-CLEANUP-CONVERSION-20260608-21</div>
+<div class="sectionTitle">雲端同步｜CUSTOM-RECIPE-CATEGORIES-20260608-23</div>
             <div class="note">
-              版本：SOURCE-CLEANUP-CONVERSION-20260608-21<br>
+              版本：CUSTOM-RECIPE-CATEGORIES-20260608-23<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -874,7 +927,8 @@ const KEY = {
   cardOpacity: "iktah_toolbox_card_opacity_v1",
   menuCollapsed: "iktah_toolbox_menu_collapsed_v1",
   cleanAdminEmail: "iktah_clean_admin_email_v1",
-  cleanAccessToken: "iktah_clean_access_token_v1"
+  cleanAccessToken: "iktah_clean_access_token_v1",
+  recipeCategories: "longmen_recipe_categories_v1"
 };
 
 const LEGACY_KEYS = {
@@ -917,6 +971,7 @@ migrateStorageOnce();
 let timers = JSON.parse(localStorage.getItem(KEY.timers) || "[]");
 let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
 let recipes = JSON.parse(localStorage.getItem(KEY.recipes) || "[]");
+let recipeCategories = JSON.parse(localStorage.getItem(KEY.recipeCategories) || "[\"未分類\"]");
 let selectedNoteId = localStorage.getItem(KEY.selectedNote) || "";
 let selectedRecipeId = localStorage.getItem(KEY.selectedRecipe) || "";
 let cleanCloudMode = false;
@@ -936,6 +991,31 @@ let deferredInstallPrompt = null;
 function saveTimers() { localStorage.setItem(KEY.timers, JSON.stringify(timers)); }
 function saveNotes() { localStorage.setItem(KEY.notes, JSON.stringify(notes)); localStorage.setItem(KEY.selectedNote, selectedNoteId); }
 function saveRecipes() { localStorage.setItem(KEY.recipes, JSON.stringify(recipes)); localStorage.setItem(KEY.selectedRecipe, selectedRecipeId); }
+function saveRecipeCategories() {
+  recipeCategories = Array.from(new Set((recipeCategories || [])
+    .map(c => String(c || "").trim())
+    .filter(Boolean)));
+  if (!recipeCategories.includes("未分類")) recipeCategories.unshift("未分類");
+  localStorage.setItem(KEY.recipeCategories, JSON.stringify(recipeCategories));
+}
+function normalizeRecipeCategory(value) {
+  const category = String(value || "").trim();
+  return category && recipeCategories.includes(category) ? category : "未分類";
+}
+function recipeLocalSignature(recipe) {
+  const ingredients = (recipe?.ingredients || [])
+    .map(i => ({
+      name: String(i?.name || "").trim(),
+      amount: Number(i?.amount || 0),
+      unit: String(i?.unit || "克").trim()
+    }))
+    .sort((a, b) => `${a.name}|${a.amount}|${a.unit}`.localeCompare(`${b.name}|${b.amount}|${b.unit}`));
+  return JSON.stringify({
+    name: String(recipe?.name || "").trim(),
+    baseWeight: Number(recipe?.baseWeight || 500),
+    ingredients
+  });
+}
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -1404,6 +1484,7 @@ function bulkImportRecipes() {
   const imported = parsed.map((item, idx) => ({
     id: String(now + idx) + Math.random().toString(16).slice(2),
     name: item.name,
+    category: "未分類",
     baseWeight: item.baseWeight,
     ingredients: item.ingredients,
     createdAt: now + idx,
@@ -1438,6 +1519,125 @@ function fillBulkRecipeExample() {
 }
 
 
+
+function renderRecipeCategoryControls() {
+  saveRecipeCategories();
+
+  const filter = $("recipeCategoryFilter");
+  if (filter) {
+    const current = filter.value || "全部";
+    filter.innerHTML = [`<option value="全部">全部分類</option>`]
+      .concat(recipeCategories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`))
+      .join("");
+    filter.value = current && (current === "全部" || recipeCategories.includes(current)) ? current : "全部";
+  }
+
+  const select = $("recipeCategorySelect");
+  if (select) {
+    const current = select.value || "未分類";
+    select.innerHTML = recipeCategories
+      .map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`)
+      .join("");
+    select.value = current && recipeCategories.includes(current) ? current : "未分類";
+  }
+
+  const pills = $("recipeCategoryPills");
+  if (pills) {
+    pills.innerHTML = recipeCategories
+      .map(c => `<span class="categoryPill">${escapeHtml(c)}</span>`)
+      .join("");
+  }
+}
+
+function addRecipeCategory() {
+  const name = prompt("請輸入新分類名稱：");
+  const category = String(name || "").trim();
+  if (!category) return;
+  if (recipeCategories.includes(category)) return alert("這個分類已經存在。");
+
+  recipeCategories.push(category);
+  saveRecipeCategories();
+  renderRecipeCategoryControls();
+  if ($("recipeCategorySelect")) $("recipeCategorySelect").value = category;
+  if ($("recipeCategoryFilter")) $("recipeCategoryFilter").value = category;
+  renderRecipeList();
+  showToast(`已新增分類：${category}`);
+}
+
+function renameRecipeCategory() {
+  const oldName = $("recipeCategoryFilter")?.value && $("recipeCategoryFilter").value !== "全部"
+    ? $("recipeCategoryFilter").value
+    : ($("recipeCategorySelect")?.value || "未分類");
+
+  if (oldName === "未分類") return alert("「未分類」不能改名。");
+
+  const next = prompt(`將分類「${oldName}」改名為：`, oldName);
+  const newName = String(next || "").trim();
+  if (!newName || newName === oldName) return;
+  if (recipeCategories.includes(newName)) return alert("這個分類名稱已經存在。");
+
+  recipeCategories = recipeCategories.map(c => c === oldName ? newName : c);
+  recipes = recipes.map(r => ({ ...r, category: normalizeRecipeCategory(r.category === oldName ? newName : r.category) }));
+
+  saveRecipeCategories();
+  saveRecipes();
+  renderRecipeCategoryControls();
+  if ($("recipeCategoryFilter")) $("recipeCategoryFilter").value = newName;
+  if ($("recipeCategorySelect")) $("recipeCategorySelect").value = newName;
+  renderRecipeList();
+  showToast(`已改名分類：${newName}`);
+}
+
+function deleteRecipeCategory() {
+  const target = $("recipeCategoryFilter")?.value && $("recipeCategoryFilter").value !== "全部"
+    ? $("recipeCategoryFilter").value
+    : ($("recipeCategorySelect")?.value || "未分類");
+
+  if (target === "未分類") return alert("「未分類」不能刪除。");
+  if (!recipeCategories.includes(target)) return alert("請先選擇要刪除的分類。");
+
+  const count = recipes.filter(r => normalizeRecipeCategory(r.category) === target).length;
+  if (!confirm(`確定刪除分類「${target}」嗎？\n\n${count} 個配方會改為「未分類」，配方本身不會被刪除。`)) return;
+
+  recipeCategories = recipeCategories.filter(c => c !== target);
+  recipes = recipes.map(r => normalizeRecipeCategory(r.category) === target ? { ...r, category: "未分類" } : r);
+
+  saveRecipeCategories();
+  saveRecipes();
+  renderRecipeCategoryControls();
+  if ($("recipeCategoryFilter")) $("recipeCategoryFilter").value = "全部";
+  if ($("recipeCategorySelect")) $("recipeCategorySelect").value = "未分類";
+  renderRecipeList();
+  showToast(`已刪除分類：${target}`);
+}
+
+function initRecipeCategories() {
+  // 舊資料補上分類欄位。
+  let changed = false;
+  recipes = recipes.map(r => {
+    if (!r.category) {
+      changed = true;
+      return { ...r, category: "未分類" };
+    }
+    if (!recipeCategories.includes(r.category)) {
+      recipeCategories.push(r.category);
+      changed = true;
+    }
+    return r;
+  });
+  if (changed) {
+    saveRecipeCategories();
+    saveRecipes();
+  }
+
+  renderRecipeCategoryControls();
+
+  if ($("recipeCategoryFilter")) $("recipeCategoryFilter").addEventListener("change", renderRecipeList);
+  if ($("addRecipeCategoryBtn")) $("addRecipeCategoryBtn").addEventListener("click", addRecipeCategory);
+  if ($("renameRecipeCategoryBtn")) $("renameRecipeCategoryBtn").addEventListener("click", renameRecipeCategory);
+  if ($("deleteRecipeCategoryBtn")) $("deleteRecipeCategoryBtn").addEventListener("click", deleteRecipeCategory);
+}
+
 function initRecipe() {
   if ($("addIngredientBtn")) $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
   if ($("newRecipeBtn")) $("newRecipeBtn").addEventListener("click", newRecipeForm);
@@ -1468,6 +1668,7 @@ function newRecipeForm() {
   selectedRecipeId = "";
   $("recipeName").value = "";
   $("recipeBase").value = 500;
+  if ($("recipeCategorySelect")) $("recipeCategorySelect").value = "未分類";
   $("recipeTarget").value = 1;
   clearIngredients();
   addIngredientRow("糖", 100, "克");
@@ -1607,6 +1808,7 @@ function selectRecipe(id) {
   if (!recipe) return;
   selectedRecipeId = id;
   $("recipeName").value = recipe.name;
+  if ($("recipeCategorySelect")) $("recipeCategorySelect").value = normalizeRecipeCategory(recipe.category);
   $("recipeBase").value = recipe.baseWeight;
   clearIngredients();
   recipe.ingredients.forEach(i => addIngredientRow(i.name, i.amount, i.unit));
@@ -1617,373 +1819,9 @@ function selectRecipe(id) {
 
 function renderRecipeList() {
   const box = $("recipeList");
-  if (!recipes.length) {
-    box.innerHTML = `<div class="muted">尚未儲存配方。請到下方「配方內容」建立第一個配方。</div>`;
-    return;
-  }
-  box.innerHTML = recipes.map(r => `
-    <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div class="itemTitle">${escapeHtml(r.name)}</div>
-      <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
-      <div class="muted">更新：${timeText(r.updatedAt)}</div>
-    </div>
-  `).join("");
-}
-
-
-function exportNotesData() {
-  const data = {
-    type: "iktah_notes_backup",
-    version: 1,
-    exportedAt: Date.now(),
-    notes,
-    selectedNoteId
-  };
-  $("notesBackupText").value = JSON.stringify(data, null, 2);
-  updateNotesPreview();
-  alert(`已匯出記事本 ${notes.length} 筆。請複製備份文字保存。`);
-}
-
-function exportRecipesData() {
-  const data = {
-    type: "iktah_recipes_backup",
-    version: 1,
-    exportedAt: Date.now(),
-    recipes,
-    selectedRecipeId
-  };
-  $("recipesBackupText").value = JSON.stringify(data, null, 2);
-  updateRecipesPreview();
-  alert(`已匯出配方 ${recipes.length} 筆。請複製備份文字保存。`);
-}
-
-function updateNotesPreview() {
-  const box = $("notesPreviewBox");
-  const text = $("notesBackupText").value.trim();
-  if (!text) {
-    box.textContent = "尚未偵測記事本備份內容。";
-    return;
-  }
-
-  try {
-    const data = JSON.parse(text);
-    const count = Array.isArray(data.notes) ? data.notes.length : 0;
-    const typeOk = data.type === "iktah_notes_backup" || Array.isArray(data.notes);
-    box.textContent = typeOk
-      ? `偵測到記事本備份：${count} 筆記事本。`
-      : "這不是有效的記事本備份格式。";
-  } catch (e) {
-    box.textContent = "記事本備份文字格式錯誤。";
-  }
-}
-
-function updateRecipesPreview() {
-  const box = $("recipesPreviewBox");
-  const text = $("recipesBackupText").value.trim();
-  if (!text) {
-    box.textContent = "尚未偵測配方備份內容。";
-    return;
-  }
-
-  try {
-    const data = JSON.parse(text);
-    const count = Array.isArray(data.recipes) ? data.recipes.length : 0;
-    const typeOk = data.type === "iktah_recipes_backup" || Array.isArray(data.recipes);
-    box.textContent = typeOk
-      ? `偵測到配方備份：${count} 筆配方。`
-      : "這不是有效的配方備份格式。";
-  } catch (e) {
-    box.textContent = "配方備份文字格式錯誤。";
-  }
-}
-
-function importNotesData(mode = "merge") {
-  const text = $("notesBackupText").value.trim();
-  if (!text) return alert("請先貼上記事本備份文字。");
-
-  try {
-    const data = JSON.parse(text);
-    const incomingNotes = Array.isArray(data.notes) ? data.notes : [];
-    if (!incomingNotes.length) return alert("這份備份裡沒有記事本資料。");
-
-    if (mode === "overwrite") {
-      if (!confirm(`覆蓋匯入會清掉目前記事本，改成備份內容。
-
-備份內含：記事本 ${incomingNotes.length} 筆。
-
-確定要覆蓋嗎？`)) return;
-      notes = incomingNotes;
-    } else {
-      const existingNoteIds = new Set(notes.map(n => n.id));
-      incomingNotes.forEach(n => {
-        const copy = {...n};
-        if (!copy.id || existingNoteIds.has(copy.id)) {
-          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
-        }
-        notes.unshift(copy);
-      });
-    }
-
-    selectedNoteId = notes[0]?.id || "";
-    saveNotes();
-    renderNotes();
-    if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
-
-    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}記事本完成：${incomingNotes.length} 筆。`);
-  } catch (e) {
-    alert("匯入失敗，記事本備份文字格式不正確。");
-  }
-}
-
-function importRecipesData(mode = "merge") {
-  const text = $("recipesBackupText").value.trim();
-  if (!text) return alert("請先貼上配方備份文字。");
-
-  try {
-    const data = JSON.parse(text);
-    const incomingRecipes = Array.isArray(data.recipes) ? data.recipes : [];
-    if (!incomingRecipes.length) return alert("這份備份裡沒有配方資料。");
-
-    if (mode === "overwrite") {
-      if (!confirm(`覆蓋匯入會清掉目前配方，改成備份內容。
-
-備份內含：配方 ${incomingRecipes.length} 筆。
-
-確定要覆蓋嗎？`)) return;
-      recipes = incomingRecipes;
-    } else {
-      const existingRecipeIds = new Set(recipes.map(r => r.id));
-      incomingRecipes.forEach(r => {
-        const copy = {...r};
-        if (!copy.id || existingRecipeIds.has(copy.id)) {
-          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
-        }
-        recipes.unshift(copy);
-      });
-    }
-
-    selectedRecipeId = recipes[0]?.id || "";
-    saveRecipes();
-    renderRecipeList();
-    if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
-
-    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}配方完成：${incomingRecipes.length} 筆。`);
-  } catch (e) {
-    alert("匯入失敗，配方備份文字格式不正確。");
-  }
-}
-
-
-
-function initSettings() {
-  updateSoundStatus();
-  updateBg();
-  updateNotesPreview();
-  updateRecipesPreview();
-
-  if ($("exportNotesBtn")) $("exportNotesBtn").addEventListener("click", exportNotesData);
-  if ($("importNotesBtn")) $("importNotesBtn").addEventListener("click", () => importNotesData("merge"));
-  if ($("overwriteNotesBtn")) $("overwriteNotesBtn").addEventListener("click", () => importNotesData("overwrite"));
-  if ($("notesBackupText")) $("notesBackupText").addEventListener("input", updateNotesPreview);
-
-  if ($("exportRecipesBtn")) $("exportRecipesBtn").addEventListener("click", exportRecipesData);
-  if ($("importRecipesBtn")) $("importRecipesBtn").addEventListener("click", () => importRecipesData("merge"));
-  if ($("overwriteRecipesBtn")) $("overwriteRecipesBtn").addEventListener("click", () => importRecipesData("overwrite"));
-  if ($("recipesBackupText")) $("recipesBackupText").addEventListener("input", updateRecipesPreview);
-
-  $("soundFile").addEventListener("change", () => {
-    const file = $("soundFile").files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("audio/")) return alert("請選擇音訊檔。");
-    if (file.size > 1024 * 1024 * 2.5) return alert("音檔太大，建議 2.5MB 以下。");
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      customSound = reader.result;
-      customSoundName = file.name;
-      localStorage.setItem(KEY.sound, customSound);
-      localStorage.setItem(KEY.soundName, customSoundName);
-      updateSoundStatus();
-      alert("自訂鈴聲已儲存。");
-    };
-    reader.readAsDataURL(file);
-  });
-
-  $("testSoundBtn").addEventListener("click", () => customSound ? new Audio(customSound).play() : playDefaultBeep());
-  $("defaultSoundBtn").addEventListener("click", () => {
-    customSound = "";
-    customSoundName = "";
-    localStorage.removeItem(KEY.sound);
-    localStorage.removeItem(KEY.soundName);
-    updateSoundStatus();
-    playDefaultBeep();
-  });
-  $("clearSoundBtn").addEventListener("click", () => {
-    customSound = "";
-    customSoundName = "";
-    localStorage.removeItem(KEY.sound);
-    localStorage.removeItem(KEY.soundName);
-    updateSoundStatus();
-  });
-  if ($("bgFile")) $("bgFile").addEventListener("change", () => {
-    const file = $("bgFile").files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return alert("請選擇圖片檔。");
-    if (file.size > 1024 * 1024 * 4) return alert("圖片太大，建議 4MB 以下。");
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      customBg = reader.result;
-      customBgName = file.name;
-      localStorage.setItem(KEY.bg, customBg);
-      localStorage.setItem(KEY.bgName, customBgName);
-      updateBg();
-      alert("背景已儲存。");
-    };
-    reader.readAsDataURL(file);
-  });
-
-  if ($("applyBgBtn")) $("applyBgBtn").addEventListener("click", () => {
-    bgDim = $("bgDim") ? $("bgDim").value : bgDim;
-    cardOpacity = $("cardOpacity") ? $("cardOpacity").value : cardOpacity;
-    localStorage.setItem(KEY.bgDim, bgDim);
-    localStorage.setItem(KEY.cardOpacity, cardOpacity);
-    updateBg();
-  });
-
-  if ($("clearBgBtn")) $("clearBgBtn").addEventListener("click", () => {
-    customBg = "";
-    customBgName = "";
-    localStorage.removeItem(KEY.bg);
-    localStorage.removeItem(KEY.bgName);
-    updateBg();
-  });
-}
-
-function updateSoundStatus() {
-  $("soundStatus").textContent = customSound ? `目前：${customSoundName}` : "目前：預設提示音";
-}
-
-function updateBg() {
-  if ($("bgDim")) $("bgDim").value = bgDim;
-  if ($("cardOpacity")) $("cardOpacity").value = cardOpacity;
-
-  document.documentElement.style.setProperty("--bgDim", Number(bgDim) / 100);
-  document.documentElement.style.setProperty("--card", `rgba(27,31,42,${Number(cardOpacity) / 100})`);
-
-  if ($("appBg")) {
-    $("appBg").style.backgroundImage = customBg
-      ? `url("${customBg}")`
-      : `radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%), radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%), linear-gradient(180deg, #111318, #111318)`;
-  }
-
-  if ($("bgStatus")) {
-    $("bgStatus").textContent = customBg ? `目前：${customBgName}` : "目前：預設背景";
-  }
-}
-
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  deferredInstallPrompt = event;
-  const btn = $("installAppBtn");
-  if (btn) btn.style.display = "block";
-});
-
-window.addEventListener("appinstalled", () => {
-  deferredInstallPrompt = null;
-  const btn = $("installAppBtn");
-  if (btn) btn.style.display = "none";
-});
-
-function initInstallButton() {
-  const installBtn = $("installAppBtn");
-  const reloadBtn = $("reloadAppBtn");
-
-  if (installBtn) {
-    installBtn.addEventListener("click", async () => {
-      if (!deferredInstallPrompt) {
-        alert("目前瀏覽器沒有提供安裝提示。請用 Chrome 開啟正式網址，或用右上角選單 → 新增至主畫面。");
-        return;
-      }
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-      installBtn.style.display = "none";
-    });
-  }
-
-  if (reloadBtn) {
-    reloadBtn.addEventListener("click", () => location.reload());
-  }
-}
-
-function initPwa() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/service-worker.js");
-  }
-}
-
-
-let toastTimer = null;
-function showToast(message = "已點擊") {
-  const toast = $("toast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), 1200);
-}
-
-document.addEventListener("click", (event) => {
-  const btn = event.target.closest && event.target.closest("button");
-  if (!btn || btn.disabled) return;
-  const label = (btn.textContent || "按鈕").trim();
-  showToast(`已點擊：${label}`);
-});
-
-/* 安全搜尋：覆蓋列表渲染，不影響其他功能 */
-function renderNotes() {
-  const box = $("noteList");
   if (!box) return;
 
-  if (!notes.length) {
-    box.innerHTML = `<div class="muted">還沒有記事。</div>`;
-    if ($("noteSearchHint")) $("noteSearchHint").textContent = "目前沒有記事可搜尋。";
-    return;
-  }
-
-  const query = $("noteSearchInput") ? $("noteSearchInput").value.trim().toLowerCase() : "";
-  const filtered = query
-    ? notes.filter(n =>
-        String(n.title || "").toLowerCase().includes(query) ||
-        String(n.content || "").toLowerCase().includes(query)
-      )
-    : notes;
-
-  if ($("noteSearchHint")) {
-    $("noteSearchHint").textContent = query
-      ? `搜尋結果：${filtered.length} / ${notes.length} 筆記事。`
-      : `共有 ${notes.length} 筆記事。`;
-  }
-
-  if (!filtered.length) {
-    box.innerHTML = `<div class="muted">沒有符合搜尋的記事。</div>`;
-    return;
-  }
-
-  box.innerHTML = filtered.map(n => `
-    <div class="item ${n.id === selectedNoteId ? "active" : ""}" onclick="selectNote('${n.id}')">
-      <div class="itemTitle">${escapeHtml(n.title)}</div>
-      <div class="muted">更新：${timeText(n.updatedAt)}</div>
-      <div class="muted">${escapeHtml((n.content || "").slice(0, 80))}</div>
-    </div>
-  `).join("");
-}
-
-function renderRecipeList() {
-  const box = $("recipeList");
-  if (!box) return;
+  const categoryFilter = $("recipeCategoryFilter") ? $("recipeCategoryFilter").value || "全部" : "全部";
 
   if (!recipes.length) {
     box.innerHTML = `<div class="muted">尚未儲存配方。請到下方「配方內容」建立第一個配方。</div>`;
@@ -1992,41 +1830,52 @@ function renderRecipeList() {
   }
 
   const query = $("recipeSearchInput") ? $("recipeSearchInput").value.trim().toLowerCase() : "";
-  const filtered = query
-    ? recipes.filter(r => {
-        const nameMatch = String(r.name || "").toLowerCase().includes(query);
-        const ingredientMatch = (r.ingredients || []).some(i =>
-          String(i.name || "").toLowerCase().includes(query) ||
-          String(i.unit || "").toLowerCase().includes(query)
-        );
-        return nameMatch || ingredientMatch;
-      })
-    : recipes;
+  const filtered = recipes.filter(r => {
+    const category = normalizeRecipeCategory(r.category);
+    const categoryMatch = categoryFilter === "全部" || category === categoryFilter;
+
+    if (!categoryMatch) return false;
+    if (!query) return true;
+
+    const nameMatch = String(r.name || "").toLowerCase().includes(query);
+    const categoryTextMatch = String(category || "").toLowerCase().includes(query);
+    const ingredientMatch = (r.ingredients || []).some(i =>
+      String(i.name || "").toLowerCase().includes(query) ||
+      String(i.unit || "").toLowerCase().includes(query)
+    );
+    return nameMatch || categoryTextMatch || ingredientMatch;
+  });
 
   if ($("recipeSearchHint")) {
+    const categoryText = categoryFilter === "全部" ? "全部分類" : categoryFilter;
     $("recipeSearchHint").textContent = query
-      ? `搜尋結果：${filtered.length} / ${recipes.length} 筆配方。`
-      : `共有 ${recipes.length} 筆配方。`;
+      ? `搜尋結果：${filtered.length} / ${recipes.length} 筆配方｜${categoryText}`
+      : `共有 ${filtered.length} / ${recipes.length} 筆配方｜${categoryText}`;
   }
 
   if (!filtered.length) {
-    box.innerHTML = `<div class="muted">沒有符合搜尋的配方。</div>`;
+    box.innerHTML = `<div class="muted">沒有符合搜尋或分類的配方。</div>`;
     return;
   }
 
-  box.innerHTML = filtered.map(r => `
-    <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div class="itemTitle">${escapeHtml(r.name)}</div>
-      <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
-      <div class="muted">更新：${timeText(r.updatedAt)}</div>
-    </div>
-  `).join("");
+  box.innerHTML = filtered.map(r => {
+    const category = normalizeRecipeCategory(r.category);
+    return `
+      <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
+        <div class="itemTitle">${escapeHtml(r.name)}</div>
+        <div class="recipeCategoryTag">${escapeHtml(category)}</div>
+        <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
+        <div class="muted">更新：${timeText(r.updatedAt)}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 /* 安全綁定搜尋框：等頁面初始化後再補上，不破壞原本 init */
 setTimeout(() => {
   if ($("noteSearchInput")) $("noteSearchInput").addEventListener("input", renderNotes);
   if ($("recipeSearchInput")) $("recipeSearchInput").addEventListener("input", renderRecipeList);
+  initRecipeCategories();
   renderNotes();
   renderRecipeList();
 }, 0);
@@ -2198,6 +2047,11 @@ function cleanDedupeRecipes(recipeRows) {
 }
 
 function cleanNormalizeCloudData(data) {
+  const localCategoryBySignature = new Map();
+  (recipes || []).forEach(r => {
+    localCategoryBySignature.set(recipeLocalSignature(r), normalizeRecipeCategory(r.category));
+  });
+
   const noteRows = cleanDedupeNotes(data.notes || []);
   const recipeRows = cleanDedupeRecipes(data.recipes || []);
 
@@ -2212,6 +2066,15 @@ function cleanNormalizeCloudData(data) {
   recipes = recipeRows.map(r => ({
     id: r.id,
     name: r.name || "",
+    category: localCategoryBySignature.get(recipeLocalSignature({
+      name: r.name || "",
+      baseWeight: Number(r.base_weight || 500),
+      ingredients: (r.ingredients || []).map(i => ({
+        name: i.name || "",
+        amount: Number(i.amount || 0),
+        unit: i.unit || "克"
+      }))
+    })) || "未分類",
     baseWeight: Number(r.base_weight || 500),
     ingredients: (r.ingredients || [])
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
@@ -2229,6 +2092,7 @@ function cleanNormalizeCloudData(data) {
   selectedNoteId = notes[0]?.id || "";
   selectedRecipeId = recipes[0]?.id || "";
   renderNotes();
+  renderRecipeCategoryControls();
   renderRecipeList();
   if (selectedNoteId) selectNote(selectedNoteId);
   if (selectedRecipeId) selectRecipe(selectedRecipeId);
@@ -2309,6 +2173,7 @@ function cleanCurrentRecipeFromForm(forceNew = false) {
   return {
     id: forceNew ? "" : selectedRecipeId,
     name,
+    category: $("recipeCategorySelect") ? normalizeRecipeCategory($("recipeCategorySelect").value) : "未分類",
     baseWeight: base,
     ingredients,
     createdAt: now,
@@ -2385,6 +2250,7 @@ async function saveRecipe(forceNew = false) {
 
   if (local) {
     local.name = recipe.name;
+    local.category = recipe.category || "未分類";
     local.baseWeight = recipe.baseWeight;
     local.ingredients = recipe.ingredients;
     local.updatedAt = now;
@@ -3051,6 +2917,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initLongmen();
   initNotes();
   initRecipe();
+  initRecipeCategories();
   initSettings();
   $("stopAlarmBtn").addEventListener("click", stopAlarm);
   renderTimers();
