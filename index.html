@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111318" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="提醒器" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>龍門陣工具箱</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --card: rgba(27,31,42,.82);
+      --card2: rgba(36,41,54,.92);
+      --text: #f3f4f6;
+      --muted: #c7ccd7;
+      --accent: #b7d7a8;
+      --danger: #ffb4a2;
+      --line: rgba(255,255,255,.16);
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
+      --bgDim: .25;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background: #111318;
+    }
+
+    body {
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+
+    #appBg {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%),
+        #111318;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    #appDim {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background: rgba(0,0,0,var(--bgDim));
+      pointer-events: none;
+    }
+
+    .wrap { max-width: 900px; margin: 0 auto; }
+
+    header {
+      margin: 12px 0 16px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.65);
+    }
+
+    h1 { margin: 0 0 6px; font-size: clamp(26px, 6vw, 42px); }
+    h2 { margin: 0 0 10px; }
+    .sub, .muted, .note { color: var(--muted); line-height: 1.6; }
+    .note { font-size: 13px; margin-top: 10px; }
+
+    .appShell {
+      display: grid;
+      grid-template-columns: 155px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .appShell.collapsed {
+      grid-template-columns: 58px minmax(0, 1fr);
+    }
+
+    .sideMenu {
+      position: sticky;
+      top: 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .menuTitle {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 4px;
+    }
+
+    .menuToggle, .menuBtn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      min-height: 44px;
+      margin-top: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .menuToggle {
+      background: var(--accent);
+      color: #10140f;
+    }
+
+    .menuBtn {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .menuBtn.active {
+      background: var(--accent);
+      color: #10140f;
+    }
+
+    .collapsed .menuTitle, .collapsed .menuText {
+      display: none;
+    }
+
+    .collapsed .menuBtn {
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    .collapsed .menuBtn::before {
+      content: attr(data-short);
+    }
+
+    .collapsed .menuToggle::before { content: "☰"; }
+    .expanded .menuToggle::before { content: "收起"; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)), var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin: 0 0 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    input, select, textarea, button {
+      font: inherit;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--card2);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+      min-height: 48px;
+    }
+
+    textarea {
+      min-height: 240px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    input[type="file"] { padding: 10px; }
+    input[type="range"] { padding: 0; min-height: 40px; accent-color: var(--accent); }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1.2fr .8fr .8fr; gap: 12px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .actions3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #10140f;
+      font-weight: 900;
+      min-height: 48px;
+    }
+
+    button.secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button.danger {
+      background: var(--danger);
+      color: #26110c;
+    }
+
+    .resultBox, .item {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+
+    .bigtime {
+      font-size: clamp(34px, 10vw, 70px);
+      font-weight: 950;
+      margin: 8px 0;
+    }
+
+    .rowTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .itemTitle {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .pill {
+      background: var(--accent);
+      color: #10140f;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .sectionTitle {
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+      margin-top: 16px;
+      font-weight: 900;
+    }
+
+    .quickTimers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .ingredientRow {
+      display: grid;
+      grid-template-columns: 1.3fr .8fr .7fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .ingredientRow button {
+      min-height: 44px;
+      padding: 8px 10px;
+    }
+
+    .alarmOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,.78);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .alarmOverlay.active { display: flex; }
+
+    .alarmBox {
+      width: min(420px, 100%);
+      background: rgba(27,31,42,.97);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+    }
+
+    .alarmIcon { font-size: 48px; }
+    .alarmTitle { font-size: 28px; font-weight: 950; margin: 8px 0; }
+    .alarmName { color: var(--muted); font-size: 18px; margin-bottom: 18px; }
+    .stopAlarmBtn { background: var(--danger); color: #26110c; width: 100%; font-size: 18px; min-height: 56px; }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 900;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+
+    @media (max-width: 700px) {
+      .appShell, .appShell.collapsed {
+        grid-template-columns: 1fr;
+      }
+
+      .sideMenu {
+        position: relative;
+        top: auto;
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+      }
+
+      .menuTitle { display: none; }
+      .menuToggle, .menuBtn { margin-top: 0; white-space: nowrap; width: auto; min-width: 72px; text-align: center; }
+      .collapsed .menuBtn { display: none; }
+      .expanded .menuToggle::before { content: "收起分類"; }
+
+      .grid, .grid3, .actions, .actions3, .quickTimers, .ingredientRow {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .item.active {
+      border-color: rgba(183,215,168,.75);
+      box-shadow: 0 0 0 2px rgba(183,215,168,.12);
+    }
+
+
+    .previewBox {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      background: rgba(255,255,255,.03);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(22px, env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      z-index: 10000;
+      background: rgba(20,24,32,.96);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      box-shadow: 0 14px 35px rgba(0,0,0,.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: .18s ease;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .searchBox { margin-top: 12px; }
+    .searchHint {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .safeCloudBox {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .cloudPanelClean {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+    .cloudPanelClean.good {
+      border-color: rgba(183,215,168,.55);
+      color: var(--text);
+    }
+    .cloudPanelClean.bad {
+      border-color: rgba(255,167,153,.55);
+      color: var(--danger);
+    }
+    .cloudBadgeClean {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--card2);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 900;
+      margin-left: 6px;
+    }
+    .cloudBadgeClean.on {
+      background: var(--accent);
+      color: #10140f;
+    }
+    .cloudBadgeClean.admin {
+      background: #b7d7a8;
+      color: #10140f;
+    }
+
+    /* LONGMEN_STABLE_REPAIR_CSS */
+    [id*="calib"], [id*="Calib"], [class*="calib"], [class*="Calib"] {
+      display: none !important;
+    }
+
+    .bulkDeleteBox {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .bulkDeleteBox .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 6px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dangerSoft {
+      background: rgba(255,167,153,.12) !important;
+      border-color: rgba(255,167,153,.35) !important;
+      color: var(--danger) !important;
+    }
+
+    .hiddenByRepair {
+      display: none !important;
+    }
+
+    /* RECIPE_MATERIAL_BULK_CSS */
+    .ingredientBulkTools {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .ingredientBulkTools .inlineTools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+    .ingredientBulkTools input[type="number"] {
+      max-width: 120px;
+    }
+    .ingredientSelectCell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ingredientSelectCell input {
+      width: auto !important;
+    }
+
+    /* YOUTUBE_ONCE_REPAIR_CSS */
+    .youtubeAlarmPanel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .youtubeAlarmOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0,0,0,.78);
+    }
+    .youtubeAlarmOverlay.show { display: flex; }
+    .youtubeAlarmCard {
+      width: min(520px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+      padding: 18px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      text-align: center;
+    }
+    .youtubeAlarmCard h2 { margin-top: 0; }
+    .youtubeAlarmCard .actions { justify-content: center; }
+  </style>
+</head>
+<body>
+  <div id="appBg"></div>
+  <div id="appDim"></div>
+  <div id="youtubeAlarmOverlay" class="youtubeAlarmOverlay">
+    <div class="youtubeAlarmCard">
+      <h2>時間到了</h2>
+      <p class="note">YouTube 鈴聲只會開啟一次。若瀏覽器阻擋自動開啟，請手動點下面按鈕。</p>
+      <div class="actions">
+        <button id="openYoutubeAlarmBtn">開啟 YouTube 鈴聲</button>
+        <button class="secondary" id="closeYoutubeAlarmBtn">關閉提示</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast">已點擊</div>
+
+  <div class="alarmOverlay" id="alarmOverlay">
+    <div class="alarmBox">
+      <div class="alarmIcon">⏰</div>
+      <div class="alarmTitle">時間到了</div>
+      <div class="alarmName" id="alarmOverlayName">提醒已完成</div>
+      <button class="stopAlarmBtn" id="stopAlarmBtn">停止鈴聲</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header>
+      <h1>龍門陣工具箱</h1>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-ONCE-REPAIR-20260608-17</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="actions" style="margin-top:12px; max-width:420px;">
+        <button id="installAppBtn" style="display:none;">安裝成 APP</button>
+        <button class="secondary" id="reloadAppBtn">重新整理</button>
+      </div>
+    </header>
+
+    <div class="appShell expanded" id="appShell">
+      <nav class="sideMenu">
+        <button class="menuToggle" id="menuToggle"></button>
+        <div class="menuTitle">分類</div>
+        <button class="menuBtn active" data-page="craftPage" data-short="製"><span class="menuText">製作提醒</span></button>
+        <button class="menuBtn" data-page="longmenPage" data-short="龍"><span class="menuText">龍門陣</span></button>
+        <button class="menuBtn" data-page="notesPage" data-short="記"><span class="menuText">記事本</span></button>
+        <button class="menuBtn" data-page="recipePage" data-short="配"><span class="menuText">配方計算機</span></button>
+        <button class="menuBtn" data-page="settingsPage" data-short="設"><span class="menuText">設定</span></button>
+      </nav>
+
+      <main>
+        <section class="page active" id="craftPage">
+          <div class="card">
+            <h2>開始倒數</h2>
+            <div class="grid3">
+              <div>
+                <label>製作名稱</label>
+                <input id="craftName" value="製作項目" />
+              </div>
+              <div>
+                <label>材料／次數</label>
+                <input id="craftCount" type="number" min="1" value="100" />
+              </div>
+              <div>
+                <label>每個耗時（秒）</label>
+                <input id="craftSeconds" type="number" min="0.1" step="0.1" value="3.9" />
+              </div>
+            </div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>（秒）</label>
+                <input id="craftOffset" type="number" step="1" value="20" />
+              </div>
+              <div>
+                <label>校正方式</label>
+                <select id="craftOffsetMode">
+                  <option value="add">遊戲比較慢：加上</option>
+                  <option value="subtract">遊戲比較快：扣掉</option>
+                  <option value="none">不校正</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="startCraftBtn">開始倒數</button>
+              <button class="secondary" id="notifyBtn">開啟通知權限</button>
+            </div>
+
+            <div class="resultBox">
+              <div class="muted">預估總時間</div>
+              <div class="bigtime" id="craftPreview">6 分 50 秒</div>
+              <div class="muted" id="craftDetail"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="longmenPage">
+          <div class="card">
+            <h2>龍門陣鬧鐘</h2>
+            <div class="sub">固定鬧鐘與自設時間，都可以加名稱。</div>
+
+            <div style="margin-top:12px;">
+              <label>鬧鐘名稱</label>
+              <input id="alarmName" value="龍門陣" />
+            </div>
+
+            <div class="quickTimers">
+              <button data-alarm-seconds="1800" data-label="30 分鐘">30 分鐘</button>
+              <button data-alarm-seconds="3600" data-label="1 小時">1 小時</button>
+              <button data-alarm-seconds="7200" data-label="2 小時">2 小時</button>
+            </div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>自設時間數值</label>
+                <input id="customAlarmValue" type="number" min="1" value="45" />
+              </div>
+              <div>
+                <label>自設時間單位</label>
+                <select id="customAlarmUnit">
+                  <option value="minutes">分鐘</option>
+                  <option value="hours">小時</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="startCustomAlarmBtn">開始自設鬧鐘</button>
+              <button class="secondary" data-jump="craftPage">回製作提醒</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="notesPage">
+          <div class="card">
+            <h2>記事本</h2>
+            <div class="sub">本機版記事本，可自由新增、修改、刪除。</div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>記事標題</label>
+                <input id="noteTitle" placeholder="例如：菜單、材料清單" />
+              </div>
+              <div>
+                <label>目前選取</label>
+                <input id="noteCurrent" value="尚未選取記事" disabled />
+              </div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <label>記事內容</label>
+              <textarea id="noteContent" placeholder="在這裡輸入內容"></textarea>
+            </div>
+
+            <div class="actions3">
+              <button id="newNoteBtn">新增記事</button>
+              <button class="secondary" id="saveNoteBtn">儲存修改</button>
+              <button class="danger" id="deleteNoteBtn">刪除記事</button>
+            </div>
+
+            <div class="sectionTitle">記事列表</div>
+            <div class="searchBox">
+              <label>搜尋記事本</label>
+              <input id="noteSearchInput" placeholder="搜尋標題或內容，例如：菜單、材料、備註" />
+              <div class="searchHint" id="noteSearchHint">會搜尋所有記事本標題與內容。</div>
+            </div>
+            <div id="noteList"></div>
+            <div class="bulkDeleteBox" id="noteBulkDeleteBox">
+              <div class="row">
+                <span>記事本批量刪除</span>
+                <label style="display:flex; gap:6px; align-items:center; margin:0;">
+                  <input type="checkbox" id="noteBulkSelectAll" style="width:auto;" />
+                  全選
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="deleteSelectedNotesBtn">刪除勾選記事</button>
+                <button class="dangerSoft" id="deleteAllNotesBtn">刪除全部記事</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="recipePage">
+          <div class="card">
+            <h2>配方計算機</h2>
+            <div class="sub">先選已儲存配方，再輸入實際重量換算。也可以新增或修改配方內容。</div>
+
+            <details style="margin-top:12px;">
+              <summary>快速批量匯入配方</summary>
+              <div class="note" style="margin-top:10px;">
+                你可以一次貼上單一配方或多個配方，按一次按鈕就自動建立。
+                多個配方建議用 "---" 分隔。
+              </div>
+              <div style="margin-top:12px;">
+                <label>快速貼上配方</label>
+                <textarea id="recipeBulkText" placeholder="配方名稱：滷汁
+基準重量：500
+糖 100 克
+鹽 20 克
+水 300 ml
+
+---
+配方名稱：醃肉醬
+基準重量：1000
+醬油 120 ml
+米酒 80 ml
+蒜泥 30 克"></textarea>
+              </div>
+              <div class="actions3">
+                <button id="bulkImportRecipeBtn">一鍵匯入貼上內容</button>
+                <button class="secondary" id="bulkFillExampleBtn">帶入範例</button>
+                <button class="secondary" id="bulkClearBtn">清空貼上內容</button>
+              </div>
+            </details>
+
+            <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
+            <div class="searchBox">
+              <label>搜尋配方</label>
+              <input id="recipeSearchInput" placeholder="搜尋配方名稱或材料，例如：糖、醬油、滷汁" />
+              <div class="searchHint" id="recipeSearchHint">會搜尋配方名稱與材料名稱。</div>
+            </div>
+            <div id="recipeList"></div>
+            <div class="bulkDeleteBox" id="recipeBulkDeleteBox">
+              <div class="row">
+                <span>配方批量刪除</span>
+                <label style="display:flex; gap:6px; align-items:center; margin:0;">
+                  <input type="checkbox" id="recipeBulkSelectAll" style="width:auto;" />
+                  全選
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="deleteSelectedRecipesBtn">刪除勾選配方</button>
+                <button class="dangerSoft" id="deleteAllRecipesBtn">刪除全部配方</button>
+              </div>
+            </div>
+
+            <div class="sectionTitle">2. 換算</div>
+            <div class="grid">
+              <div>
+                <label>實際原材料重量（克）</label>
+                <input id="recipeTarget" type="number" min="0.01" step="0.01" value="1" />
+              </div>
+              <div>
+                <label>倍率</label>
+                <input id="recipeRatio" disabled />
+              </div>
+            </div>
+
+            <div id="recipeResults"></div>
+
+            <div class="sectionTitle">3. 配方內容</div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>配方名稱</label>
+                <input id="recipeName" placeholder="例如：醃料、菜單配方" />
+              </div>
+              <div>
+                <label>基準原材料重量（克）</label>
+                <input id="recipeBase" type="number" min="0.01" step="0.01" value="500" />
+              </div>
+            </div>
+
+            <div class="sectionTitle">4. 配方材料</div>
+            <div id="ingredientBox"></div>
+
+            <div class="actions3">
+              <button id="newRecipeBtn">新增配方</button>
+              <button class="secondary" id="saveRecipeBtn">儲存修改</button>
+              <button class="secondary" id="saveAsRecipeBtn">另存新配方</button>
+            </div>
+
+            <div class="actions">
+              <button id="addIngredientBtn">新增材料</button>
+            <div class="ingredientBulkTools" id="ingredientBulkTools">
+              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">材料欄位工具</div>
+              <div class="inlineTools">
+                
+                <button class="secondary" id="selectAllIngredientsBtn">全選材料</button>
+                <button class="dangerSoft" id="deleteSelectedIngredientsBtn">刪除勾選材料</button>
+              </div>
+              <div class="note">最後一行輸入內容後會自動新增下一行；刪除材料只會修改本機配方，雲端要等「本機資料上傳雲端」才會同步。</div>
+            </div>
+            
+              <button class="danger" id="deleteRecipeBtn">刪除配方</button>
+            </div>
+
+            <div class="note">
+              使用方式：先從「已儲存配方」點選配方，再在「換算」輸入實際原材料重量。若要建立不同配方，請按「新增配方」或「另存新配方」。
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="settingsPage">
+          <div class="card">
+            <div class="youtubeAlarmPanel" id="youtubeAlarmSettingsPanel">
+              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">YouTube 鈴聲設定</div>
+              <label>鈴聲類型</label>
+              <select id="alarmSoundType">
+                <option value="builtin">內建鈴聲</option>
+                <option value="youtube">YouTube 網址</option>
+              </select>
+              <label style="margin-top:10px;">YouTube 鈴聲網址</label>
+              <input id="youtubeAlarmUrlInput" placeholder="貼上 YouTube 影片或播放清單網址" />
+              <div class="actions">
+                <button class="secondary" id="saveYoutubeAlarmBtn">儲存 YouTube 鈴聲</button>
+                <button class="secondary" id="testYoutubeAlarmBtn">測試開啟 YouTube</button>
+              </div>
+              <div class="note">
+                選擇 YouTube 時，時間到只會開啟一次 YouTube，不播放內建鈴聲；背景播放由 YouTube App / Premium 處理。
+              </div>
+            </div>
+            <h2>設定</h2>
+
+            <div class="sectionTitle">自訂鈴聲</div>
+            <div>
+              <label>選擇音檔</label>
+              <input id="soundFile" type="file" accept="audio/*" />
+            </div>
+            <div class="actions3">
+              <button class="secondary" id="testSoundBtn">試聽</button>
+              <button class="secondary" id="defaultSoundBtn">改回預設</button>
+              <button class="danger" id="clearSoundBtn">清除</button>
+            </div>
+            <div class="note" id="soundStatus">目前：預設提示音</div>
+
+            <div class="sectionTitle">自訂背景</div>
+            <div>
+              <label>選擇背景圖片</label>
+              <input id="bgFile" type="file" accept="image/*" />
+            </div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>背景暗度</label>
+                <input id="bgDim" type="range" min="0" max="85" value="25" />
+              </div>
+              <div>
+                <label>卡片透明度</label>
+                <input id="cardOpacity" type="range" min="35" max="95" value="82" />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="secondary" id="applyBgBtn">套用背景</button>
+              <button class="danger" id="clearBgBtn">清除背景</button>
+            </div>
+            <div class="note" id="bgStatus">目前：預設背景</div>
+
+            <div class="sectionTitle">雲端同步｜YOUTUBE-ONCE-REPAIR-20260608-17</div>
+            <div class="note">
+              版本：YOUTUBE-ONCE-REPAIR-20260608-17<br>
+              這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
+            </div>
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>管理者 Email</label>
+                <input id="cleanAdminEmailInput" placeholder="請輸入管理者 Email" />
+              </div>
+              <div>
+                <label>管理者密碼</label>
+                <input id="cleanAdminPasswordInput" type="password" placeholder="請輸入管理者密碼" />
+              </div>
+            </div>
+            <div class="actions3">
+              <button class="secondary" id="cleanTestCloudBtn">測試雲端</button>
+              <button class="secondary" id="cleanLoadCloudBtn">讀取雲端</button>
+              <button id="cleanLoginBtn">管理者登入</button>
+            </div>
+            <div class="actions">
+              <button class="secondary" id="cleanLogoutBtn">登出管理者</button>
+              <button class="secondary" id="cleanUploadBtn">本機資料上傳雲端</button>
+            </div>
+            <div class="cloudPanelClean" id="cleanCloudStatus">狀態：尚未測試雲端。</div>
+            <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div>
+
+            <div class="sectionTitle">記事本備份</div>
+            <div class="actions3">
+              <button class="secondary" id="exportNotesBtn">匯出記事本</button>
+              <button class="secondary" id="importNotesBtn">合併匯入記事本</button>
+              <button class="danger" id="overwriteNotesBtn">覆蓋匯入記事本</button>
+            </div>
+            <div style="margin-top:12px;">
+              <label>記事本備份文字</label>
+              <textarea id="notesBackupText" placeholder="這裡只處理記事本備份"></textarea>
+            </div>
+            <div class="previewBox" id="notesPreviewBox">尚未偵測記事本備份內容。</div>
+            <div class="note">記事本備份只包含所有記事本內容。預設為合併匯入，不會刪除目前記事本。</div>
+
+            <div class="sectionTitle">配方備份</div>
+            <div class="actions3">
+              <button class="secondary" id="exportRecipesBtn">匯出配方</button>
+              <button class="secondary" id="importRecipesBtn">合併匯入配方</button>
+              <button class="danger" id="overwriteRecipesBtn">覆蓋匯入配方</button>
+            </div>
+            <div style="margin-top:12px;">
+              <label>配方備份文字</label>
+              <textarea id="recipesBackupText" placeholder="這裡只處理配方備份"></textarea>
+            </div>
+            <div class="previewBox" id="recipesPreviewBox">尚未偵測配方備份內容。</div>
+            <div class="note">配方備份只包含所有已儲存配方。預設為合併匯入，不會刪除目前配方。</div>
+          </div>
+        </section>
+
+        <div class="card">
+          <h2>目前倒數</h2>
+          <div id="timerList"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+<script>
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const KEY = {
+  timers: "iktah_toolbox_timers_v1",
+  notes: "iktah_toolbox_notes_v1",
+  recipes: "iktah_toolbox_recipes_v1",
+  selectedNote: "iktah_toolbox_selected_note_v1",
+  selectedRecipe: "iktah_toolbox_selected_recipe_v1",
+  sound: "iktah_toolbox_sound_v1",
+  soundName: "iktah_toolbox_sound_name_v1",
+  bg: "iktah_toolbox_bg_v1",
+  bgName: "iktah_toolbox_bg_name_v1",
+  bgDim: "iktah_toolbox_bg_dim_v1",
+  cardOpacity: "iktah_toolbox_card_opacity_v1",
+  menuCollapsed: "iktah_toolbox_menu_collapsed_v1",
+  cleanAdminEmail: "iktah_clean_admin_email_v1",
+  cleanAccessToken: "iktah_clean_access_token_v1"
+};
+
+const LEGACY_KEYS = {
+  timers: ["iktah_clean_timers", "iktahCraftTimers"],
+  notes: ["iktah_clean_notes", "iktahNotes"],
+  recipes: ["iktah_clean_recipes", "iktahRecipes"],
+  selectedNote: ["iktah_clean_selected_note", "iktahSelectedNoteId"],
+  selectedRecipe: ["iktah_clean_selected_recipe", "iktahSelectedRecipeId"],
+  sound: ["iktah_clean_sound", "iktahCustomSound"],
+  soundName: ["iktah_clean_sound_name", "iktahCustomSoundName"],
+  bg: ["iktah_clean_bg", "iktahCustomBg"],
+  bgName: ["iktah_clean_bg_name", "iktahCustomBgName"],
+  bgDim: ["iktah_clean_bg_dim", "iktahBgDim"],
+  cardOpacity: ["iktah_clean_card_opacity", "iktahCardOpacity"],
+  menuCollapsed: ["iktah_clean_menu_collapsed", "iktahMenuCollapsed"]
+};
+
+function migrateStorageOnce() {
+  const flag = "iktah_toolbox_storage_migrated_v1";
+  if (localStorage.getItem(flag) === "yes") return;
+
+  Object.keys(LEGACY_KEYS).forEach(name => {
+    const targetKey = KEY[name];
+    if (localStorage.getItem(targetKey) !== null) return;
+
+    for (const oldKey of LEGACY_KEYS[name]) {
+      const value = localStorage.getItem(oldKey);
+      if (value !== null && value !== "" && value !== "[]") {
+        localStorage.setItem(targetKey, value);
+        break;
+      }
+    }
+  });
+
+  localStorage.setItem(flag, "yes");
+}
+
+migrateStorageOnce();
+
+let timers = JSON.parse(localStorage.getItem(KEY.timers) || "[]");
+let notes = JSON.parse(localStorage.getItem(KEY.notes) || "[]");
+let recipes = JSON.parse(localStorage.getItem(KEY.recipes) || "[]");
+let selectedNoteId = localStorage.getItem(KEY.selectedNote) || "";
+let selectedRecipeId = localStorage.getItem(KEY.selectedRecipe) || "";
+let cleanCloudMode = false;
+let cleanAdminEmail = localStorage.getItem(KEY.cleanAdminEmail) || "";
+let cleanAccessToken = localStorage.getItem(KEY.cleanAccessToken) || "";
+let cleanAdminLoggedIn = !!cleanAccessToken;
+let customSound = localStorage.getItem(KEY.sound) || "";
+let customSoundName = localStorage.getItem(KEY.soundName) || "";
+let customBg = localStorage.getItem(KEY.bg) || "";
+let customBgName = localStorage.getItem(KEY.bgName) || "";
+let bgDim = localStorage.getItem(KEY.bgDim) || "25";
+let cardOpacity = localStorage.getItem(KEY.cardOpacity) || "82";
+let alarmAudio = null;
+let defaultAlarmInterval = null;
+let deferredInstallPrompt = null;
+
+function saveTimers() { localStorage.setItem(KEY.timers, JSON.stringify(timers)); }
+function saveNotes() { localStorage.setItem(KEY.notes, JSON.stringify(notes)); localStorage.setItem(KEY.selectedNote, selectedNoteId); }
+function saveRecipes() { localStorage.setItem(KEY.recipes, JSON.stringify(recipes)); localStorage.setItem(KEY.selectedRecipe, selectedRecipeId); }
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+  }[c]));
+}
+
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function formatAmount(num) {
+  const n = Number(num || 0);
+  if (!Number.isFinite(n)) return "0";
+  return (Math.round(n * 1000) / 1000).toFixed(3).replace(/\.?0+$/, "");
+}
+
+function formatDuration(seconds) {
+  const safe = Math.max(0, Number(seconds || 0));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = Math.round((safe - h * 3600 - m * 60) * 10) / 10;
+  const parts = [];
+  if (h > 0) parts.push(`${h} 小時`);
+  if (m > 0) parts.push(`${m} 分`);
+  if (s > 0 || parts.length === 0) parts.push(`${s.toFixed(s % 1 === 0 ? 0 : 1)} 秒`);
+  return parts.join(" ");
+}
+
+function formatClock(seconds) {
+  let total = Math.max(0, Math.ceil(Number(seconds || 0)));
+  const h = Math.floor(total / 3600);
+  total %= 3600;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+function timeText(ts) {
+  return new Date(ts).toLocaleString("zh-TW", {
+    month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+  });
+}
+
+function switchPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === pageId));
+  document.querySelectorAll(".menuBtn").forEach(b => b.classList.toggle("active", b.dataset.page === pageId));
+}
+
+function initMenu() {
+  document.querySelectorAll(".menuBtn").forEach(btn => {
+    btn.addEventListener("click", () => switchPage(btn.dataset.page));
+  });
+  document.querySelectorAll("[data-jump]").forEach(btn => {
+    btn.addEventListener("click", () => switchPage(btn.dataset.jump));
+  });
+
+  const shell = $("appShell");
+  let collapsed = localStorage.getItem(KEY.menuCollapsed) === "yes";
+  function apply() {
+    shell.classList.toggle("collapsed", collapsed);
+    shell.classList.toggle("expanded", !collapsed);
+  }
+  $("menuToggle").addEventListener("click", () => {
+    collapsed = !collapsed;
+    localStorage.setItem(KEY.menuCollapsed, collapsed ? "yes" : "no");
+    apply();
+  });
+  apply();
+}
+
+function adjustedSeconds(baseSeconds) {
+  const offset = Number($("craftOffset").value || 0);
+  const mode = $("craftOffsetMode").value;
+  if (mode === "add") return Math.max(0, baseSeconds + offset);
+  if (mode === "subtract") return Math.max(0, baseSeconds - offset);
+  return Math.max(0, baseSeconds);
+}
+
+function updateCraftPreview() {
+  const count = Number($("craftCount").value || 0);
+  const seconds = Number($("craftSeconds").value || 0);
+  const base = count * seconds;
+  const total = adjustedSeconds(base);
+  $("craftPreview").textContent = formatDuration(total);
+  $("craftDetail").textContent = `計算：${count} × ${seconds} 秒 = ${formatAmount(base)} 秒；校正後 ${formatAmount(total)} 秒`;
+}
+
+function addTimer(name, totalSeconds, label) {
+  const now = Date.now();
+  const timer = {
+    id: String(now) + Math.random().toString(16).slice(2),
+    name: name || "提醒",
+    totalSeconds: Math.max(1, Number(totalSeconds || 1)),
+    label: label || formatDuration(totalSeconds),
+    endAt: now + Math.max(1, Number(totalSeconds || 1)) * 1000,
+    paused: false,
+    remaining: null
+  };
+  timers.unshift(timer);
+  saveTimers();
+  renderTimers();
+  switchPage("craftPage");
+}
+
+function initCraft() {
+  ["craftCount", "craftSeconds", "craftOffset", "craftOffsetMode"].forEach(id => {
+    $(id).addEventListener("input", updateCraftPreview);
+    $(id).addEventListener("change", updateCraftPreview);
+  });
+  $("startCraftBtn").addEventListener("click", () => {
+    const name = $("craftName").value.trim() || "製作項目";
+    const count = Number($("craftCount").value || 0);
+    const seconds = Number($("craftSeconds").value || 0);
+    const base = count * seconds;
+    const total = adjustedSeconds(base);
+    if (count <= 0 || seconds <= 0) return alert("請輸入正確的數量與秒數。");
+    addTimer(name, total, `${count} 個 × ${seconds} 秒`);
+  });
+  $("notifyBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) return alert("這個瀏覽器不支援通知。");
+    const permission = await Notification.requestPermission();
+    alert(permission === "granted" ? "通知已開啟。" : "通知未開啟。");
+  });
+  updateCraftPreview();
+}
+
+function initLongmen() {
+  document.querySelectorAll("[data-alarm-seconds]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const name = $("alarmName").value.trim() || "龍門陣";
+      addTimer(name, Number(btn.dataset.alarmSeconds), btn.dataset.label);
+    });
+  });
+  $("startCustomAlarmBtn").addEventListener("click", () => {
+    const value = Number($("customAlarmValue").value || 0);
+    const unit = $("customAlarmUnit").value;
+    if (value <= 0) return alert("請輸入正確的自設時間。");
+    const seconds = unit === "hours" ? value * 3600 : value * 60;
+    const label = unit === "hours" ? `${value} 小時` : `${value} 分鐘`;
+    const name = $("alarmName").value.trim() || `龍門陣 ${label}`;
+    addTimer(name, seconds, label);
+  });
+}
+
+function renderTimers() {
+  const box = $("timerList");
+  if (!timers.length) {
+    box.innerHTML = `<div class="muted">目前沒有進行中的倒數。</div>`;
+    return;
+  }
+  const now = Date.now();
+  box.innerHTML = timers.map(t => {
+    const remaining = t.paused ? t.remaining : Math.max(0, (t.endAt - now) / 1000);
+    return `
+      <div class="item">
+        <div class="rowTop">
+          <div>
+            <div class="itemTitle">${escapeHtml(t.name)}</div>
+            <div class="muted">${escapeHtml(t.label || "")}</div>
+          </div>
+          <span class="pill">${t.paused ? "已暫停" : "倒數中"}</span>
+        </div>
+        <div class="bigtime">${formatClock(remaining)}</div>
+        <div class="muted">預計完成：${timeText(t.endAt)}</div>
+        <div class="actions3">
+          <button class="secondary" onclick="pauseTimer('${t.id}')">暫停</button>
+          <button class="secondary" onclick="resumeTimer('${t.id}')">繼續</button>
+          <button class="danger" onclick="deleteTimer('${t.id}')">刪除</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function pauseTimer(id) {
+  const t = timers.find(x => x.id === id);
+  if (!t || t.paused) return;
+  t.remaining = Math.max(0, (t.endAt - Date.now()) / 1000);
+  t.paused = true;
+  saveTimers();
+  renderTimers();
+}
+
+function resumeTimer(id) {
+  const t = timers.find(x => x.id === id);
+  if (!t || !t.paused) return;
+  t.endAt = Date.now() + t.remaining * 1000;
+  t.remaining = null;
+  t.paused = false;
+  saveTimers();
+  renderTimers();
+}
+
+function deleteTimer(id) {
+  timers = timers.filter(t => t.id !== id);
+  saveTimers();
+  renderTimers();
+}
+
+function tickTimers() {
+  const now = Date.now();
+  const due = timers.filter(t => !t.paused && t.endAt <= now);
+  due.forEach(t => completeTimer(t));
+  renderTimers();
+}
+
+function completeTimer(t) {
+  timers = timers.filter(x => x.id !== t.id);
+  saveTimers();
+  startAlarm(t.name);
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification("龍門陣工具箱 提醒完成", { body: `${t.name} 時間到了。` });
+  }
+}
+
+function playDefaultBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+  } catch(e) {}
+}
+
+function stopAudioOnly() {
+  if (alarmAudio) {
+    try { alarmAudio.pause(); alarmAudio.currentTime = 0; } catch(e) {}
+    alarmAudio = null;
+  }
+  if (defaultAlarmInterval) {
+    clearInterval(defaultAlarmInterval);
+    defaultAlarmInterval = null;
+  }
+}
+
+function startAlarm(name) {
+  $("alarmOverlayName").textContent = name || "提醒已完成";
+  $("alarmOverlay").classList.add("active");
+  stopAudioOnly();
+
+  if (customSound) {
+    alarmAudio = new Audio(customSound);
+    alarmAudio.loop = true;
+    alarmAudio.volume = 1;
+    alarmAudio.play().catch(() => {
+      alarmAudio = null;
+      playDefaultBeep();
+      defaultAlarmInterval = setInterval(playDefaultBeep, 1200);
+    });
+  } else {
+    playDefaultBeep();
+    defaultAlarmInterval = setInterval(playDefaultBeep, 1200);
+  }
+}
+
+function stopAlarm() {
+  stopAudioOnly();
+  $("alarmOverlay").classList.remove("active");
+}
+
+function initNotes() {
+  $("newNoteBtn").addEventListener("click", () => {
+    selectedNoteId = "";
+    $("noteTitle").value = "";
+    $("noteContent").value = "";
+    $("noteCurrent").value = "新增記事";
+  });
+  $("saveNoteBtn").addEventListener("click", saveCurrentNote);
+  $("deleteNoteBtn").addEventListener("click", deleteCurrentNote);
+
+  if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
+  else if (notes[0]) selectNote(notes[0].id);
+  else renderNotes();
+}
+
+function saveCurrentNote() {
+  const title = $("noteTitle").value.trim() || "未命名記事";
+  const content = $("noteContent").value || "";
+  const now = Date.now();
+
+  let note = notes.find(n => n.id === selectedNoteId);
+  if (note) {
+    note.title = title;
+    note.content = content;
+    note.updatedAt = now;
+    notes = [note, ...notes.filter(n => n.id !== selectedNoteId)];
+  } else {
+    note = { id: String(now) + Math.random().toString(16).slice(2), title, content, createdAt: now, updatedAt: now };
+    notes.unshift(note);
+    selectedNoteId = note.id;
+  }
+  saveNotes();
+  renderNotes();
+  $("noteCurrent").value = title;
+  alert("記事已儲存。");
+}
+
+function selectNote(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  selectedNoteId = id;
+  $("noteTitle").value = note.title;
+  $("noteContent").value = note.content;
+  $("noteCurrent").value = note.title;
+  saveNotes();
+  renderNotes();
+}
+
+function deleteCurrentNote() {
+  if (!selectedNoteId) return alert("目前沒有選取記事。");
+  if (!confirm("確定刪除這則記事嗎？")) return;
+  notes = notes.filter(n => n.id !== selectedNoteId);
+  selectedNoteId = notes[0]?.id || "";
+  saveNotes();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  else {
+    $("noteTitle").value = "";
+    $("noteContent").value = "";
+    $("noteCurrent").value = "尚未選取記事";
+    renderNotes();
+  }
+}
+
+function renderNotes() {
+  const box = $("noteList");
+  if (!notes.length) {
+    box.innerHTML = `<div class="muted">還沒有記事。</div>`;
+    return;
+  }
+  box.innerHTML = notes.map(n => `
+    <div class="item" onclick="selectNote('${n.id}')">
+      <div class="itemTitle">${escapeHtml(n.title)}</div>
+      <div class="muted">更新：${timeText(n.updatedAt)}</div>
+      <div class="muted">${escapeHtml((n.content || "").slice(0, 60))}</div>
+    </div>
+  `).join("");
+}
+
+
+function splitRecipeBlocks(text) {
+  const normalized = String(text || "").replace(/\r/g, "").trim();
+  if (!normalized) return [];
+
+  if (/^\s*(---+|===+)\s*$/m.test(normalized)) {
+    return normalized.split(/^\s*(?:---+|===+)\s*$/m).map(x => x.trim()).filter(Boolean);
+  }
+
+  const lines = normalized.split("\n");
+  const blocks = [];
+  let current = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (/^配方名稱\s*[:：]/.test(line) && current.length) {
+      blocks.push(current.join("\n").trim());
+      current = [rawLine];
+    } else {
+      current.push(rawLine);
+    }
+  }
+
+  if (current.length) blocks.push(current.join("\n").trim());
+  return blocks.filter(Boolean);
+}
+
+function parseIngredientLine(line) {
+  let s = String(line || "").trim();
+  if (!s) return null;
+
+  s = s.replace(/[\t]+/g, " ").replace(/\s+/g, " ");
+  s = s.replace(/[，]/g, ",").replace(/[／]/g, "/").replace(/[：]/g, ":");
+
+  let name = "";
+  let amount = null;
+  let unit = "";
+
+  if (s.includes(",")) {
+    const parts = s.split(",").map(x => x.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      name = parts[0] || "";
+      amount = Number(parts[1]);
+      unit = parts[2] || "克";
+    }
+  } else if (s.includes("/") && !/^https?:/i.test(s)) {
+    const parts = s.split("/").map(x => x.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      name = parts[0] || "";
+      amount = Number(parts[1]);
+      unit = parts[2] || "克";
+    }
+  } else if (s.includes(":") && !/^配方名稱\s*:/.test(s) && !/^基準(?:重量|原材料重量)?\s*:/.test(s)) {
+    const parts = s.split(":");
+    if (parts.length >= 2) {
+      name = parts[0].trim();
+      const right = parts.slice(1).join(":").trim();
+      const match = right.match(/^(-?\d+(?:\.\d+)?)\s*(.*)$/);
+      if (match) {
+        amount = Number(match[1]);
+        unit = (match[2] || "").trim() || "克";
+      }
+    }
+  } else {
+    const match = s.match(/^(.*?)(-?\d+(?:\.\d+)?)\s*([^\d].*)?$/);
+    if (match) {
+      name = (match[1] || "").trim();
+      amount = Number(match[2]);
+      unit = (match[3] || "").trim() || "克";
+    }
+  }
+
+  if (!name || !Number.isFinite(amount)) return null;
+  return { name, amount, unit: unit || "克" };
+}
+
+function parseRecipeBlock(blockText, index) {
+  const lines = String(blockText || "").replace(/\r/g, "").split("\n").map(x => x.trim()).filter(Boolean);
+  let name = "";
+  let baseWeight = null;
+  const ingredients = [];
+
+  lines.forEach(line => {
+    const normalized = line.replace(/[：]/g, ":");
+    const nameMatch = normalized.match(/^配方名稱\s*:\s*(.+)$/i);
+    if (nameMatch) {
+      name = nameMatch[1].trim();
+      return;
+    }
+
+    const baseMatch = normalized.match(/^基準(?:重量|原材料重量)?\s*:\s*(-?\d+(?:\.\d+)?)/i);
+    if (baseMatch) {
+      baseWeight = Number(baseMatch[1]);
+      return;
+    }
+
+    const ingredient = parseIngredientLine(normalized);
+    if (ingredient) ingredients.push(ingredient);
+  });
+
+  if (!ingredients.length) return null;
+
+  return {
+    name: name || `未命名配方 ${index + 1}`,
+    baseWeight: Number.isFinite(baseWeight) && baseWeight > 0 ? baseWeight : 500,
+    ingredients
+  };
+}
+
+function bulkImportRecipes() {
+  const text = $("recipeBulkText").value.trim();
+  if (!text) return alert("請先貼上配方內容。");
+
+  const blocks = splitRecipeBlocks(text);
+  const parsed = blocks.map((block, idx) => parseRecipeBlock(block, idx)).filter(Boolean);
+
+  if (!parsed.length) {
+    return alert("沒有解析到可用配方。請確認格式像：配方名稱、基準重量、材料 數量 單位。");
+  }
+
+  const now = Date.now();
+  const imported = parsed.map((item, idx) => ({
+    id: String(now + idx) + Math.random().toString(16).slice(2),
+    name: item.name,
+    baseWeight: item.baseWeight,
+    ingredients: item.ingredients,
+    createdAt: now + idx,
+    updatedAt: now + idx
+  }));
+
+  recipes = [...imported, ...recipes];
+  selectedRecipeId = imported[0].id;
+  saveRecipes();
+  renderRecipeList();
+  selectRecipe(selectedRecipeId);
+  $("recipeBulkText").value = "";
+
+  alert(`已匯入 ${imported.length} 個配方。`);
+}
+
+function fillBulkRecipeExample() {
+  $("recipeBulkText").value = `配方名稱：滷汁
+基準重量：500
+糖 100 克
+鹽 20 克
+水 300 ml
+醬油 50 ml
+
+---
+配方名稱：醃肉醬
+基準重量：1000
+醬油 120 ml
+米酒 80 ml
+蒜泥 30 克
+糖 50 克`;
+}
+
+
+function initRecipe() {
+  $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
+  $("newRecipeBtn").addEventListener("click", newRecipeForm);
+  $("saveRecipeBtn").addEventListener("click", () => saveRecipe(false));
+  $("saveAsRecipeBtn").addEventListener("click", () => saveRecipe(true));
+  $("deleteRecipeBtn").addEventListener("click", deleteRecipe);
+  $("bulkImportRecipeBtn").addEventListener("click", bulkImportRecipes);
+  $("bulkFillExampleBtn").addEventListener("click", fillBulkRecipeExample);
+  $("bulkClearBtn").addEventListener("click", () => { $("recipeBulkText").value = ""; });
+  ["recipeBase", "recipeTarget"].forEach(id => $(id).addEventListener("input", calculateRecipe));
+
+  if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
+  else if (recipes[0]) selectRecipe(recipes[0].id);
+  else {
+    newRecipeForm();
+    renderRecipeList();
+  }
+}
+
+function newRecipeForm() {
+  selectedRecipeId = "";
+  $("recipeName").value = "";
+  $("recipeBase").value = 500;
+  $("recipeTarget").value = 340;
+  clearIngredients();
+  addIngredientRow("糖", 100, "克");
+  saveRecipes();
+  renderRecipeList();
+  calculateRecipe();
+}
+
+function addIngredientRow(name = "", amount = "", unit = "克") {
+  const row = document.createElement("div");
+  row.className = "ingredientRow";
+
+  const nameInput = document.createElement("input");
+  nameInput.placeholder = "材料名稱";
+  nameInput.className = "ingName";
+  nameInput.value = name;
+
+  const amountInput = document.createElement("input");
+  amountInput.placeholder = "數量";
+  amountInput.type = "number";
+  amountInput.step = "0.001";
+  amountInput.className = "ingAmount";
+  amountInput.value = amount;
+
+  const unitInput = document.createElement("input");
+  unitInput.placeholder = "單位";
+  unitInput.className = "ingUnit";
+  unitInput.value = unit;
+
+  const del = document.createElement("button");
+  del.className = "danger";
+  del.textContent = "刪除";
+  del.type = "button";
+  del.addEventListener("click", () => { row.remove(); calculateRecipe(); });
+
+  [nameInput, amountInput, unitInput].forEach(i => i.addEventListener("input", calculateRecipe));
+
+  row.append(nameInput, amountInput, unitInput, del);
+  $("ingredientBox").appendChild(row);
+  calculateRecipe();
+}
+
+function getIngredients() {
+  return Array.from(document.querySelectorAll(".ingredientRow")).map(row => ({
+    name: row.querySelector(".ingName").value.trim(),
+    amount: Number(row.querySelector(".ingAmount").value || 0),
+    unit: row.querySelector(".ingUnit").value.trim() || "克"
+  })).filter(i => i.name || i.amount > 0);
+}
+
+function clearIngredients() {
+  $("ingredientBox").innerHTML = "";
+}
+
+function calculateRecipe() {
+  const base = Number($("recipeBase").value || 0);
+  const target = Number($("recipeTarget").value || 0);
+  const ratio = base > 0 ? target / base : 0;
+  $("recipeRatio").value = `${formatAmount(ratio)} 倍`;
+
+  const items = getIngredients();
+  if (!items.length) {
+    $("recipeResults").innerHTML = `<div class="muted" style="margin-top:12px;">尚未新增材料。</div>`;
+    return;
+  }
+
+  $("recipeResults").innerHTML = items.map(i => `
+    <div class="resultBox">
+      <div><strong>${escapeHtml(i.name || "未命名材料")}</strong></div>
+      <div class="muted">基準：${formatAmount(i.amount)} ${escapeHtml(i.unit)}</div>
+      <div>實際需要：<strong>${formatAmount(i.amount * ratio)} ${escapeHtml(i.unit)}</strong></div>
+    </div>
+  `).join("");
+}
+
+function saveRecipe(forceNew = false) {
+  const name = $("recipeName").value.trim() || "未命名配方";
+  const base = Number($("recipeBase").value || 0);
+  const ingredients = getIngredients();
+  if (base <= 0) return alert("請輸入正確的基準原材料重量。");
+  if (!ingredients.length) return alert("請至少新增一個材料。");
+
+  const now = Date.now();
+  let recipe = !forceNew ? recipes.find(r => r.id === selectedRecipeId) : null;
+
+  if (recipe) {
+    recipe.name = name;
+    recipe.baseWeight = base;
+    recipe.ingredients = ingredients;
+    recipe.updatedAt = now;
+    recipes = [recipe, ...recipes.filter(r => r.id !== selectedRecipeId)];
+  } else {
+    recipe = {
+      id: String(now) + Math.random().toString(16).slice(2),
+      name,
+      baseWeight: base,
+      ingredients,
+      createdAt: now,
+      updatedAt: now
+    };
+    recipes.unshift(recipe);
+    selectedRecipeId = recipe.id;
+  }
+
+  saveRecipes();
+  selectRecipe(selectedRecipeId);
+  alert(forceNew ? "已另存為新配方。" : "配方已儲存。");
+}
+
+function deleteRecipe() {
+  if (!selectedRecipeId) return alert("目前沒有選取配方。");
+  const recipe = recipes.find(r => r.id === selectedRecipeId);
+  if (!confirm(`確定刪除「${recipe ? recipe.name : "這個配方"}」嗎？`)) return;
+
+  recipes = recipes.filter(r => r.id !== selectedRecipeId);
+  selectedRecipeId = recipes[0]?.id || "";
+  saveRecipes();
+
+  if (selectedRecipeId) {
+    selectRecipe(selectedRecipeId);
+  } else {
+    newRecipeForm();
+  }
+}
+
+function selectRecipe(id) {
+  const recipe = recipes.find(r => r.id === id);
+  if (!recipe) return;
+  selectedRecipeId = id;
+  $("recipeName").value = recipe.name;
+  $("recipeBase").value = recipe.baseWeight;
+  clearIngredients();
+  recipe.ingredients.forEach(i => addIngredientRow(i.name, i.amount, i.unit));
+  saveRecipes();
+  renderRecipeList();
+  calculateRecipe();
+}
+
+function renderRecipeList() {
+  const box = $("recipeList");
+  if (!recipes.length) {
+    box.innerHTML = `<div class="muted">尚未儲存配方。請到下方「配方內容」建立第一個配方。</div>`;
+    return;
+  }
+  box.innerHTML = recipes.map(r => `
+    <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
+      <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
+      <div class="muted">更新：${timeText(r.updatedAt)}</div>
+    </div>
+  `).join("");
+}
+
+
+function exportNotesData() {
+  const data = {
+    type: "iktah_notes_backup",
+    version: 1,
+    exportedAt: Date.now(),
+    notes,
+    selectedNoteId
+  };
+  $("notesBackupText").value = JSON.stringify(data, null, 2);
+  updateNotesPreview();
+  alert(`已匯出記事本 ${notes.length} 筆。請複製備份文字保存。`);
+}
+
+function exportRecipesData() {
+  const data = {
+    type: "iktah_recipes_backup",
+    version: 1,
+    exportedAt: Date.now(),
+    recipes,
+    selectedRecipeId
+  };
+  $("recipesBackupText").value = JSON.stringify(data, null, 2);
+  updateRecipesPreview();
+  alert(`已匯出配方 ${recipes.length} 筆。請複製備份文字保存。`);
+}
+
+function updateNotesPreview() {
+  const box = $("notesPreviewBox");
+  const text = $("notesBackupText").value.trim();
+  if (!text) {
+    box.textContent = "尚未偵測記事本備份內容。";
+    return;
+  }
+
+  try {
+    const data = JSON.parse(text);
+    const count = Array.isArray(data.notes) ? data.notes.length : 0;
+    const typeOk = data.type === "iktah_notes_backup" || Array.isArray(data.notes);
+    box.textContent = typeOk
+      ? `偵測到記事本備份：${count} 筆記事本。`
+      : "這不是有效的記事本備份格式。";
+  } catch (e) {
+    box.textContent = "記事本備份文字格式錯誤。";
+  }
+}
+
+function updateRecipesPreview() {
+  const box = $("recipesPreviewBox");
+  const text = $("recipesBackupText").value.trim();
+  if (!text) {
+    box.textContent = "尚未偵測配方備份內容。";
+    return;
+  }
+
+  try {
+    const data = JSON.parse(text);
+    const count = Array.isArray(data.recipes) ? data.recipes.length : 0;
+    const typeOk = data.type === "iktah_recipes_backup" || Array.isArray(data.recipes);
+    box.textContent = typeOk
+      ? `偵測到配方備份：${count} 筆配方。`
+      : "這不是有效的配方備份格式。";
+  } catch (e) {
+    box.textContent = "配方備份文字格式錯誤。";
+  }
+}
+
+function importNotesData(mode = "merge") {
+  const text = $("notesBackupText").value.trim();
+  if (!text) return alert("請先貼上記事本備份文字。");
+
+  try {
+    const data = JSON.parse(text);
+    const incomingNotes = Array.isArray(data.notes) ? data.notes : [];
+    if (!incomingNotes.length) return alert("這份備份裡沒有記事本資料。");
+
+    if (mode === "overwrite") {
+      if (!confirm(`覆蓋匯入會清掉目前記事本，改成備份內容。
+
+備份內含：記事本 ${incomingNotes.length} 筆。
+
+確定要覆蓋嗎？`)) return;
+      notes = incomingNotes;
+    } else {
+      const existingNoteIds = new Set(notes.map(n => n.id));
+      incomingNotes.forEach(n => {
+        const copy = {...n};
+        if (!copy.id || existingNoteIds.has(copy.id)) {
+          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
+        }
+        notes.unshift(copy);
+      });
+    }
+
+    selectedNoteId = notes[0]?.id || "";
+    saveNotes();
+    renderNotes();
+    if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
+
+    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}記事本完成：${incomingNotes.length} 筆。`);
+  } catch (e) {
+    alert("匯入失敗，記事本備份文字格式不正確。");
+  }
+}
+
+function importRecipesData(mode = "merge") {
+  const text = $("recipesBackupText").value.trim();
+  if (!text) return alert("請先貼上配方備份文字。");
+
+  try {
+    const data = JSON.parse(text);
+    const incomingRecipes = Array.isArray(data.recipes) ? data.recipes : [];
+    if (!incomingRecipes.length) return alert("這份備份裡沒有配方資料。");
+
+    if (mode === "overwrite") {
+      if (!confirm(`覆蓋匯入會清掉目前配方，改成備份內容。
+
+備份內含：配方 ${incomingRecipes.length} 筆。
+
+確定要覆蓋嗎？`)) return;
+      recipes = incomingRecipes;
+    } else {
+      const existingRecipeIds = new Set(recipes.map(r => r.id));
+      incomingRecipes.forEach(r => {
+        const copy = {...r};
+        if (!copy.id || existingRecipeIds.has(copy.id)) {
+          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
+        }
+        recipes.unshift(copy);
+      });
+    }
+
+    selectedRecipeId = recipes[0]?.id || "";
+    saveRecipes();
+    renderRecipeList();
+    if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
+
+    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}配方完成：${incomingRecipes.length} 筆。`);
+  } catch (e) {
+    alert("匯入失敗，配方備份文字格式不正確。");
+  }
+}
+
+
+
+function initSettings() {
+  updateSoundStatus();
+  updateBg();
+  updateNotesPreview();
+  updateRecipesPreview();
+
+  if ($("exportNotesBtn")) $("exportNotesBtn").addEventListener("click", exportNotesData);
+  if ($("importNotesBtn")) $("importNotesBtn").addEventListener("click", () => importNotesData("merge"));
+  if ($("overwriteNotesBtn")) $("overwriteNotesBtn").addEventListener("click", () => importNotesData("overwrite"));
+  if ($("notesBackupText")) $("notesBackupText").addEventListener("input", updateNotesPreview);
+
+  if ($("exportRecipesBtn")) $("exportRecipesBtn").addEventListener("click", exportRecipesData);
+  if ($("importRecipesBtn")) $("importRecipesBtn").addEventListener("click", () => importRecipesData("merge"));
+  if ($("overwriteRecipesBtn")) $("overwriteRecipesBtn").addEventListener("click", () => importRecipesData("overwrite"));
+  if ($("recipesBackupText")) $("recipesBackupText").addEventListener("input", updateRecipesPreview);
+
+  $("soundFile").addEventListener("change", () => {
+    const file = $("soundFile").files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) return alert("請選擇音訊檔。");
+    if (file.size > 1024 * 1024 * 2.5) return alert("音檔太大，建議 2.5MB 以下。");
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      customSound = reader.result;
+      customSoundName = file.name;
+      localStorage.setItem(KEY.sound, customSound);
+      localStorage.setItem(KEY.soundName, customSoundName);
+      updateSoundStatus();
+      alert("自訂鈴聲已儲存。");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("testSoundBtn").addEventListener("click", () => customSound ? new Audio(customSound).play() : playDefaultBeep());
+  $("defaultSoundBtn").addEventListener("click", () => {
+    customSound = "";
+    customSoundName = "";
+    localStorage.removeItem(KEY.sound);
+    localStorage.removeItem(KEY.soundName);
+    updateSoundStatus();
+    playDefaultBeep();
+  });
+  $("clearSoundBtn").addEventListener("click", () => {
+    customSound = "";
+    customSoundName = "";
+    localStorage.removeItem(KEY.sound);
+    localStorage.removeItem(KEY.soundName);
+    updateSoundStatus();
+  });
+
+  $("bgFile").addEventListener("change", () => {
+    const file = $("bgFile").files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return alert("請選擇圖片檔。");
+    if (file.size > 1024 * 1024 * 4) return alert("圖片太大，建議 4MB 以下。");
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      customBg = reader.result;
+      customBgName = file.name;
+      localStorage.setItem(KEY.bg, customBg);
+      localStorage.setItem(KEY.bgName, customBgName);
+      updateBg();
+      alert("背景已儲存。");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("applyBgBtn").addEventListener("click", () => {
+    bgDim = $("bgDim").value;
+    cardOpacity = $("cardOpacity").value;
+    localStorage.setItem(KEY.bgDim, bgDim);
+    localStorage.setItem(KEY.cardOpacity, cardOpacity);
+    updateBg();
+  });
+
+  $("clearBgBtn").addEventListener("click", () => {
+    customBg = "";
+    customBgName = "";
+    localStorage.removeItem(KEY.bg);
+    localStorage.removeItem(KEY.bgName);
+    updateBg();
+  });
+}
+
+function updateSoundStatus() {
+  $("soundStatus").textContent = customSound ? `目前：${customSoundName}` : "目前：預設提示音";
+}
+
+function updateBg() {
+  $("bgDim").value = bgDim;
+  $("cardOpacity").value = cardOpacity;
+  document.documentElement.style.setProperty("--bgDim", Number(bgDim) / 100);
+  document.documentElement.style.setProperty("--card", `rgba(27,31,42,${Number(cardOpacity) / 100})`);
+  $("appBg").style.backgroundImage = customBg
+    ? `url("${customBg}")`
+    : `radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%), radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%), linear-gradient(180deg, #111318, #111318)`;
+  $("bgStatus").textContent = customBg ? `目前：${customBgName}` : "目前：預設背景";
+}
+
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  const btn = $("installAppBtn");
+  if (btn) btn.style.display = "block";
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  const btn = $("installAppBtn");
+  if (btn) btn.style.display = "none";
+});
+
+function initInstallButton() {
+  const installBtn = $("installAppBtn");
+  const reloadBtn = $("reloadAppBtn");
+
+  if (installBtn) {
+    installBtn.addEventListener("click", async () => {
+      if (!deferredInstallPrompt) {
+        alert("目前瀏覽器沒有提供安裝提示。請用 Chrome 開啟正式網址，或用右上角選單 → 新增至主畫面。");
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installBtn.style.display = "none";
+    });
+  }
+
+  if (reloadBtn) {
+    reloadBtn.addEventListener("click", () => location.reload());
+  }
+}
+
+function initPwa() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/service-worker.js");
+  }
+}
+
+
+let toastTimer = null;
+function showToast(message = "已點擊") {
+  const toast = $("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 1200);
+}
+
+document.addEventListener("click", (event) => {
+  const btn = event.target.closest && event.target.closest("button");
+  if (!btn || btn.disabled) return;
+  const label = (btn.textContent || "按鈕").trim();
+  showToast(`已點擊：${label}`);
+});
+
+/* 安全搜尋：覆蓋列表渲染，不影響其他功能 */
+function renderNotes() {
+  const box = $("noteList");
+  if (!box) return;
+
+  if (!notes.length) {
+    box.innerHTML = `<div class="muted">還沒有記事。</div>`;
+    if ($("noteSearchHint")) $("noteSearchHint").textContent = "目前沒有記事可搜尋。";
+    return;
+  }
+
+  const query = $("noteSearchInput") ? $("noteSearchInput").value.trim().toLowerCase() : "";
+  const filtered = query
+    ? notes.filter(n =>
+        String(n.title || "").toLowerCase().includes(query) ||
+        String(n.content || "").toLowerCase().includes(query)
+      )
+    : notes;
+
+  if ($("noteSearchHint")) {
+    $("noteSearchHint").textContent = query
+      ? `搜尋結果：${filtered.length} / ${notes.length} 筆記事。`
+      : `共有 ${notes.length} 筆記事。`;
+  }
+
+  if (!filtered.length) {
+    box.innerHTML = `<div class="muted">沒有符合搜尋的記事。</div>`;
+    return;
+  }
+
+  box.innerHTML = filtered.map(n => `
+    <div class="item ${n.id === selectedNoteId ? "active" : ""}" onclick="selectNote('${n.id}')">
+      <div class="itemTitle">${escapeHtml(n.title)}</div>
+      <div class="muted">更新：${timeText(n.updatedAt)}</div>
+      <div class="muted">${escapeHtml((n.content || "").slice(0, 80))}</div>
+    </div>
+  `).join("");
+}
+
+function renderRecipeList() {
+  const box = $("recipeList");
+  if (!box) return;
+
+  if (!recipes.length) {
+    box.innerHTML = `<div class="muted">尚未儲存配方。請到下方「配方內容」建立第一個配方。</div>`;
+    if ($("recipeSearchHint")) $("recipeSearchHint").textContent = "目前沒有配方可搜尋。";
+    return;
+  }
+
+  const query = $("recipeSearchInput") ? $("recipeSearchInput").value.trim().toLowerCase() : "";
+  const filtered = query
+    ? recipes.filter(r => {
+        const nameMatch = String(r.name || "").toLowerCase().includes(query);
+        const ingredientMatch = (r.ingredients || []).some(i =>
+          String(i.name || "").toLowerCase().includes(query) ||
+          String(i.unit || "").toLowerCase().includes(query)
+        );
+        return nameMatch || ingredientMatch;
+      })
+    : recipes;
+
+  if ($("recipeSearchHint")) {
+    $("recipeSearchHint").textContent = query
+      ? `搜尋結果：${filtered.length} / ${recipes.length} 筆配方。`
+      : `共有 ${recipes.length} 筆配方。`;
+  }
+
+  if (!filtered.length) {
+    box.innerHTML = `<div class="muted">沒有符合搜尋的配方。</div>`;
+    return;
+  }
+
+  box.innerHTML = filtered.map(r => `
+    <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
+      <div class="itemTitle">${escapeHtml(r.name)}</div>
+      <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
+      <div class="muted">更新：${timeText(r.updatedAt)}</div>
+    </div>
+  `).join("");
+}
+
+/* 安全綁定搜尋框：等頁面初始化後再補上，不破壞原本 init */
+setTimeout(() => {
+  if ($("noteSearchInput")) $("noteSearchInput").addEventListener("input", renderNotes);
+  if ($("recipeSearchInput")) $("recipeSearchInput").addEventListener("input", renderRecipeList);
+  renderNotes();
+  renderRecipeList();
+}, 0);
+
+
+
+function cleanSetPanel(id, text, mode = "") {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove("good", "bad");
+  if (mode) el.classList.add(mode);
+}
+
+function cleanUpdateBadge() {
+  const badge = $("cleanCloudBadge");
+  if (!badge) return;
+  badge.classList.remove("on", "admin");
+  if (cleanAdminLoggedIn) {
+    badge.textContent = "雲端管理者";
+    badge.classList.add("admin");
+  } else if (cleanCloudMode) {
+    badge.textContent = "雲端唯讀";
+    badge.classList.add("on");
+  } else {
+    badge.textContent = "本機模式";
+  }
+}
+
+function cleanCanEdit() {
+  // 方案 A：
+  // 新增、修改、刪除一律只改本機，不直接動雲端。
+  // 管理者登入只用於「本機資料上傳雲端」。
+  return true;
+}
+
+function cleanRequireEdit() {
+  return true;
+}
+
+function cleanUpdateEditLock() {
+  [
+    "newNoteBtn", "saveNoteBtn", "deleteNoteBtn", "noteTitle", "noteContent",
+    "newRecipeBtn", "saveRecipeBtn", "saveAsRecipeBtn", "deleteRecipeBtn", "addIngredientBtn",
+    "recipeName", "recipeBase", "recipeBulkText", "bulkImportRecipeBtn", "bulkFillExampleBtn", "bulkClearBtn"
+  ].forEach(id => {
+    const el = $(id);
+    if (el) el.disabled = false;
+  });
+  cleanUpdateBadge();
+}
+
+function cleanXhr(action, payload = {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${location.origin}/api/cloud?t=${Date.now()}`, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = 25000;
+
+    xhr.onload = () => {
+      let data = null;
+      try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; }
+      catch { data = xhr.responseText; }
+
+      if (xhr.status >= 200 && xhr.status < 300 && !(data && data.error)) {
+        resolve(data);
+      } else {
+        const msg = (data && (data.error || data.message || data.details)) || xhr.responseText || `HTTP ${xhr.status}`;
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("無法連線到同網域 API /api/cloud。請確認 api/cloud.js 已上傳並部署。"));
+    xhr.ontimeout = () => reject(new Error("連線逾時。請稍後再試。"));
+    xhr.onabort = () => reject(new Error("連線中止。"));
+    xhr.send(JSON.stringify({ action, token: cleanAccessToken, ...payload }));
+  });
+}
+
+function cleanDescribeError(e) {
+  const msg = String((e && e.message) || e || "未知錯誤");
+  if (msg.includes("Method not allowed")) return "API 有部署，但呼叫方式不正確。請確認 APP 已更新到乾淨重建版。";
+  if (msg.includes("no such table") || msg.includes("does not exist") || msg.includes("relation")) return "Supabase 資料表不存在。請確認 SQL 已用 postgres 執行成功。";
+  if (msg.includes("permission") || msg.includes("RLS") || msg.includes("row-level")) return "Supabase 權限被拒絕。請確認 RLS policies 與 app_admins。";
+  if (msg.includes("Invalid login") || msg.includes("invalid_credentials")) return "管理者 Email 或密碼錯誤。";
+  return msg;
+}
+
+async function cleanTestCloud() {
+  const btn = $("cleanTestCloudBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "測試中...";
+  showToast("正在測試雲端...");
+
+  try {
+    cleanSetPanel("cleanCloudStatus", "狀態：正在測試 Vercel API 與 Supabase...", "");
+    const result = await cleanXhr("test");
+    cleanCloudMode = true;
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端測試成功。\nAPI：${result.api || "ok"}\nSupabase：${result.supabase || "ok"}`, "good");
+    showToast("雲端測試成功");
+  } catch (e) {
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端測試失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`雲端測試失敗。\n\n${cleanDescribeError(e)}`);
+  } finally {
+    if (btn) btn.textContent = old;
+    cleanUpdateEditLock();
+  }
+}
+
+function cleanNormalizeTextForDedupe(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map(line => line.trim().replace(/\s+/g, " "))
+    .join("\n")
+    .trim();
+}
+
+function cleanNoteSignature(row) {
+  return JSON.stringify({
+    title: cleanNormalizeTextForDedupe(row.title || ""),
+    content: cleanNormalizeTextForDedupe(row.content || "")
+  });
+}
+
+function cleanDedupeNotes(noteRows) {
+  const map = new Map();
+
+  for (const n of noteRows || []) {
+    const key = cleanNoteSignature(n);
+    const current = map.get(key);
+
+    // 同標題＋同內容時，保留 updated_at 較新的那筆。
+    const currentTime = current ? new Date(current.updated_at || current.updatedAt || 0).getTime() : 0;
+    const nextTime = new Date(n.updated_at || n.updatedAt || 0).getTime();
+
+    if (!current || nextTime >= currentTime) {
+      map.set(key, n);
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+function cleanRecipeSignature(row) {
+  const ingredients = (row.ingredients || [])
+    .map(i => ({
+      name: String(i.name || "").trim(),
+      amount: Number(i.amount || 0),
+      unit: String(i.unit || "克").trim()
+    }))
+    .sort((a, b) => `${a.name}|${a.amount}|${a.unit}`.localeCompare(`${b.name}|${b.amount}|${b.unit}`));
+
+  return JSON.stringify({
+    name: String(row.name || "").trim(),
+    baseWeight: Number(row.base_weight || 500),
+    ingredients
+  });
+}
+
+function cleanDedupeRecipes(recipeRows) {
+  const map = new Map();
+  for (const r of recipeRows || []) {
+    const key = cleanRecipeSignature(r);
+    if (!map.has(key)) map.set(key, r);
+  }
+  return Array.from(map.values());
+}
+
+function cleanNormalizeCloudData(data) {
+  const noteRows = cleanDedupeNotes(data.notes || []);
+  const recipeRows = cleanDedupeRecipes(data.recipes || []);
+
+  notes = noteRows.map(n => ({
+    id: n.id,
+    title: n.title || "",
+    content: n.content || "",
+    createdAt: new Date(n.created_at || Date.now()).getTime(),
+    updatedAt: new Date(n.updated_at || Date.now()).getTime()
+  }));
+
+  recipes = recipeRows.map(r => ({
+    id: r.id,
+    name: r.name || "",
+    baseWeight: Number(r.base_weight || 500),
+    ingredients: (r.ingredients || [])
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map(i => ({
+        name: i.name || "",
+        amount: Number(i.amount || 0),
+        unit: i.unit || "克"
+      })),
+    createdAt: new Date(r.created_at || Date.now()).getTime(),
+    updatedAt: new Date(r.updated_at || Date.now()).getTime()
+  }));
+
+  saveNotes();
+  saveRecipes();
+  selectedNoteId = notes[0]?.id || "";
+  selectedRecipeId = recipes[0]?.id || "";
+  renderNotes();
+  renderRecipeList();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  if (selectedRecipeId) selectRecipe(selectedRecipeId);
+}
+
+async function cleanLoadCloud() {
+  const btn = $("cleanLoadCloudBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "讀取中...";
+  showToast("正在讀取雲端...");
+
+  try {
+    cleanSetPanel("cleanCloudStatus", "狀態：正在讀取雲端資料...", "");
+    const result = await cleanXhr("read");
+    cleanCloudMode = true;
+    cleanNormalizeCloudData(result);
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端讀取成功。\n記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。`, "good");
+    showToast("雲端讀取成功");
+  } catch (e) {
+    cleanSetPanel("cleanCloudStatus", `狀態：雲端讀取失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`雲端讀取失敗。\n\n${cleanDescribeError(e)}`);
+  } finally {
+    if (btn) btn.textContent = old;
+    cleanUpdateEditLock();
+  }
+}
+
+async function cleanLogin() {
+  const email = $("cleanAdminEmailInput").value.trim();
+  const password = $("cleanAdminPasswordInput").value;
+  if (!email || !password) return alert("請輸入管理者 Email 與密碼。");
+
+  const btn = $("cleanLoginBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "登入中...";
+  showToast("管理者登入中...");
+
+  try {
+    const result = await cleanXhr("login", { email, password });
+    cleanAccessToken = result.token || "";
+    cleanAdminEmail = email;
+    cleanAdminLoggedIn = !!cleanAccessToken;
+    localStorage.setItem(KEY.cleanAccessToken, cleanAccessToken);
+    localStorage.setItem(KEY.cleanAdminEmail, cleanAdminEmail);
+    cleanCloudMode = true;
+    cleanSetPanel("cleanLoginStatus", `登入狀態：管理者登入成功。\n目前帳號：${email}`, "good");
+    showToast("管理者登入成功");
+    alert("管理者登入成功。");
+  } catch (e) {
+    cleanAdminLoggedIn = false;
+    cleanAccessToken = "";
+    localStorage.removeItem(KEY.cleanAccessToken);
+    cleanSetPanel("cleanLoginStatus", `登入狀態：管理者登入失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`管理者登入失敗。\n\n${cleanDescribeError(e)}`);
+  } finally {
+    if (btn) btn.textContent = old;
+    cleanUpdateEditLock();
+  }
+}
+
+async function cleanLogout() {
+  cleanAccessToken = "";
+  cleanAdminLoggedIn = false;
+  localStorage.removeItem(KEY.cleanAccessToken);
+  cleanSetPanel("cleanLoginStatus", "登入狀態：已登出管理者。現在為雲端唯讀模式。", "");
+  cleanUpdateEditLock();
+  showToast("已登出管理者");
+  alert("已登出管理者。");
+}
+
+function cleanCurrentRecipeFromForm(forceNew = false) {
+  const name = $("recipeName").value.trim() || "未命名配方";
+  const base = Number($("recipeBase").value || 0);
+  const ingredients = getIngredients();
+  if (base <= 0) throw new Error("請輸入正確的基準原材料重量。");
+  if (!ingredients.length) throw new Error("請至少新增一個材料。");
+  const now = Date.now();
+  return {
+    id: forceNew ? "" : selectedRecipeId,
+    name,
+    baseWeight: base,
+    ingredients,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+async function saveCurrentNote() {
+  const title = $("noteTitle").value.trim() || "未命名記事";
+  const content = $("noteContent").value || "";
+  const now = Date.now();
+  let note = notes.find(n => n.id === selectedNoteId);
+
+  if (note) {
+    note.title = title;
+    note.content = content;
+    note.updatedAt = now;
+  } else {
+    note = { id: String(now) + Math.random().toString(16).slice(2), title, content, createdAt: now, updatedAt: now };
+  }
+
+  if (notes.some(n => n.id === note.id)) {
+    notes = [note, ...notes.filter(n => n.id !== note.id)];
+  } else {
+    notes.unshift(note);
+    selectedNoteId = note.id;
+  }
+
+  saveNotes();
+  renderNotes();
+  $("noteCurrent").value = title;
+  showToast("記事已儲存到本機。要同步雲端請按「本機資料上傳雲端」。");
+}
+
+async function deleteCurrentNote() {
+  if (!cleanRequireEdit()) return;
+  if (!selectedNoteId) return alert("目前沒有選取記事。");
+  if (!confirm("確定刪除這則記事嗎？")) return;
+
+  if (cleanCloudMode && cleanAdminLoggedIn) {
+    try {
+      await cleanXhr("deleteNote", { id: selectedNoteId });
+      showToast("雲端記事已刪除");
+      await cleanLoadCloud();
+      return;
+    } catch (e) {
+      alert(`雲端記事刪除失敗。\n\n${cleanDescribeError(e)}`);
+      return;
+    }
+  }
+
+  notes = notes.filter(n => n.id !== selectedNoteId);
+  selectedNoteId = notes[0]?.id || "";
+  saveNotes();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  else {
+    $("noteTitle").value = "";
+    $("noteContent").value = "";
+    $("noteCurrent").value = "尚未選取記事";
+    renderNotes();
+  }
+}
+
+async function saveRecipe(forceNew = false) {
+  let recipe;
+  try {
+    recipe = cleanCurrentRecipeFromForm(forceNew);
+  } catch (e) {
+    return alert(e.message);
+  }
+
+  const now = Date.now();
+  let local = !forceNew ? recipes.find(r => r.id === selectedRecipeId) : null;
+
+  if (local) {
+    local.name = recipe.name;
+    local.baseWeight = recipe.baseWeight;
+    local.ingredients = recipe.ingredients;
+    local.updatedAt = now;
+  } else {
+    local = {
+      ...recipe,
+      id: String(now) + Math.random().toString(16).slice(2),
+      createdAt: now,
+      updatedAt: now
+    };
+  }
+
+  if (!forceNew && recipes.some(r => r.id === local.id)) {
+    recipes = [local, ...recipes.filter(r => r.id !== local.id)];
+  } else {
+    recipes.unshift(local);
+    selectedRecipeId = local.id;
+  }
+
+  saveRecipes();
+  selectRecipe(selectedRecipeId);
+  showToast(forceNew ? "已另存本機配方。雲端尚未變更。" : "配方已儲存到本機。雲端尚未變更。");
+}
+
+async function deleteRecipe() {
+  if (!selectedRecipeId) return alert("目前沒有選取配方。");
+  const recipe = recipes.find(r => r.id === selectedRecipeId);
+  if (!confirm(`確定刪除本機配方「${recipe ? recipe.name : "這個配方"}」嗎？
+
+雲端不會立刻刪除，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  recipes = recipes.filter(r => r.id !== selectedRecipeId);
+  selectedRecipeId = recipes[0]?.id || "";
+  saveRecipes();
+
+  if (selectedRecipeId) {
+    selectRecipe(selectedRecipeId);
+  } else {
+    newRecipeForm();
+  }
+
+  showToast("已刪除本機配方。雲端尚未變更。");
+}
+
+async function cleanUploadLocal() {
+  if (!cleanAdminLoggedIn) return alert("請先登入管理者。");
+  if (!confirm(`會用目前本機資料「覆蓋」雲端資料。\n\n你剛才在本機新增、修改、刪除的內容，會在這一步才同步到雲端。\n\n這會先清空雲端記事本與配方，再上傳目前本機資料。\n\n本機：記事本 ${notes.length} 筆、配方 ${recipes.length} 筆。\n\n確定繼續嗎？`)) return;
+
+  const btn = $("cleanUploadBtn");
+  const old = btn ? btn.textContent : "";
+  if (btn) btn.textContent = "上傳中...";
+  showToast("正在上傳雲端...");
+
+  try {
+    await cleanXhr("uploadAll", { notes: cleanDedupeNotes(notes), recipes });
+    cleanSetPanel("cleanCloudStatus", "狀態：本機資料已覆蓋上傳到雲端。\n讀取雲端與上傳雲端時都會自動去除重複記事本與重複配方。", "good");
+    await cleanLoadCloud();
+    alert("本機資料已覆蓋上傳到雲端。");
+  } catch (e) {
+    cleanSetPanel("cleanCloudStatus", `狀態：上傳失敗。\n原因：${cleanDescribeError(e)}`, "bad");
+    alert(`上傳失敗。\n\n${cleanDescribeError(e)}`);
+  } finally {
+    if (btn) btn.textContent = old;
+  }
+}
+
+function initCleanCloud() {
+  if ($("cleanAdminEmailInput")) $("cleanAdminEmailInput").value = cleanAdminEmail;
+
+  if (cleanAdminLoggedIn) {
+    cleanCloudMode = true;
+    cleanSetPanel("cleanLoginStatus", `登入狀態：偵測到已儲存管理者登入狀態。\n目前帳號：${cleanAdminEmail}`, "good");
+  }
+
+  if ($("cleanTestCloudBtn")) $("cleanTestCloudBtn").addEventListener("click", cleanTestCloud);
+  if ($("cleanLoadCloudBtn")) $("cleanLoadCloudBtn").addEventListener("click", cleanLoadCloud);
+  if ($("cleanLoginBtn")) $("cleanLoginBtn").addEventListener("click", cleanLogin);
+  if ($("cleanLogoutBtn")) $("cleanLogoutBtn").addEventListener("click", cleanLogout);
+  if ($("cleanUploadBtn")) $("cleanUploadBtn").addEventListener("click", cleanUploadLocal);
+
+  cleanUpdateEditLock();
+}
+
+setTimeout(initCleanCloud, 0);
+
+
+
+function repairFindSectionByText(text) {
+  const candidates = Array.from(document.querySelectorAll("section, .panel, .card, main > div, div"));
+  return candidates.find(el => {
+    const directHead = Array.from(el.children).slice(0, 4).some(child => {
+      const t = (child.textContent || "").trim();
+      return t === text || t.includes(text);
+    });
+    return directHead && (el.textContent || "").includes(text);
+  });
+}
+
+function repairHideTextSections(titles) {
+  const all = Array.from(document.querySelectorAll("section, .panel, .card, div"));
+  for (const title of titles) {
+    const target = all.find(el => {
+      const txt = (el.textContent || "").trim();
+      if (!txt.includes(title)) return false;
+      return txt.length < 3000;
+    });
+    if (target) target.classList.add("hiddenByRepair");
+  }
+}
+
+function repairMoveLongmenIntoTimer() {
+  const longmen = repairFindSectionByText("龍門陣");
+  const timer = repairFindSectionByText("製作提醒");
+
+  if (longmen && timer && longmen !== timer) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "bulkDeleteBox";
+    wrapper.innerHTML = `<div class="sectionTitle">龍門陣鬧鐘</div>`;
+    while (longmen.firstChild) wrapper.appendChild(longmen.firstChild);
+    timer.appendChild(wrapper);
+    longmen.classList.add("hiddenByRepair");
+  }
+
+  // 移除左側或分類選單中的獨立「龍門陣」入口，但不移除內容文字。
+  Array.from(document.querySelectorAll("button, a, option")).forEach(el => {
+    const txt = (el.textContent || "").trim();
+    const attr = `${el.getAttribute("data-section") || ""} ${el.getAttribute("data-target") || ""} ${el.getAttribute("href") || ""}`;
+    if (txt === "龍門陣" || (txt.includes("龍門陣") && /longmen|dragon|alarm/i.test(attr))) {
+      el.classList.add("hiddenByRepair");
+    }
+  });
+}
+
+function repairHideCalibrationText() {
+  const words = ["秒數校正", "校正秒數", "秒差", "時間校正", "校正值", "校準秒數"];
+  Array.from(document.querySelectorAll("label, .row, .field, div, button")).forEach(el => {
+    const txt = (el.textContent || "").trim();
+    if (words.some(w => txt.includes(w)) && txt.length < 200) {
+      el.classList.add("hiddenByRepair");
+    }
+  });
+}
+
+function repairPatchRenderLists() {
+  const oldRenderNotes = window.renderNotes || renderNotes;
+  const oldRenderRecipes = window.renderRecipeList || renderRecipeList;
+
+  window.renderNotes = function() {
+    oldRenderNotes();
+    document.querySelectorAll("#noteList .item").forEach(item => {
+      if (item.querySelector(".noteBulkCheck")) return;
+      const onclick = item.getAttribute("onclick") || "";
+      const m = onclick.match(/selectNote\('([^']+)'\)/);
+      if (!m) return;
+      const id = m[1];
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.className = "noteBulkCheck";
+      box.value = id;
+      box.style.width = "auto";
+      box.style.marginRight = "8px";
+      box.addEventListener("click", e => e.stopPropagation());
+      item.prepend(box);
+    });
+  };
+
+  window.renderRecipeList = function() {
+    oldRenderRecipes();
+    document.querySelectorAll("#recipeList .item").forEach(item => {
+      if (item.querySelector(".recipeBulkCheck")) return;
+      const onclick = item.getAttribute("onclick") || "";
+      const m = onclick.match(/selectRecipe\('([^']+)'\)/);
+      if (!m) return;
+      const id = m[1];
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.className = "recipeBulkCheck";
+      box.value = id;
+      box.style.width = "auto";
+      box.style.marginRight = "8px";
+      box.addEventListener("click", e => e.stopPropagation());
+      item.prepend(box);
+    });
+  };
+
+  renderNotes = window.renderNotes;
+  renderRecipeList = window.renderRecipeList;
+}
+
+function getCheckedValues(selector) {
+  return Array.from(document.querySelectorAll(selector + ":checked")).map(el => el.value);
+}
+
+function deleteSelectedNotesLocal() {
+  const ids = getCheckedValues(".noteBulkCheck");
+  if (!ids.length) return alert("請先勾選要刪除的記事。");
+  if (!confirm(`確定刪除 ${ids.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  notes = notes.filter(n => !ids.includes(n.id));
+  if (ids.includes(selectedNoteId)) selectedNoteId = notes[0]?.id || "";
+  saveNotes();
+  if (selectedNoteId) selectNote(selectedNoteId);
+  else {
+    if ($("noteTitle")) $("noteTitle").value = "";
+    if ($("noteContent")) $("noteContent").value = "";
+    if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
+    renderNotes();
+  }
+  showToast(`已刪除 ${ids.length} 筆本機記事`);
+}
+
+function deleteAllNotesLocal() {
+  if (!notes.length) return alert("目前沒有記事可刪除。");
+  if (!confirm(`確定刪除全部 ${notes.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+  notes = [];
+  selectedNoteId = "";
+  saveNotes();
+  if ($("noteTitle")) $("noteTitle").value = "";
+  if ($("noteContent")) $("noteContent").value = "";
+  if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
+  renderNotes();
+  showToast("已刪除全部本機記事");
+}
+
+function deleteSelectedRecipesLocal() {
+  const ids = getCheckedValues(".recipeBulkCheck");
+  if (!ids.length) return alert("請先勾選要刪除的配方。");
+  if (!confirm(`確定刪除 ${ids.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
+  recipes = recipes.filter(r => !ids.includes(r.id));
+  if (ids.includes(selectedRecipeId)) selectedRecipeId = recipes[0]?.id || "";
+  saveRecipes();
+  if (selectedRecipeId) selectRecipe(selectedRecipeId);
+  else newRecipeForm();
+  renderRecipeList();
+  showToast(`已刪除 ${ids.length} 個本機配方`);
+}
+
+function deleteAllRecipesLocal() {
+  if (!recipes.length) return alert("目前沒有配方可刪除。");
+  if (!confirm(`確定刪除全部 ${recipes.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+  recipes = [];
+  selectedRecipeId = "";
+  saveRecipes();
+  newRecipeForm();
+  renderRecipeList();
+  showToast("已刪除全部本機配方");
+}
+
+
+function repairHideBackupSectionsSafely() {
+  // 只隱藏「備份小區塊」，不要再用大範圍文字搜尋，避免把整個設定頁藏掉。
+  const titles = ["記事本備份", "配方備份"];
+  const headings = Array.from(document.querySelectorAll(".sectionTitle, h1, h2, h3, h4, label, strong"));
+
+  headings.forEach(h => {
+    const text = (h.textContent || "").trim();
+    if (!titles.includes(text)) return;
+
+    let node = h;
+    let box = h.parentElement;
+
+    // 找一個較小的父層，不要吃到整個設定頁。
+    for (let i = 0; i < 3 && box; i++) {
+      const txt = (box.textContent || "");
+      if (txt.length < 1200) break;
+      box = box.parentElement;
+    }
+
+    if (box && (box.textContent || "").length < 1500) {
+      box.classList.add("hiddenByRepair");
+    } else {
+      // 如果找不到安全父層，只隱藏標題本身，不隱藏整個設定。
+      node.classList.add("hiddenByRepair");
+    }
+  });
+}
+
+function repairEnsureSettingsVisible() {
+  // 防止設定區被 previous repair 加到 hiddenByRepair。
+  Array.from(document.querySelectorAll("section, .panel, .card, main > div, div")).forEach(el => {
+    const txt = el.textContent || "";
+    const hasCloud = txt.includes("雲端") || txt.includes("管理者") || txt.includes("設定");
+    const hugePanel = txt.length > 1500;
+    if (hasCloud && hugePanel) {
+      el.classList.remove("hiddenByRepair");
+      el.style.display = "";
+    }
+  });
+}
+
+function initStableRepairControls() {
+  repairEnsureSettingsVisible();
+  repairPatchRenderLists();
+  repairHideCalibrationText();
+  repairMoveLongmenIntoTimer();
+  repairHideBackupSectionsSafely();
+
+  if ($("deleteSelectedNotesBtn")) $("deleteSelectedNotesBtn").addEventListener("click", deleteSelectedNotesLocal);
+  if ($("deleteAllNotesBtn")) $("deleteAllNotesBtn").addEventListener("click", deleteAllNotesLocal);
+  if ($("deleteSelectedRecipesBtn")) $("deleteSelectedRecipesBtn").addEventListener("click", deleteSelectedRecipesLocal);
+  if ($("deleteAllRecipesBtn")) $("deleteAllRecipesBtn").addEventListener("click", deleteAllRecipesLocal);
+
+  if ($("noteBulkSelectAll")) $("noteBulkSelectAll").addEventListener("change", (e) => {
+    document.querySelectorAll(".noteBulkCheck").forEach(el => el.checked = e.target.checked);
+  });
+  if ($("recipeBulkSelectAll")) $("recipeBulkSelectAll").addEventListener("change", (e) => {
+    document.querySelectorAll(".recipeBulkCheck").forEach(el => el.checked = e.target.checked);
+  });
+
+  renderNotes();
+  renderRecipeList();
+}
+
+setTimeout(initStableRepairControls, 50);
+
+
+function recipeBulkFindIngredientRows() {
+  const selectors = [
+    "#ingredientsList .ingredientRow",
+    "#ingredientList .ingredientRow",
+    "#recipeIngredients .ingredientRow",
+    "#ingredients .ingredientRow",
+    ".ingredientRow",
+    "#ingredientsList > div",
+    "#ingredientList > div",
+    "#recipeIngredients > div"
+  ];
+
+  for (const selector of selectors) {
+    const rows = Array.from(document.querySelectorAll(selector)).filter(row => {
+      return row.querySelector("input") || row.querySelector("select");
+    });
+    if (rows.length) return rows;
+  }
+
+  return [];
+}
+
+function recipeBulkPatchIngredientCheckboxes() {
+  const rows = recipeBulkFindIngredientRows();
+
+  rows.forEach((row, index) => {
+    if (row.querySelector(".ingredientBulkCheck")) return;
+
+    const cell = document.createElement("div");
+    cell.className = "ingredientSelectCell";
+    cell.innerHTML = `<input type="checkbox" class="ingredientBulkCheck" data-index="${index}" />`;
+
+    row.prepend(cell);
+  });
+
+  recipeBulkBindAutoNextRow();
+}
+
+
+function recipeBulkIsRowFilled(row) {
+  if (!row) return false;
+  const inputs = Array.from(row.querySelectorAll("input, select, textarea"))
+    .filter(el => !el.classList.contains("ingredientBulkCheck") && el.type !== "checkbox" && el.type !== "button");
+  return inputs.some(el => String(el.value || "").trim() !== "");
+}
+
+function recipeBulkLastRowIsFilled() {
+  const rows = recipeBulkFindIngredientRows();
+  if (!rows.length) return false;
+  return recipeBulkIsRowFilled(rows[rows.length - 1]);
+}
+
+function recipeBulkAutoAddNextRow() {
+  const rows = recipeBulkFindIngredientRows();
+  if (!rows.length) return;
+
+  const last = rows[rows.length - 1];
+  if (!recipeBulkIsRowFilled(last)) return;
+
+  if (typeof addIngredient === "function") {
+    addIngredient();
+  } else {
+    const btn = $("addIngredientBtn");
+    if (btn) btn.click();
+  }
+
+  setTimeout(() => {
+    recipeBulkPatchIngredientCheckboxes();
+  }, 30);
+}
+
+function recipeBulkBindAutoNextRow() {
+  const rows = recipeBulkFindIngredientRows();
+  rows.forEach(row => {
+    if (row.dataset.autoNextBound === "1") return;
+    row.dataset.autoNextBound = "1";
+    row.addEventListener("input", () => {
+      clearTimeout(window.__recipeAutoNextTimer);
+      window.__recipeAutoNextTimer = setTimeout(recipeBulkAutoAddNextRow, 120);
+    });
+    row.addEventListener("change", () => {
+      clearTimeout(window.__recipeAutoNextTimer);
+      window.__recipeAutoNextTimer = setTimeout(recipeBulkAutoAddNextRow, 120);
+    });
+  });
+}
+
+function recipeBulkSelectAllIngredients() {
+  recipeBulkPatchIngredientCheckboxes();
+  const checks = Array.from(document.querySelectorAll(".ingredientBulkCheck"));
+  if (!checks.length) return alert("目前沒有材料欄位可選。");
+  const shouldCheck = checks.some(c => !c.checked);
+  checks.forEach(c => c.checked = shouldCheck);
+  showToast(shouldCheck ? "已全選材料" : "已取消全選材料");
+}
+
+function recipeBulkDeleteSelectedIngredients() {
+  recipeBulkPatchIngredientCheckboxes();
+
+  const rows = recipeBulkFindIngredientRows();
+  const checks = Array.from(document.querySelectorAll(".ingredientBulkCheck"));
+  const selectedIndexes = checks
+    .filter(c => c.checked)
+    .map(c => Number(c.dataset.index))
+    .filter(n => Number.isFinite(n))
+    .sort((a, b) => b - a);
+
+  if (!selectedIndexes.length) return alert("請先勾選要刪除的材料欄位。");
+  if (!confirm(`確定刪除 ${selectedIndexes.length} 個材料欄位嗎？`)) return;
+
+  // Prefer data model update if selected recipe exists.
+  const recipe = recipes.find(r => r.id === selectedRecipeId);
+  if (recipe && Array.isArray(recipe.ingredients)) {
+    for (const index of selectedIndexes) {
+      recipe.ingredients.splice(index, 1);
+    }
+    recipe.updatedAt = Date.now();
+    saveRecipes();
+    selectRecipe(selectedRecipeId);
+  } else {
+    // Fallback: remove DOM rows only.
+    for (const index of selectedIndexes) {
+      if (rows[index]) rows[index].remove();
+    }
+  }
+
+  setTimeout(() => {
+    recipeBulkPatchIngredientCheckboxes();
+    showToast(`已刪除 ${selectedIndexes.length} 個材料欄位`);
+  }, 50);
+}
+
+function recipeBulkSetConvertDefaultOneGram() {
+  const candidates = Array.from(document.querySelectorAll("input")).filter(input => {
+    const id = (input.id || "").toLowerCase();
+    const name = (input.name || "").toLowerCase();
+    const ph = (input.placeholder || "").toLowerCase();
+    const label = input.closest("div")?.textContent || "";
+    return (
+      id.includes("target") ||
+      id.includes("convert") ||
+      id.includes("calc") ||
+      id.includes("weight") ||
+      name.includes("target") ||
+      name.includes("convert") ||
+      ph.includes("原材料") ||
+      ph.includes("換算") ||
+      label.includes("換算") ||
+      label.includes("原材料")
+    );
+  });
+
+  const likely = candidates.find(input => {
+    const label = input.closest("div")?.textContent || "";
+    return label.includes("換算") || label.includes("原材料");
+  }) || candidates[0];
+
+  if (likely && (!likely.value || Number(likely.value) === 500 || Number(likely.value) === 0)) {
+    likely.value = "1";
+    likely.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}
+
+function initRecipeMaterialBulkTools() {
+  if ($("selectAllIngredientsBtn")) $("selectAllIngredientsBtn").addEventListener("click", recipeBulkSelectAllIngredients);
+  if ($("deleteSelectedIngredientsBtn")) $("deleteSelectedIngredientsBtn").addEventListener("click", recipeBulkDeleteSelectedIngredients);
+
+  const oldRenderIngredientRows = window.renderIngredientRows || (typeof renderIngredientRows !== "undefined" ? renderIngredientRows : null);
+  if (typeof oldRenderIngredientRows === "function") {
+    window.renderIngredientRows = function(...args) {
+      const result = oldRenderIngredientRows.apply(this, args);
+      setTimeout(recipeBulkPatchIngredientCheckboxes, 0);
+      return result;
+    };
+    try { renderIngredientRows = window.renderIngredientRows; } catch {}
+  }
+
+  const oldSelectRecipe = window.selectRecipe || (typeof selectRecipe !== "undefined" ? selectRecipe : null);
+  if (typeof oldSelectRecipe === "function") {
+    window.selectRecipe = function(...args) {
+      const result = oldSelectRecipe.apply(this, args);
+      setTimeout(() => {
+        recipeBulkPatchIngredientCheckboxes();
+        recipeBulkSetConvertDefaultOneGram();
+      }, 0);
+      return result;
+    };
+    try { selectRecipe = window.selectRecipe; } catch {}
+  }
+
+  setTimeout(() => {
+    recipeBulkPatchIngredientCheckboxes();
+    recipeBulkSetConvertDefaultOneGram();
+  }, 100);
+}
+setTimeout(initRecipeMaterialBulkTools, 100);
+
+
+const YOUTUBE_ALARM_KEY_URL = "longmen_youtube_alarm_url_v1";
+const YOUTUBE_ALARM_KEY_TYPE = "longmen_alarm_sound_type_v1";
+let youtubeAlarmOpenedForCurrentRing = false;
+let youtubeAlarmLastOpenAt = 0;
+
+function normalizeYoutubeUrl(url) {
+  return String(url || "").trim();
+}
+
+function saveYoutubeAlarmSettings() {
+  const type = $("alarmSoundType") ? $("alarmSoundType").value : "builtin";
+  const url = $("youtubeAlarmUrlInput") ? normalizeYoutubeUrl($("youtubeAlarmUrlInput").value) : "";
+  localStorage.setItem(YOUTUBE_ALARM_KEY_TYPE, type);
+  localStorage.setItem(YOUTUBE_ALARM_KEY_URL, url);
+  showToast("YouTube 鈴聲設定已儲存");
+}
+
+function loadYoutubeAlarmSettings() {
+  const type = localStorage.getItem(YOUTUBE_ALARM_KEY_TYPE) || "builtin";
+  const url = localStorage.getItem(YOUTUBE_ALARM_KEY_URL) || "";
+  if ($("alarmSoundType")) $("alarmSoundType").value = type;
+  if ($("youtubeAlarmUrlInput")) $("youtubeAlarmUrlInput").value = url;
+}
+
+function getYoutubeAlarmUrl() {
+  return normalizeYoutubeUrl(localStorage.getItem(YOUTUBE_ALARM_KEY_URL) || "");
+}
+
+function isYoutubeAlarmEnabled() {
+  return (localStorage.getItem(YOUTUBE_ALARM_KEY_TYPE) || "builtin") === "youtube" && !!getYoutubeAlarmUrl();
+}
+
+function openYoutubeAlarmUrl() {
+  const url = getYoutubeAlarmUrl();
+  if (!url) {
+    alert("請先設定 YouTube 鈴聲網址。");
+    return false;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+  return true;
+}
+
+function closeYoutubeAlarmPrompt() {
+  const overlay = $("youtubeAlarmOverlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function stopBuiltinAlarmIfYoutubeMode() {
+  if (!isYoutubeAlarmEnabled()) return;
+
+  try {
+    document.querySelectorAll("audio").forEach(a => {
+      try { a.pause(); a.currentTime = 0; } catch {}
+    });
+  } catch {}
+
+  ["stopAlarm", "stopRinging", "stopSound", "pauseAlarm", "cancelAlarmSound"].forEach(name => {
+    try {
+      const fn = window[name] || globalThis[name];
+      if (typeof fn === "function") fn();
+    } catch {}
+  });
+}
+
+function resetYoutubeAlarmOnceFlag() {
+  youtubeAlarmOpenedForCurrentRing = false;
+}
+
+function showYoutubeAlarmPromptOnce() {
+  if (!isYoutubeAlarmEnabled()) return;
+
+  const now = Date.now();
+
+  // Hard lock: the same ring can only open once; also prevent repeated calls within 10 minutes.
+  if (youtubeAlarmOpenedForCurrentRing) return;
+  if (now - youtubeAlarmLastOpenAt < 10 * 60 * 1000) return;
+
+  youtubeAlarmOpenedForCurrentRing = true;
+  youtubeAlarmLastOpenAt = now;
+
+  stopBuiltinAlarmIfYoutubeMode();
+
+  const overlay = $("youtubeAlarmOverlay");
+  if (overlay) overlay.classList.add("show");
+
+  setTimeout(() => {
+    try { openYoutubeAlarmUrl(); } catch {}
+  }, 150);
+}
+
+function initYoutubeAlarmLink() {
+  loadYoutubeAlarmSettings();
+
+  if ($("saveYoutubeAlarmBtn")) $("saveYoutubeAlarmBtn").addEventListener("click", saveYoutubeAlarmSettings);
+  if ($("testYoutubeAlarmBtn")) $("testYoutubeAlarmBtn").addEventListener("click", () => {
+    saveYoutubeAlarmSettings();
+    openYoutubeAlarmUrl();
+  });
+  if ($("openYoutubeAlarmBtn")) $("openYoutubeAlarmBtn").addEventListener("click", openYoutubeAlarmUrl);
+  if ($("closeYoutubeAlarmBtn")) $("closeYoutubeAlarmBtn").addEventListener("click", closeYoutubeAlarmPrompt);
+
+  // Reset the one-shot flag only when a new timer is started.
+  ["startTimer", "resumeTimer", "setTimer", "startPresetTimer", "startCustomTimer"].forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__youtubeResetHooked) {
+        const wrapped = function(...args) {
+          resetYoutubeAlarmOnceFlag();
+          return fn.apply(this, args);
+        };
+        wrapped.__youtubeResetHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
+
+  // Hook alarm end functions only. No broad text observer, so it will not keep popping repeatedly.
+  ["triggerAlarm", "startAlarm", "playAlarm", "ringAlarm", "timerDone", "onTimerDone", "handleTimerDone", "finishTimer", "completeTimer"].forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__youtubeHooked) {
+        const wrapped = function(...args) {
+          const result = fn.apply(this, args);
+          showYoutubeAlarmPromptOnce();
+          return result;
+        };
+        wrapped.__youtubeHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
+}
+
+setTimeout(initYoutubeAlarmLink, 200);
+
+window.pauseTimer = pauseTimer;
+window.resumeTimer = resumeTimer;
+window.deleteTimer = deleteTimer;
+window.selectNote = selectNote;
+window.selectRecipe = selectRecipe;
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPwa();
+  initInstallButton();
+  initMenu();
+  initCraft();
+  initLongmen();
+  initNotes();
+  initRecipe();
+  initSettings();
+  $("stopAlarmBtn").addEventListener("click", stopAlarm);
+  renderTimers();
+  setInterval(tickTimers, 1000);
+});
+</script>
+</body>
+</html>
