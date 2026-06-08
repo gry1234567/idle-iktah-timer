@@ -548,6 +548,11 @@
       color: var(--muted);
       font-size: 14px;
     }
+
+    /* SETTINGS_VISIBILITY_REPAIR_CSS */
+    .settingsVisibilityNote {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -577,7 +582,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CLEANUP-CONVERSION-DISPLAY-20260608-18</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SETTINGS-VISIBILITY-REPAIR-20260608-19</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -893,9 +898,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜CLEANUP-CONVERSION-DISPLAY-20260608-18</div>
+            <div class="sectionTitle">雲端同步｜SETTINGS-VISIBILITY-REPAIR-20260608-19</div>
             <div class="note">
-              版本：CLEANUP-CONVERSION-DISPLAY-20260608-18<br>
+              版本：SETTINGS-VISIBILITY-REPAIR-20260608-19<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -3139,36 +3144,57 @@ function cleanupShouldHideSmallBlock(el) {
   return isNoteImportExport || isRecipeImportExport || isBackgroundSetting;
 }
 
+
 function cleanupHideImportExportAndBackground() {
-  const selectors = [
-    ".sectionTitle", "h1", "h2", "h3", "h4", "label", "strong",
-    "button", ".card", ".panel", "section > div", "main > div", "div"
-  ];
+  // 重要：這版不再隱藏整個 panel / div，避免把設定區藏掉。
+  // 只隱藏明確的匯入、匯出、備份、背景修改按鈕或很小的控制元件。
+  const targets = Array.from(document.querySelectorAll("button, input, label, a, .sectionTitle, h3, h4, strong"));
 
-  const nodes = Array.from(document.querySelectorAll(selectors.join(",")));
+  targets.forEach(el => {
+    const text = cleanupNormalizeText(el.textContent || el.value || el.placeholder || "");
 
-  nodes.forEach(node => {
-    if (!cleanupShouldHideSmallBlock(node)) return;
+    // 雲端上傳、雲端讀取、管理者登入登出必須保留。
+    if (/雲端|管理者|登入|登出|同步|讀取雲端|上傳雲端/.test(text)) return;
 
-    // 從標題/按鈕往上找小父層，限制大小，避免吃掉整個頁面。
-    let target = node;
-    for (let i = 0; i < 4; i++) {
-      const parent = target.parentElement;
-      if (!parent) break;
-      const parentText = cleanupNormalizeText(parent.textContent || "");
-      if (parentText.length > 900) break;
-      target = parent;
+    const shouldHide =
+      /(匯入|匯出|備份|下載備份|還原備份|上傳檔案)/.test(text) ||
+      (/背景/.test(text) && /(修改|圖片|顏色|上傳|自訂|清除|恢復)/.test(text));
+
+    if (!shouldHide) return;
+
+    el.classList.add("cleanupHidden");
+
+    // 只允許隱藏非常小的父層；絕不往上吃到整個設定頁。
+    const parent = el.parentElement;
+    if (parent) {
+      const pText = cleanupNormalizeText(parent.textContent || "");
+      if (
+        pText.length < 260 &&
+        !/雲端|管理者|登入|登出|同步|讀取雲端|上傳雲端|YouTube|鈴聲/.test(pText)
+      ) {
+        parent.classList.add("cleanupHidden");
+      }
     }
-
-    target.classList.add("cleanupHidden");
   });
 
-  // 額外隱藏明確的匯入匯出按鈕，但保留雲端按鈕。
-  Array.from(document.querySelectorAll("button, input, label")).forEach(el => {
-    const text = cleanupNormalizeText(el.textContent || el.value || el.placeholder || "");
-    if (/雲端|管理者|登入|登出/.test(text)) return;
-    if (/(匯入|匯出|備份|背景修改|修改背景|背景圖片|自訂背景)/.test(text)) {
-      el.classList.add("cleanupHidden");
+  cleanupRestoreSettingsVisible();
+}
+
+function cleanupRestoreSettingsVisible() {
+  // 強制恢復設定、雲端、YouTube 鈴聲這些區塊。
+  Array.from(document.querySelectorAll("section, .panel, .card, main > div, div")).forEach(el => {
+    const text = el.textContent || "";
+    const shouldShow =
+      text.includes("雲端") ||
+      text.includes("管理者") ||
+      text.includes("YouTube 鈴聲") ||
+      text.includes("鈴聲類型") ||
+      text.includes("本機資料上傳雲端");
+
+    if (shouldShow && text.length > 300) {
+      el.classList.remove("cleanupHidden");
+      el.classList.remove("hiddenByRepair");
+      el.style.display = "";
     }
   });
 }
@@ -3277,9 +3303,11 @@ function cleanupPatchConversionHooks() {
 
 function initCleanupConversionDisplay() {
   cleanupHideImportExportAndBackground();
+  cleanupRestoreSettingsVisible();
   cleanupPatchConversionHooks();
   setTimeout(cleanupRenderMergedConversion, 150);
   setTimeout(cleanupHideImportExportAndBackground, 300);
+  setTimeout(cleanupRestoreSettingsVisible, 350);
 }
 
 setTimeout(initCleanupConversionDisplay, 200);
