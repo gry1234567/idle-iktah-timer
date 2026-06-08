@@ -1,14 +1,17 @@
-# 龍門陣工具箱｜YouTube 單次修復版
+# 龍門陣工具箱｜YouTube 單次開啟鈴聲設定版
 
-版本：YOUTUBE-ONCE-REPAIR-20260608-17
+版本：YOUTUBE-ONCE-SETTINGS-20260608-16
 
-修正：
-- 恢復製作提醒，不再把 YouTube 設定插進製作提醒結構
-- YouTube 鈴聲設定固定放在設定區
-- YouTube 鈴聲只會開啟一次
-- 移除廣泛頁面監測，避免 YouTube 重複跳出
-- 選擇 YouTube 時會嘗試停止內建鈴聲
-- 內建鈴聲模式維持原本功能
+調整：
+- YouTube 鈴聲設定放到設定區
+- YouTube 鈴聲時間到只跳出 / 開啟一次
+- 選擇 YouTube 鈴聲時，不播放內建循環鈴聲
+- 若瀏覽器阻擋自動開啟，仍會顯示「開啟 YouTube 鈴聲」按鈕
+- 內建鈴聲模式維持原本提醒方式
+
+說明：
+- YouTube 背景播放由 YouTube App / YouTube Premium 處理
+- 網頁 APP 只負責時間到時連動開啟 YouTube
 
 一定要上傳：
 - index.html
