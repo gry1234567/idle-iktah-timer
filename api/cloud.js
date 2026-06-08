@@ -3,7 +3,7 @@ import https from "https";
 const SUPABASE_REST_URL = "https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/";
 const SUPABASE_ROOT_URL = "https://oivbidfpeuddedsucwhg.supabase.co";
 const PUBLISHABLE_KEY = "sb_publishable_dFemdW0JzlnskIPhMAGTIA_cu-263-G";
-const API_VERSION = "SETTINGS-VISIBILITY-REPAIR-20260608-19";
+const API_VERSION = "CONVERSION-INLINE-MERGE-REPAIR-20260608-20";
 
 function requestJson(path, options = {}) {
   return new Promise((resolve, reject) => {

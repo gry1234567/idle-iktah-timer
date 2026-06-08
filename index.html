@@ -553,6 +553,29 @@
     .settingsVisibilityNote {
       display: none;
     }
+
+    /* CONVERSION_INLINE_MERGE_REPAIR_CSS */
+    .inlineMergedConversionResult {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      line-height: 1.9;
+      white-space: pre-wrap;
+    }
+    .inlineMergedConversionResult .mergedTitle {
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .inlineMergedConversionResult .mergedContent {
+      color: var(--text);
+      font-size: 15px;
+    }
+    .conversionCardsHiddenByMerge {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -582,7 +605,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SETTINGS-VISIBILITY-REPAIR-20260608-19</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CONVERSION-INLINE-MERGE-REPAIR-20260608-20</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -898,9 +921,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜SETTINGS-VISIBILITY-REPAIR-20260608-19</div>
+            <div class="sectionTitle">雲端同步｜CONVERSION-INLINE-MERGE-REPAIR-20260608-20</div>
             <div class="note">
-              版本：SETTINGS-VISIBILITY-REPAIR-20260608-19<br>
+              版本：CONVERSION-INLINE-MERGE-REPAIR-20260608-20<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -3199,78 +3222,131 @@ function cleanupRestoreSettingsVisible() {
   });
 }
 
-function cleanupFindConversionContainer() {
-  // 找「換算」附近的小區塊，不碰整個頁面。
-  const candidates = Array.from(document.querySelectorAll("section, .card, .panel, div")).filter(el => {
-    const text = cleanupNormalizeText(el.textContent || "");
-    return text.includes("換算") && text.length < 3000;
-  });
 
-  // 優先選有材料/結果/原材料文字的區塊。
-  return candidates.find(el => /材料|結果|原材料|基準|重量/.test(el.textContent || "")) || candidates[0] || null;
+function conversionInlineText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
 }
 
-function cleanupCollectConversionLines(container) {
-  if (!container) return [];
+function conversionFindSection() {
+  const all = Array.from(document.querySelectorAll("section, .card, .panel, main > div, div"));
+
+  // 找包含「2. 換算」且有「實際原材料重量 / 倍率」的小區塊。
+  let target = all.find(el => {
+    const text = conversionInlineText(el.textContent || "");
+    return text.includes("2. 換算") && text.includes("實際原材料重量") && text.includes("倍率") && text.length < 5000;
+  });
+
+  if (target) return target;
+
+  // 備援：找含換算結果卡的父層。
+  const cards = conversionFindResultCards();
+  if (cards.length) {
+    let parent = cards[0].parentElement;
+    for (let i = 0; i < 5 && parent; i++) {
+      const text = conversionInlineText(parent.textContent || "");
+      if (text.includes("換算") && text.length < 5000) return parent;
+      parent = parent.parentElement;
+    }
+  }
+
+  return null;
+}
+
+function conversionFindResultCards() {
+  const all = Array.from(document.querySelectorAll("div, article, li"));
+
+  return all.filter(el => {
+    if (el.id === "inlineMergedConversionResult") return false;
+    if (el.classList.contains("inlineMergedConversionResult")) return false;
+    if (el.classList.contains("conversionCardsHiddenByMerge")) return false;
+
+    const text = conversionInlineText(el.textContent || "");
+    if (!text) return false;
+    if (text.length > 180) return false;
+
+    // 圖 2 的卡片格式：品名 + 基準： + 實際需要：
+    return text.includes("基準：") && text.includes("實際需要：");
+  }).filter(el => {
+    // 避免抓到父層，把最小卡片留下。
+    return !Array.from(el.children || []).some(child => {
+      const t = conversionInlineText(child.textContent || "");
+      return t.includes("基準：") && t.includes("實際需要：");
+    });
+  });
+}
+
+function conversionParseCard(card) {
+  const raw = conversionInlineText(card.textContent || "");
+  if (!raw) return "";
+
+  // 目標：酥肉粉｜基準：1 包｜實際需要：1 包
+  let name = raw;
+  let base = "";
+  let need = "";
+
+  const baseMatch = raw.match(/基準：\s*([^實]+)/);
+  const needMatch = raw.match(/實際需要：\s*(.+)$/);
+
+  if (baseMatch) base = baseMatch[1].trim();
+  if (needMatch) need = needMatch[1].trim();
+
+  name = raw
+    .replace(/基準：[\s\S]*$/, "")
+    .trim();
+
+  if (!name) {
+    name = raw.split("基準：")[0].trim();
+  }
+
+  if (!name && raw) return raw;
+
+  const parts = [];
+  if (name) parts.push(name);
+  if (base) parts.push(`基準：${base}`);
+  if (need) parts.push(`實際需要：${need}`);
+
+  return parts.join("　");
+}
+
+function conversionRenderInlineMerged() {
+  const section = conversionFindSection();
+  if (!section) return;
+
+  // 移除上一版錯誤產生在下方的大框。
+  const old = $("oldMergedConversionResult");
+  if (old) old.remove();
+
+  const cards = conversionFindResultCards();
+  if (!cards.length) return;
 
   const lines = [];
-
-  // 優先從結果區文字抓取。
-  const possibleResultNodes = Array.from(container.querySelectorAll("div, li, p, .item, .row, tr")).filter(el => {
-    const text = cleanupNormalizeText(el.textContent || "");
-    if (!text) return false;
-    if (text.includes("換算") || text.includes("基準") || text.includes("原材料")) return false;
-    if (text.length > 120) return false;
-    return /\d/.test(text) && /[a-zA-Z克公斤gGmlML湯匙茶匙顆根片球小撮]/.test(text);
+  cards.forEach(card => {
+    const line = conversionParseCard(card);
+    if (line && !lines.includes(line)) lines.push(line);
   });
 
-  possibleResultNodes.forEach(el => {
-    const text = cleanupNormalizeText(el.textContent || "");
-    if (text && !lines.includes(text)) lines.push(text);
-  });
+  if (!lines.length) return;
 
-  // 如果沒有結果文字，從目前配方資料抓。
-  try {
-    const recipe = recipes && recipes.find(r => r.id === selectedRecipeId);
-    if (!lines.length && recipe && Array.isArray(recipe.ingredients)) {
-      recipe.ingredients.forEach(i => {
-        const name = i.name || "";
-        const amount = i.amount ?? "";
-        const unit = i.unit || "";
-        if (name || amount) lines.push(`${name} ${amount} ${unit}`.trim());
-      });
-    }
-  } catch {}
+  cards.forEach(card => card.classList.add("conversionCardsHiddenByMerge"));
 
-  return lines;
-}
-
-function cleanupRenderMergedConversion() {
-  const container = cleanupFindConversionContainer();
-  if (!container) return;
-
-  let box = $("mergedConversionResult");
+  let box = $("inlineMergedConversionResult");
   if (!box) {
     box = document.createElement("div");
-    box.id = "mergedConversionResult";
-    box.className = "mergedConversionResult";
-    container.appendChild(box);
+    box.id = "inlineMergedConversionResult";
+    box.className = "inlineMergedConversionResult";
+
+    // 插在換算區塊裡，盡量放在輸入欄下方、原本結果卡片前面。
+    const firstCard = cards[0];
+    firstCard.parentElement.insertBefore(box, firstCard);
   }
 
-  const lines = cleanupCollectConversionLines(container);
-  if (!lines.length) {
-    box.innerHTML = `<div class="mergedTitle">換算結果</div><div class="mergedLine">尚無換算內容。</div>`;
-    return;
-  }
-
-  const merged = lines.join("　｜　");
   box.innerHTML = `
-    <div class="mergedTitle">換算結果合併顯示</div>
-    <div class="mergedLine">${escapeHtml(merged)}</div>
+    <div class="mergedTitle">換算結果</div>
+    <div class="mergedContent">${escapeHtml(lines.join("\\n"))}</div>
   `;
 }
 
-function cleanupPatchConversionHooks() {
+function conversionPatchInlineMergeHooks() {
   const hookNames = [
     "calculateRecipe", "calcRecipe", "convertRecipe", "renderConversion",
     "renderRecipeCalc", "updateRecipeCalc", "selectRecipe", "saveRecipe"
@@ -3279,13 +3355,13 @@ function cleanupPatchConversionHooks() {
   hookNames.forEach(name => {
     try {
       const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
-      if (typeof fn === "function" && !fn.__mergedConversionHooked) {
+      if (typeof fn === "function" && !fn.__inlineMergeHooked) {
         const wrapped = function(...args) {
           const result = fn.apply(this, args);
-          setTimeout(cleanupRenderMergedConversion, 50);
+          setTimeout(conversionRenderInlineMerged, 80);
           return result;
         };
-        wrapped.__mergedConversionHooked = true;
+        wrapped.__inlineMergeHooked = true;
         window[name] = wrapped;
         try { globalThis[name] = wrapped; } catch {}
       }
@@ -3293,24 +3369,22 @@ function cleanupPatchConversionHooks() {
   });
 
   document.addEventListener("input", event => {
-    const text = cleanupNormalizeText(event.target?.closest("div")?.textContent || "");
-    if (/換算|原材料|重量|配方/.test(text)) {
-      clearTimeout(window.__mergedConversionTimer);
-      window.__mergedConversionTimer = setTimeout(cleanupRenderMergedConversion, 120);
+    const area = event.target?.closest("section, .card, .panel, div");
+    const text = conversionInlineText(area?.textContent || "");
+    if (/換算|實際原材料重量|倍率|基準|實際需要/.test(text)) {
+      clearTimeout(window.__inlineMergeTimer);
+      window.__inlineMergeTimer = setTimeout(conversionRenderInlineMerged, 120);
     }
   });
 }
 
-function initCleanupConversionDisplay() {
-  cleanupHideImportExportAndBackground();
-  cleanupRestoreSettingsVisible();
-  cleanupPatchConversionHooks();
-  setTimeout(cleanupRenderMergedConversion, 150);
-  setTimeout(cleanupHideImportExportAndBackground, 300);
-  setTimeout(cleanupRestoreSettingsVisible, 350);
+function initConversionInlineMergeRepair() {
+  conversionPatchInlineMergeHooks();
+  setTimeout(conversionRenderInlineMerged, 250);
+  setTimeout(conversionRenderInlineMerged, 800);
 }
 
-setTimeout(initCleanupConversionDisplay, 200);
+setTimeout(initConversionInlineMergeRepair, 200);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
