@@ -525,57 +525,6 @@
     }
     .youtubeAlarmCard h2 { margin-top: 0; }
     .youtubeAlarmCard .actions { justify-content: center; }
-
-    /* CLEANUP_CONVERSION_DISPLAY_CSS */
-    .cleanupHidden {
-      display: none !important;
-    }
-    .mergedConversionResult {
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: rgba(255,255,255,.04);
-      line-height: 1.8;
-      white-space: pre-wrap;
-    }
-    .mergedConversionResult .mergedTitle {
-      font-weight: 900;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-    .mergedConversionResult .mergedLine {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    /* SETTINGS_VISIBILITY_REPAIR_CSS */
-    .settingsVisibilityNote {
-      display: none;
-    }
-
-    /* CONVERSION_INLINE_MERGE_REPAIR_CSS */
-    .inlineMergedConversionResult {
-      margin-top: 12px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: rgba(255,255,255,.04);
-      line-height: 1.9;
-      white-space: pre-wrap;
-    }
-    .inlineMergedConversionResult .mergedTitle {
-      font-weight: 900;
-      color: var(--text);
-      margin-bottom: 8px;
-    }
-    .inlineMergedConversionResult .mergedContent {
-      color: var(--text);
-      font-size: 15px;
-    }
-    .conversionCardsHiddenByMerge {
-      display: none !important;
-    }
   </style>
 </head>
 <body>
@@ -605,7 +554,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CONVERSION-INLINE-MERGE-REPAIR-20260608-20</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SOURCE-CLEANUP-CONVERSION-20260608-21</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -761,36 +710,7 @@
           <div class="card">
             <h2>配方計算機</h2>
             <div class="sub">先選已儲存配方，再輸入實際重量換算。也可以新增或修改配方內容。</div>
-
-            <details style="margin-top:12px;">
-              <summary>快速批量匯入配方</summary>
-              <div class="note" style="margin-top:10px;">
-                你可以一次貼上單一配方或多個配方，按一次按鈕就自動建立。
-                多個配方建議用 "---" 分隔。
-              </div>
-              <div style="margin-top:12px;">
-                <label>快速貼上配方</label>
-                <textarea id="recipeBulkText" placeholder="配方名稱：滷汁
-基準重量：500
-糖 100 克
-鹽 20 克
-水 300 ml
-
----
-配方名稱：醃肉醬
-基準重量：1000
-醬油 120 ml
-米酒 80 ml
-蒜泥 30 克"></textarea>
-              </div>
-              <div class="actions3">
-                <button id="bulkImportRecipeBtn">一鍵匯入貼上內容</button>
-                <button class="secondary" id="bulkFillExampleBtn">帶入範例</button>
-                <button class="secondary" id="bulkClearBtn">清空貼上內容</button>
-              </div>
-            </details>
-
-            <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
+<div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
             <div class="searchBox">
               <label>搜尋配方</label>
               <input id="recipeSearchInput" placeholder="搜尋配方名稱或材料，例如：糖、醬油、滷汁" />
@@ -899,31 +819,9 @@
               <button class="danger" id="clearSoundBtn">清除</button>
             </div>
             <div class="note" id="soundStatus">目前：預設提示音</div>
-
-            <div class="sectionTitle">自訂背景</div>
-            <div>
-              <label>選擇背景圖片</label>
-              <input id="bgFile" type="file" accept="image/*" />
-            </div>
-            <div class="grid" style="margin-top:12px;">
-              <div>
-                <label>背景暗度</label>
-                <input id="bgDim" type="range" min="0" max="85" value="25" />
-              </div>
-              <div>
-                <label>卡片透明度</label>
-                <input id="cardOpacity" type="range" min="35" max="95" value="82" />
-              </div>
-            </div>
-            <div class="actions">
-              <button class="secondary" id="applyBgBtn">套用背景</button>
-              <button class="danger" id="clearBgBtn">清除背景</button>
-            </div>
-            <div class="note" id="bgStatus">目前：預設背景</div>
-
-            <div class="sectionTitle">雲端同步｜CONVERSION-INLINE-MERGE-REPAIR-20260608-20</div>
+<div class="sectionTitle">雲端同步｜SOURCE-CLEANUP-CONVERSION-20260608-21</div>
             <div class="note">
-              版本：CONVERSION-INLINE-MERGE-REPAIR-20260608-20<br>
+              版本：SOURCE-CLEANUP-CONVERSION-20260608-21<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -947,33 +845,7 @@
             </div>
             <div class="cloudPanelClean" id="cleanCloudStatus">狀態：尚未測試雲端。</div>
             <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div>
-
-            <div class="sectionTitle">記事本備份</div>
-            <div class="actions3">
-              <button class="secondary" id="exportNotesBtn">匯出記事本</button>
-              <button class="secondary" id="importNotesBtn">合併匯入記事本</button>
-              <button class="danger" id="overwriteNotesBtn">覆蓋匯入記事本</button>
-            </div>
-            <div style="margin-top:12px;">
-              <label>記事本備份文字</label>
-              <textarea id="notesBackupText" placeholder="這裡只處理記事本備份"></textarea>
-            </div>
-            <div class="previewBox" id="notesPreviewBox">尚未偵測記事本備份內容。</div>
-            <div class="note">記事本備份只包含所有記事本內容。預設為合併匯入，不會刪除目前記事本。</div>
-
-            <div class="sectionTitle">配方備份</div>
-            <div class="actions3">
-              <button class="secondary" id="exportRecipesBtn">匯出配方</button>
-              <button class="secondary" id="importRecipesBtn">合併匯入配方</button>
-              <button class="danger" id="overwriteRecipesBtn">覆蓋匯入配方</button>
-            </div>
-            <div style="margin-top:12px;">
-              <label>配方備份文字</label>
-              <textarea id="recipesBackupText" placeholder="這裡只處理配方備份"></textarea>
-            </div>
-            <div class="previewBox" id="recipesPreviewBox">尚未偵測配方備份內容。</div>
-            <div class="note">配方備份只包含所有已儲存配方。預設為合併匯入，不會刪除目前配方。</div>
-          </div>
+</div>
         </section>
 
         <div class="card">
@@ -1567,15 +1439,22 @@ function fillBulkRecipeExample() {
 
 
 function initRecipe() {
-  $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
-  $("newRecipeBtn").addEventListener("click", newRecipeForm);
-  $("saveRecipeBtn").addEventListener("click", () => saveRecipe(false));
-  $("saveAsRecipeBtn").addEventListener("click", () => saveRecipe(true));
-  $("deleteRecipeBtn").addEventListener("click", deleteRecipe);
-  $("bulkImportRecipeBtn").addEventListener("click", bulkImportRecipes);
-  $("bulkFillExampleBtn").addEventListener("click", fillBulkRecipeExample);
-  $("bulkClearBtn").addEventListener("click", () => { $("recipeBulkText").value = ""; });
-  ["recipeBase", "recipeTarget"].forEach(id => $(id).addEventListener("input", calculateRecipe));
+  if ($("addIngredientBtn")) $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
+  if ($("newRecipeBtn")) $("newRecipeBtn").addEventListener("click", newRecipeForm);
+  if ($("saveRecipeBtn")) $("saveRecipeBtn").addEventListener("click", () => saveRecipe(false));
+  if ($("saveAsRecipeBtn")) $("saveAsRecipeBtn").addEventListener("click", () => saveRecipe(true));
+  if ($("deleteRecipeBtn")) $("deleteRecipeBtn").addEventListener("click", deleteRecipe);
+
+  // 快速批量匯入配方已移除，保留防呆避免舊 HTML 快取報錯。
+  if ($("bulkImportRecipeBtn")) $("bulkImportRecipeBtn").addEventListener("click", bulkImportRecipes);
+  if ($("bulkFillExampleBtn")) $("bulkFillExampleBtn").addEventListener("click", fillBulkRecipeExample);
+  if ($("bulkClearBtn")) $("bulkClearBtn").addEventListener("click", () => {
+    if ($("recipeBulkText")) $("recipeBulkText").value = "";
+  });
+
+  ["recipeBase", "recipeTarget"].forEach(id => {
+    if ($(id)) $(id).addEventListener("input", calculateRecipe);
+  });
 
   if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
   else if (recipes[0]) selectRecipe(recipes[0].id);
@@ -1589,7 +1468,7 @@ function newRecipeForm() {
   selectedRecipeId = "";
   $("recipeName").value = "";
   $("recipeBase").value = 500;
-  $("recipeTarget").value = 340;
+  $("recipeTarget").value = 1;
   clearIngredients();
   addIngredientRow("糖", 100, "克");
   saveRecipes();
@@ -1649,19 +1528,28 @@ function calculateRecipe() {
   const ratio = base > 0 ? target / base : 0;
   $("recipeRatio").value = `${formatAmount(ratio)} 倍`;
 
-  const items = getIngredients();
+  const items = getIngredients().filter(i =>
+    String(i.name || "").trim() || Number(i.amount || 0) > 0
+  );
+
   if (!items.length) {
     $("recipeResults").innerHTML = `<div class="muted" style="margin-top:12px;">尚未新增材料。</div>`;
     return;
   }
 
-  $("recipeResults").innerHTML = items.map(i => `
+  const lines = items.map(i => {
+    const name = escapeHtml(i.name || "未命名材料");
+    const amount = formatAmount(Number(i.amount || 0) * ratio);
+    const unit = escapeHtml(i.unit || "");
+    return `<div class="resultLine"><strong>${name}</strong>：${amount} ${unit}</div>`;
+  }).join("");
+
+  $("recipeResults").innerHTML = `
     <div class="resultBox">
-      <div><strong>${escapeHtml(i.name || "未命名材料")}</strong></div>
-      <div class="muted">基準：${formatAmount(i.amount)} ${escapeHtml(i.unit)}</div>
-      <div>實際需要：<strong>${formatAmount(i.amount * ratio)} ${escapeHtml(i.unit)}</strong></div>
+      <div><strong>換算結果</strong></div>
+      <div style="margin-top:8px; line-height:1.9;">${lines}</div>
     </div>
-  `).join("");
+  `;
 }
 
 function saveRecipe(forceNew = false) {
@@ -1937,8 +1825,7 @@ function initSettings() {
     localStorage.removeItem(KEY.soundName);
     updateSoundStatus();
   });
-
-  $("bgFile").addEventListener("change", () => {
+  if ($("bgFile")) $("bgFile").addEventListener("change", () => {
     const file = $("bgFile").files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return alert("請選擇圖片檔。");
@@ -1956,15 +1843,15 @@ function initSettings() {
     reader.readAsDataURL(file);
   });
 
-  $("applyBgBtn").addEventListener("click", () => {
-    bgDim = $("bgDim").value;
-    cardOpacity = $("cardOpacity").value;
+  if ($("applyBgBtn")) $("applyBgBtn").addEventListener("click", () => {
+    bgDim = $("bgDim") ? $("bgDim").value : bgDim;
+    cardOpacity = $("cardOpacity") ? $("cardOpacity").value : cardOpacity;
     localStorage.setItem(KEY.bgDim, bgDim);
     localStorage.setItem(KEY.cardOpacity, cardOpacity);
     updateBg();
   });
 
-  $("clearBgBtn").addEventListener("click", () => {
+  if ($("clearBgBtn")) $("clearBgBtn").addEventListener("click", () => {
     customBg = "";
     customBgName = "";
     localStorage.removeItem(KEY.bg);
@@ -1978,14 +1865,21 @@ function updateSoundStatus() {
 }
 
 function updateBg() {
-  $("bgDim").value = bgDim;
-  $("cardOpacity").value = cardOpacity;
+  if ($("bgDim")) $("bgDim").value = bgDim;
+  if ($("cardOpacity")) $("cardOpacity").value = cardOpacity;
+
   document.documentElement.style.setProperty("--bgDim", Number(bgDim) / 100);
   document.documentElement.style.setProperty("--card", `rgba(27,31,42,${Number(cardOpacity) / 100})`);
-  $("appBg").style.backgroundImage = customBg
-    ? `url("${customBg}")`
-    : `radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%), radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%), linear-gradient(180deg, #111318, #111318)`;
-  $("bgStatus").textContent = customBg ? `目前：${customBgName}` : "目前：預設背景";
+
+  if ($("appBg")) {
+    $("appBg").style.backgroundImage = customBg
+      ? `url("${customBg}")`
+      : `radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%), radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%), linear-gradient(180deg, #111318, #111318)`;
+  }
+
+  if ($("bgStatus")) {
+    $("bgStatus").textContent = customBg ? `目前：${customBgName}` : "目前：預設背景";
+  }
 }
 
 
@@ -3142,249 +3036,6 @@ function initYoutubeAlarmLink() {
 }
 
 setTimeout(initYoutubeAlarmLink, 200);
-
-
-function cleanupNormalizeText(value) {
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-function cleanupShouldHideSmallBlock(el) {
-  const text = cleanupNormalizeText(el.textContent || "");
-  if (!text) return false;
-
-  // 保留雲端相關，不要誤刪「本機資料上傳雲端」。
-  if (/雲端|管理者|登入|登出|同步|上傳雲端|讀取雲端/.test(text)) return false;
-
-  // 只針對小區塊，避免把整個設定頁隱藏。
-  if (text.length > 900) return false;
-
-  const isNoteImportExport = /記事本/.test(text) && /(匯入|匯出|備份|下載|上傳檔案)/.test(text);
-  const isRecipeImportExport = /配方/.test(text) && /(匯入|匯出|備份|下載|上傳檔案)/.test(text);
-
-  // 背景修改功能：包含背景 + 修改/圖片/顏色/上傳/自訂，才隱藏。
-  const isBackgroundSetting = /背景/.test(text) && /(修改|圖片|顏色|上傳|自訂|清除|恢復)/.test(text);
-
-  return isNoteImportExport || isRecipeImportExport || isBackgroundSetting;
-}
-
-
-function cleanupHideImportExportAndBackground() {
-  // 重要：這版不再隱藏整個 panel / div，避免把設定區藏掉。
-  // 只隱藏明確的匯入、匯出、備份、背景修改按鈕或很小的控制元件。
-  const targets = Array.from(document.querySelectorAll("button, input, label, a, .sectionTitle, h3, h4, strong"));
-
-  targets.forEach(el => {
-    const text = cleanupNormalizeText(el.textContent || el.value || el.placeholder || "");
-
-    // 雲端上傳、雲端讀取、管理者登入登出必須保留。
-    if (/雲端|管理者|登入|登出|同步|讀取雲端|上傳雲端/.test(text)) return;
-
-    const shouldHide =
-      /(匯入|匯出|備份|下載備份|還原備份|上傳檔案)/.test(text) ||
-      (/背景/.test(text) && /(修改|圖片|顏色|上傳|自訂|清除|恢復)/.test(text));
-
-    if (!shouldHide) return;
-
-    el.classList.add("cleanupHidden");
-
-    // 只允許隱藏非常小的父層；絕不往上吃到整個設定頁。
-    const parent = el.parentElement;
-    if (parent) {
-      const pText = cleanupNormalizeText(parent.textContent || "");
-      if (
-        pText.length < 260 &&
-        !/雲端|管理者|登入|登出|同步|讀取雲端|上傳雲端|YouTube|鈴聲/.test(pText)
-      ) {
-        parent.classList.add("cleanupHidden");
-      }
-    }
-  });
-
-  cleanupRestoreSettingsVisible();
-}
-
-function cleanupRestoreSettingsVisible() {
-  // 強制恢復設定、雲端、YouTube 鈴聲這些區塊。
-  Array.from(document.querySelectorAll("section, .panel, .card, main > div, div")).forEach(el => {
-    const text = el.textContent || "";
-    const shouldShow =
-      text.includes("雲端") ||
-      text.includes("管理者") ||
-      text.includes("YouTube 鈴聲") ||
-      text.includes("鈴聲類型") ||
-      text.includes("本機資料上傳雲端");
-
-    if (shouldShow && text.length > 300) {
-      el.classList.remove("cleanupHidden");
-      el.classList.remove("hiddenByRepair");
-      el.style.display = "";
-    }
-  });
-}
-
-
-function conversionInlineText(value) {
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-function conversionFindSection() {
-  const all = Array.from(document.querySelectorAll("section, .card, .panel, main > div, div"));
-
-  // 找包含「2. 換算」且有「實際原材料重量 / 倍率」的小區塊。
-  let target = all.find(el => {
-    const text = conversionInlineText(el.textContent || "");
-    return text.includes("2. 換算") && text.includes("實際原材料重量") && text.includes("倍率") && text.length < 5000;
-  });
-
-  if (target) return target;
-
-  // 備援：找含換算結果卡的父層。
-  const cards = conversionFindResultCards();
-  if (cards.length) {
-    let parent = cards[0].parentElement;
-    for (let i = 0; i < 5 && parent; i++) {
-      const text = conversionInlineText(parent.textContent || "");
-      if (text.includes("換算") && text.length < 5000) return parent;
-      parent = parent.parentElement;
-    }
-  }
-
-  return null;
-}
-
-function conversionFindResultCards() {
-  const all = Array.from(document.querySelectorAll("div, article, li"));
-
-  return all.filter(el => {
-    if (el.id === "inlineMergedConversionResult") return false;
-    if (el.classList.contains("inlineMergedConversionResult")) return false;
-    if (el.classList.contains("conversionCardsHiddenByMerge")) return false;
-
-    const text = conversionInlineText(el.textContent || "");
-    if (!text) return false;
-    if (text.length > 180) return false;
-
-    // 圖 2 的卡片格式：品名 + 基準： + 實際需要：
-    return text.includes("基準：") && text.includes("實際需要：");
-  }).filter(el => {
-    // 避免抓到父層，把最小卡片留下。
-    return !Array.from(el.children || []).some(child => {
-      const t = conversionInlineText(child.textContent || "");
-      return t.includes("基準：") && t.includes("實際需要：");
-    });
-  });
-}
-
-function conversionParseCard(card) {
-  const raw = conversionInlineText(card.textContent || "");
-  if (!raw) return "";
-
-  // 目標：酥肉粉｜基準：1 包｜實際需要：1 包
-  let name = raw;
-  let base = "";
-  let need = "";
-
-  const baseMatch = raw.match(/基準：\s*([^實]+)/);
-  const needMatch = raw.match(/實際需要：\s*(.+)$/);
-
-  if (baseMatch) base = baseMatch[1].trim();
-  if (needMatch) need = needMatch[1].trim();
-
-  name = raw
-    .replace(/基準：[\s\S]*$/, "")
-    .trim();
-
-  if (!name) {
-    name = raw.split("基準：")[0].trim();
-  }
-
-  if (!name && raw) return raw;
-
-  const parts = [];
-  if (name) parts.push(name);
-  if (base) parts.push(`基準：${base}`);
-  if (need) parts.push(`實際需要：${need}`);
-
-  return parts.join("　");
-}
-
-function conversionRenderInlineMerged() {
-  const section = conversionFindSection();
-  if (!section) return;
-
-  // 移除上一版錯誤產生在下方的大框。
-  const old = $("oldMergedConversionResult");
-  if (old) old.remove();
-
-  const cards = conversionFindResultCards();
-  if (!cards.length) return;
-
-  const lines = [];
-  cards.forEach(card => {
-    const line = conversionParseCard(card);
-    if (line && !lines.includes(line)) lines.push(line);
-  });
-
-  if (!lines.length) return;
-
-  cards.forEach(card => card.classList.add("conversionCardsHiddenByMerge"));
-
-  let box = $("inlineMergedConversionResult");
-  if (!box) {
-    box = document.createElement("div");
-    box.id = "inlineMergedConversionResult";
-    box.className = "inlineMergedConversionResult";
-
-    // 插在換算區塊裡，盡量放在輸入欄下方、原本結果卡片前面。
-    const firstCard = cards[0];
-    firstCard.parentElement.insertBefore(box, firstCard);
-  }
-
-  box.innerHTML = `
-    <div class="mergedTitle">換算結果</div>
-    <div class="mergedContent">${escapeHtml(lines.join("\\n"))}</div>
-  `;
-}
-
-function conversionPatchInlineMergeHooks() {
-  const hookNames = [
-    "calculateRecipe", "calcRecipe", "convertRecipe", "renderConversion",
-    "renderRecipeCalc", "updateRecipeCalc", "selectRecipe", "saveRecipe"
-  ];
-
-  hookNames.forEach(name => {
-    try {
-      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
-      if (typeof fn === "function" && !fn.__inlineMergeHooked) {
-        const wrapped = function(...args) {
-          const result = fn.apply(this, args);
-          setTimeout(conversionRenderInlineMerged, 80);
-          return result;
-        };
-        wrapped.__inlineMergeHooked = true;
-        window[name] = wrapped;
-        try { globalThis[name] = wrapped; } catch {}
-      }
-    } catch {}
-  });
-
-  document.addEventListener("input", event => {
-    const area = event.target?.closest("section, .card, .panel, div");
-    const text = conversionInlineText(area?.textContent || "");
-    if (/換算|實際原材料重量|倍率|基準|實際需要/.test(text)) {
-      clearTimeout(window.__inlineMergeTimer);
-      window.__inlineMergeTimer = setTimeout(conversionRenderInlineMerged, 120);
-    }
-  });
-}
-
-function initConversionInlineMergeRepair() {
-  conversionPatchInlineMergeHooks();
-  setTimeout(conversionRenderInlineMerged, 250);
-  setTimeout(conversionRenderInlineMerged, 800);
-}
-
-setTimeout(initConversionInlineMergeRepair, 200);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
