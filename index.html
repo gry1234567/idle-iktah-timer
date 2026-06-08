@@ -554,7 +554,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-ONCE-REPAIR-20260608-17</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 MOBILE-PERFORMANCE-SOURCE-CLEANUP-20260608-22</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -710,36 +710,7 @@
           <div class="card">
             <h2>配方計算機</h2>
             <div class="sub">先選已儲存配方，再輸入實際重量換算。也可以新增或修改配方內容。</div>
-
-            <details style="margin-top:12px;">
-              <summary>快速批量匯入配方</summary>
-              <div class="note" style="margin-top:10px;">
-                你可以一次貼上單一配方或多個配方，按一次按鈕就自動建立。
-                多個配方建議用 "---" 分隔。
-              </div>
-              <div style="margin-top:12px;">
-                <label>快速貼上配方</label>
-                <textarea id="recipeBulkText" placeholder="配方名稱：滷汁
-基準重量：500
-糖 100 克
-鹽 20 克
-水 300 ml
-
----
-配方名稱：醃肉醬
-基準重量：1000
-醬油 120 ml
-米酒 80 ml
-蒜泥 30 克"></textarea>
-              </div>
-              <div class="actions3">
-                <button id="bulkImportRecipeBtn">一鍵匯入貼上內容</button>
-                <button class="secondary" id="bulkFillExampleBtn">帶入範例</button>
-                <button class="secondary" id="bulkClearBtn">清空貼上內容</button>
-              </div>
-            </details>
-
-            <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
+<div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:12px;">1. 已儲存配方</div>
             <div class="searchBox">
               <label>搜尋配方</label>
               <input id="recipeSearchInput" placeholder="搜尋配方名稱或材料，例如：糖、醬油、滷汁" />
@@ -804,7 +775,7 @@
                 <button class="secondary" id="selectAllIngredientsBtn">全選材料</button>
                 <button class="dangerSoft" id="deleteSelectedIngredientsBtn">刪除勾選材料</button>
               </div>
-              <div class="note">最後一行輸入內容後會自動新增下一行；刪除材料只會修改本機配方，雲端要等「本機資料上傳雲端」才會同步。</div>
+              <div class="note">刪除材料只會修改本機配方，雲端要等「本機資料上傳雲端」才會同步。</div>
             </div>
             
               <button class="danger" id="deleteRecipeBtn">刪除配方</button>
@@ -848,31 +819,9 @@
               <button class="danger" id="clearSoundBtn">清除</button>
             </div>
             <div class="note" id="soundStatus">目前：預設提示音</div>
-
-            <div class="sectionTitle">自訂背景</div>
-            <div>
-              <label>選擇背景圖片</label>
-              <input id="bgFile" type="file" accept="image/*" />
-            </div>
-            <div class="grid" style="margin-top:12px;">
-              <div>
-                <label>背景暗度</label>
-                <input id="bgDim" type="range" min="0" max="85" value="25" />
-              </div>
-              <div>
-                <label>卡片透明度</label>
-                <input id="cardOpacity" type="range" min="35" max="95" value="82" />
-              </div>
-            </div>
-            <div class="actions">
-              <button class="secondary" id="applyBgBtn">套用背景</button>
-              <button class="danger" id="clearBgBtn">清除背景</button>
-            </div>
-            <div class="note" id="bgStatus">目前：預設背景</div>
-
-            <div class="sectionTitle">雲端同步｜YOUTUBE-ONCE-REPAIR-20260608-17</div>
+<div class="sectionTitle">雲端同步｜MOBILE-PERFORMANCE-SOURCE-CLEANUP-20260608-22</div>
             <div class="note">
-              版本：YOUTUBE-ONCE-REPAIR-20260608-17<br>
+              版本：MOBILE-PERFORMANCE-SOURCE-CLEANUP-20260608-22<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -896,33 +845,7 @@
             </div>
             <div class="cloudPanelClean" id="cleanCloudStatus">狀態：尚未測試雲端。</div>
             <div class="cloudPanelClean" id="cleanLoginStatus">登入狀態：未登入管理者。</div>
-
-            <div class="sectionTitle">記事本備份</div>
-            <div class="actions3">
-              <button class="secondary" id="exportNotesBtn">匯出記事本</button>
-              <button class="secondary" id="importNotesBtn">合併匯入記事本</button>
-              <button class="danger" id="overwriteNotesBtn">覆蓋匯入記事本</button>
-            </div>
-            <div style="margin-top:12px;">
-              <label>記事本備份文字</label>
-              <textarea id="notesBackupText" placeholder="這裡只處理記事本備份"></textarea>
-            </div>
-            <div class="previewBox" id="notesPreviewBox">尚未偵測記事本備份內容。</div>
-            <div class="note">記事本備份只包含所有記事本內容。預設為合併匯入，不會刪除目前記事本。</div>
-
-            <div class="sectionTitle">配方備份</div>
-            <div class="actions3">
-              <button class="secondary" id="exportRecipesBtn">匯出配方</button>
-              <button class="secondary" id="importRecipesBtn">合併匯入配方</button>
-              <button class="danger" id="overwriteRecipesBtn">覆蓋匯入配方</button>
-            </div>
-            <div style="margin-top:12px;">
-              <label>配方備份文字</label>
-              <textarea id="recipesBackupText" placeholder="這裡只處理配方備份"></textarea>
-            </div>
-            <div class="previewBox" id="recipesPreviewBox">尚未偵測配方備份內容。</div>
-            <div class="note">配方備份只包含所有已儲存配方。預設為合併匯入，不會刪除目前配方。</div>
-          </div>
+</div>
         </section>
 
         <div class="card">
@@ -1350,181 +1273,29 @@ function renderNotes() {
   }
   box.innerHTML = notes.map(n => `
     <div class="item" onclick="selectNote('${n.id}')">
-      <div class="itemTitle">${escapeHtml(n.title)}</div>
-      <div class="muted">更新：${timeText(n.updatedAt)}</div>
-      <div class="muted">${escapeHtml((n.content || "").slice(0, 60))}</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <input type="checkbox" class="noteBulkCheck" value="${n.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
+        <div style="flex:1;">
+          <div class="itemTitle">${escapeHtml(n.title)}</div>
+          <div class="muted">更新：${timeText(n.updatedAt)}</div>
+          <div class="muted">${escapeHtml((n.content || "").slice(0, 60))}</div>
+        </div>
+      </div>
     </div>
   `).join("");
 }
 
 
-function splitRecipeBlocks(text) {
-  const normalized = String(text || "").replace(/\r/g, "").trim();
-  if (!normalized) return [];
-
-  if (/^\s*(---+|===+)\s*$/m.test(normalized)) {
-    return normalized.split(/^\s*(?:---+|===+)\s*$/m).map(x => x.trim()).filter(Boolean);
-  }
-
-  const lines = normalized.split("\n");
-  const blocks = [];
-  let current = [];
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (/^配方名稱\s*[:：]/.test(line) && current.length) {
-      blocks.push(current.join("\n").trim());
-      current = [rawLine];
-    } else {
-      current.push(rawLine);
-    }
-  }
-
-  if (current.length) blocks.push(current.join("\n").trim());
-  return blocks.filter(Boolean);
-}
-
-function parseIngredientLine(line) {
-  let s = String(line || "").trim();
-  if (!s) return null;
-
-  s = s.replace(/[\t]+/g, " ").replace(/\s+/g, " ");
-  s = s.replace(/[，]/g, ",").replace(/[／]/g, "/").replace(/[：]/g, ":");
-
-  let name = "";
-  let amount = null;
-  let unit = "";
-
-  if (s.includes(",")) {
-    const parts = s.split(",").map(x => x.trim()).filter(Boolean);
-    if (parts.length >= 2) {
-      name = parts[0] || "";
-      amount = Number(parts[1]);
-      unit = parts[2] || "克";
-    }
-  } else if (s.includes("/") && !/^https?:/i.test(s)) {
-    const parts = s.split("/").map(x => x.trim()).filter(Boolean);
-    if (parts.length >= 2) {
-      name = parts[0] || "";
-      amount = Number(parts[1]);
-      unit = parts[2] || "克";
-    }
-  } else if (s.includes(":") && !/^配方名稱\s*:/.test(s) && !/^基準(?:重量|原材料重量)?\s*:/.test(s)) {
-    const parts = s.split(":");
-    if (parts.length >= 2) {
-      name = parts[0].trim();
-      const right = parts.slice(1).join(":").trim();
-      const match = right.match(/^(-?\d+(?:\.\d+)?)\s*(.*)$/);
-      if (match) {
-        amount = Number(match[1]);
-        unit = (match[2] || "").trim() || "克";
-      }
-    }
-  } else {
-    const match = s.match(/^(.*?)(-?\d+(?:\.\d+)?)\s*([^\d].*)?$/);
-    if (match) {
-      name = (match[1] || "").trim();
-      amount = Number(match[2]);
-      unit = (match[3] || "").trim() || "克";
-    }
-  }
-
-  if (!name || !Number.isFinite(amount)) return null;
-  return { name, amount, unit: unit || "克" };
-}
-
-function parseRecipeBlock(blockText, index) {
-  const lines = String(blockText || "").replace(/\r/g, "").split("\n").map(x => x.trim()).filter(Boolean);
-  let name = "";
-  let baseWeight = null;
-  const ingredients = [];
-
-  lines.forEach(line => {
-    const normalized = line.replace(/[：]/g, ":");
-    const nameMatch = normalized.match(/^配方名稱\s*:\s*(.+)$/i);
-    if (nameMatch) {
-      name = nameMatch[1].trim();
-      return;
-    }
-
-    const baseMatch = normalized.match(/^基準(?:重量|原材料重量)?\s*:\s*(-?\d+(?:\.\d+)?)/i);
-    if (baseMatch) {
-      baseWeight = Number(baseMatch[1]);
-      return;
-    }
-
-    const ingredient = parseIngredientLine(normalized);
-    if (ingredient) ingredients.push(ingredient);
-  });
-
-  if (!ingredients.length) return null;
-
-  return {
-    name: name || `未命名配方 ${index + 1}`,
-    baseWeight: Number.isFinite(baseWeight) && baseWeight > 0 ? baseWeight : 500,
-    ingredients
-  };
-}
-
-function bulkImportRecipes() {
-  const text = $("recipeBulkText").value.trim();
-  if (!text) return alert("請先貼上配方內容。");
-
-  const blocks = splitRecipeBlocks(text);
-  const parsed = blocks.map((block, idx) => parseRecipeBlock(block, idx)).filter(Boolean);
-
-  if (!parsed.length) {
-    return alert("沒有解析到可用配方。請確認格式像：配方名稱、基準重量、材料 數量 單位。");
-  }
-
-  const now = Date.now();
-  const imported = parsed.map((item, idx) => ({
-    id: String(now + idx) + Math.random().toString(16).slice(2),
-    name: item.name,
-    baseWeight: item.baseWeight,
-    ingredients: item.ingredients,
-    createdAt: now + idx,
-    updatedAt: now + idx
-  }));
-
-  recipes = [...imported, ...recipes];
-  selectedRecipeId = imported[0].id;
-  saveRecipes();
-  renderRecipeList();
-  selectRecipe(selectedRecipeId);
-  $("recipeBulkText").value = "";
-
-  alert(`已匯入 ${imported.length} 個配方。`);
-}
-
-function fillBulkRecipeExample() {
-  $("recipeBulkText").value = `配方名稱：滷汁
-基準重量：500
-糖 100 克
-鹽 20 克
-水 300 ml
-醬油 50 ml
-
----
-配方名稱：醃肉醬
-基準重量：1000
-醬油 120 ml
-米酒 80 ml
-蒜泥 30 克
-糖 50 克`;
-}
-
-
 function initRecipe() {
-  $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
-  $("newRecipeBtn").addEventListener("click", newRecipeForm);
-  $("saveRecipeBtn").addEventListener("click", () => saveRecipe(false));
-  $("saveAsRecipeBtn").addEventListener("click", () => saveRecipe(true));
-  $("deleteRecipeBtn").addEventListener("click", deleteRecipe);
-  $("bulkImportRecipeBtn").addEventListener("click", bulkImportRecipes);
-  $("bulkFillExampleBtn").addEventListener("click", fillBulkRecipeExample);
-  $("bulkClearBtn").addEventListener("click", () => { $("recipeBulkText").value = ""; });
-  ["recipeBase", "recipeTarget"].forEach(id => $(id).addEventListener("input", calculateRecipe));
+  if ($("addIngredientBtn")) $("addIngredientBtn").addEventListener("click", () => addIngredientRow());
+  if ($("newRecipeBtn")) $("newRecipeBtn").addEventListener("click", newRecipeForm);
+  if ($("saveRecipeBtn")) $("saveRecipeBtn").addEventListener("click", () => saveRecipe(false));
+  if ($("saveAsRecipeBtn")) $("saveAsRecipeBtn").addEventListener("click", () => saveRecipe(true));
+  if ($("deleteRecipeBtn")) $("deleteRecipeBtn").addEventListener("click", deleteRecipe);
+
+  ["recipeBase", "recipeTarget"].forEach(id => {
+    if ($(id)) $(id).addEventListener("input", calculateRecipe);
+  });
 
   if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
   else if (recipes[0]) selectRecipe(recipes[0].id);
@@ -1538,7 +1309,7 @@ function newRecipeForm() {
   selectedRecipeId = "";
   $("recipeName").value = "";
   $("recipeBase").value = 500;
-  $("recipeTarget").value = 340;
+  $("recipeTarget").value = 1;
   clearIngredients();
   addIngredientRow("糖", 100, "克");
   saveRecipes();
@@ -1549,6 +1320,14 @@ function newRecipeForm() {
 function addIngredientRow(name = "", amount = "", unit = "克") {
   const row = document.createElement("div");
   row.className = "ingredientRow";
+
+  const checkWrap = document.createElement("div");
+  checkWrap.className = "ingredientSelectCell";
+  const check = document.createElement("input");
+  check.type = "checkbox";
+  check.className = "ingredientBulkCheck";
+  check.style.width = "auto";
+  checkWrap.appendChild(check);
 
   const nameInput = document.createElement("input");
   nameInput.placeholder = "材料名稱";
@@ -1575,7 +1354,7 @@ function addIngredientRow(name = "", amount = "", unit = "克") {
 
   [nameInput, amountInput, unitInput].forEach(i => i.addEventListener("input", calculateRecipe));
 
-  row.append(nameInput, amountInput, unitInput, del);
+  row.append(checkWrap, nameInput, amountInput, unitInput, del);
   $("ingredientBox").appendChild(row);
   calculateRecipe();
 }
@@ -1598,19 +1377,28 @@ function calculateRecipe() {
   const ratio = base > 0 ? target / base : 0;
   $("recipeRatio").value = `${formatAmount(ratio)} 倍`;
 
-  const items = getIngredients();
+  const items = getIngredients().filter(i =>
+    String(i.name || "").trim() || Number(i.amount || 0) > 0
+  );
+
   if (!items.length) {
     $("recipeResults").innerHTML = `<div class="muted" style="margin-top:12px;">尚未新增材料。</div>`;
     return;
   }
 
-  $("recipeResults").innerHTML = items.map(i => `
+  const lines = items.map(i => {
+    const name = escapeHtml(i.name || "未命名材料");
+    const amount = formatAmount(Number(i.amount || 0) * ratio);
+    const unit = escapeHtml(i.unit || "");
+    return `<div class="resultLine"><strong>${name}</strong>：${amount} ${unit}</div>`;
+  }).join("");
+
+  $("recipeResults").innerHTML = `
     <div class="resultBox">
-      <div><strong>${escapeHtml(i.name || "未命名材料")}</strong></div>
-      <div class="muted">基準：${formatAmount(i.amount)} ${escapeHtml(i.unit)}</div>
-      <div>實際需要：<strong>${formatAmount(i.amount * ratio)} ${escapeHtml(i.unit)}</strong></div>
+      <div><strong>換算結果</strong></div>
+      <div style="margin-top:8px; line-height:1.9;">${lines}</div>
     </div>
-  `).join("");
+  `;
 }
 
 function saveRecipe(forceNew = false) {
@@ -1684,175 +1472,24 @@ function renderRecipeList() {
   }
   box.innerHTML = recipes.map(r => `
     <div class="item ${r.id === selectedRecipeId ? "active" : ""}" onclick="selectRecipe('${r.id}')">
-      <div class="itemTitle">${escapeHtml(r.name)}</div>
-      <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
-      <div class="muted">更新：${timeText(r.updatedAt)}</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <input type="checkbox" class="recipeBulkCheck" value="${r.id}" onclick="event.stopPropagation()" style="width:auto; margin-top:3px;" />
+        <div style="flex:1;">
+          <div class="itemTitle">${escapeHtml(r.name)}</div>
+          <div class="muted">基準：${formatAmount(r.baseWeight)} 克｜材料 ${r.ingredients.length} 項</div>
+          <div class="muted">更新：${timeText(r.updatedAt)}</div>
+        </div>
+      </div>
     </div>
   `).join("");
 }
 
 
-function exportNotesData() {
-  const data = {
-    type: "iktah_notes_backup",
-    version: 1,
-    exportedAt: Date.now(),
-    notes,
-    selectedNoteId
-  };
-  $("notesBackupText").value = JSON.stringify(data, null, 2);
-  updateNotesPreview();
-  alert(`已匯出記事本 ${notes.length} 筆。請複製備份文字保存。`);
-}
-
-function exportRecipesData() {
-  const data = {
-    type: "iktah_recipes_backup",
-    version: 1,
-    exportedAt: Date.now(),
-    recipes,
-    selectedRecipeId
-  };
-  $("recipesBackupText").value = JSON.stringify(data, null, 2);
-  updateRecipesPreview();
-  alert(`已匯出配方 ${recipes.length} 筆。請複製備份文字保存。`);
-}
-
-function updateNotesPreview() {
-  const box = $("notesPreviewBox");
-  const text = $("notesBackupText").value.trim();
-  if (!text) {
-    box.textContent = "尚未偵測記事本備份內容。";
-    return;
-  }
-
-  try {
-    const data = JSON.parse(text);
-    const count = Array.isArray(data.notes) ? data.notes.length : 0;
-    const typeOk = data.type === "iktah_notes_backup" || Array.isArray(data.notes);
-    box.textContent = typeOk
-      ? `偵測到記事本備份：${count} 筆記事本。`
-      : "這不是有效的記事本備份格式。";
-  } catch (e) {
-    box.textContent = "記事本備份文字格式錯誤。";
-  }
-}
-
-function updateRecipesPreview() {
-  const box = $("recipesPreviewBox");
-  const text = $("recipesBackupText").value.trim();
-  if (!text) {
-    box.textContent = "尚未偵測配方備份內容。";
-    return;
-  }
-
-  try {
-    const data = JSON.parse(text);
-    const count = Array.isArray(data.recipes) ? data.recipes.length : 0;
-    const typeOk = data.type === "iktah_recipes_backup" || Array.isArray(data.recipes);
-    box.textContent = typeOk
-      ? `偵測到配方備份：${count} 筆配方。`
-      : "這不是有效的配方備份格式。";
-  } catch (e) {
-    box.textContent = "配方備份文字格式錯誤。";
-  }
-}
-
-function importNotesData(mode = "merge") {
-  const text = $("notesBackupText").value.trim();
-  if (!text) return alert("請先貼上記事本備份文字。");
-
-  try {
-    const data = JSON.parse(text);
-    const incomingNotes = Array.isArray(data.notes) ? data.notes : [];
-    if (!incomingNotes.length) return alert("這份備份裡沒有記事本資料。");
-
-    if (mode === "overwrite") {
-      if (!confirm(`覆蓋匯入會清掉目前記事本，改成備份內容。
-
-備份內含：記事本 ${incomingNotes.length} 筆。
-
-確定要覆蓋嗎？`)) return;
-      notes = incomingNotes;
-    } else {
-      const existingNoteIds = new Set(notes.map(n => n.id));
-      incomingNotes.forEach(n => {
-        const copy = {...n};
-        if (!copy.id || existingNoteIds.has(copy.id)) {
-          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
-        }
-        notes.unshift(copy);
-      });
-    }
-
-    selectedNoteId = notes[0]?.id || "";
-    saveNotes();
-    renderNotes();
-    if (selectedNoteId && notes.some(n => n.id === selectedNoteId)) selectNote(selectedNoteId);
-
-    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}記事本完成：${incomingNotes.length} 筆。`);
-  } catch (e) {
-    alert("匯入失敗，記事本備份文字格式不正確。");
-  }
-}
-
-function importRecipesData(mode = "merge") {
-  const text = $("recipesBackupText").value.trim();
-  if (!text) return alert("請先貼上配方備份文字。");
-
-  try {
-    const data = JSON.parse(text);
-    const incomingRecipes = Array.isArray(data.recipes) ? data.recipes : [];
-    if (!incomingRecipes.length) return alert("這份備份裡沒有配方資料。");
-
-    if (mode === "overwrite") {
-      if (!confirm(`覆蓋匯入會清掉目前配方，改成備份內容。
-
-備份內含：配方 ${incomingRecipes.length} 筆。
-
-確定要覆蓋嗎？`)) return;
-      recipes = incomingRecipes;
-    } else {
-      const existingRecipeIds = new Set(recipes.map(r => r.id));
-      incomingRecipes.forEach(r => {
-        const copy = {...r};
-        if (!copy.id || existingRecipeIds.has(copy.id)) {
-          copy.id = String(Date.now()) + Math.random().toString(16).slice(2);
-        }
-        recipes.unshift(copy);
-      });
-    }
-
-    selectedRecipeId = recipes[0]?.id || "";
-    saveRecipes();
-    renderRecipeList();
-    if (selectedRecipeId && recipes.some(r => r.id === selectedRecipeId)) selectRecipe(selectedRecipeId);
-
-    alert(`${mode === "overwrite" ? "覆蓋匯入" : "合併匯入"}配方完成：${incomingRecipes.length} 筆。`);
-  } catch (e) {
-    alert("匯入失敗，配方備份文字格式不正確。");
-  }
-}
-
-
-
 function initSettings() {
   updateSoundStatus();
   updateBg();
-  updateNotesPreview();
-  updateRecipesPreview();
 
-  if ($("exportNotesBtn")) $("exportNotesBtn").addEventListener("click", exportNotesData);
-  if ($("importNotesBtn")) $("importNotesBtn").addEventListener("click", () => importNotesData("merge"));
-  if ($("overwriteNotesBtn")) $("overwriteNotesBtn").addEventListener("click", () => importNotesData("overwrite"));
-  if ($("notesBackupText")) $("notesBackupText").addEventListener("input", updateNotesPreview);
-
-  if ($("exportRecipesBtn")) $("exportRecipesBtn").addEventListener("click", exportRecipesData);
-  if ($("importRecipesBtn")) $("importRecipesBtn").addEventListener("click", () => importRecipesData("merge"));
-  if ($("overwriteRecipesBtn")) $("overwriteRecipesBtn").addEventListener("click", () => importRecipesData("overwrite"));
-  if ($("recipesBackupText")) $("recipesBackupText").addEventListener("input", updateRecipesPreview);
-
-  $("soundFile").addEventListener("change", () => {
+  if ($("soundFile")) $("soundFile").addEventListener("change", () => {
     const file = $("soundFile").files?.[0];
     if (!file) return;
     if (!file.type.startsWith("audio/")) return alert("請選擇音訊檔。");
@@ -1870,8 +1507,8 @@ function initSettings() {
     reader.readAsDataURL(file);
   });
 
-  $("testSoundBtn").addEventListener("click", () => customSound ? new Audio(customSound).play() : playDefaultBeep());
-  $("defaultSoundBtn").addEventListener("click", () => {
+  if ($("testSoundBtn")) $("testSoundBtn").addEventListener("click", () => customSound ? new Audio(customSound).play() : playDefaultBeep());
+  if ($("defaultSoundBtn")) $("defaultSoundBtn").addEventListener("click", () => {
     customSound = "";
     customSoundName = "";
     localStorage.removeItem(KEY.sound);
@@ -1879,46 +1516,12 @@ function initSettings() {
     updateSoundStatus();
     playDefaultBeep();
   });
-  $("clearSoundBtn").addEventListener("click", () => {
+  if ($("clearSoundBtn")) $("clearSoundBtn").addEventListener("click", () => {
     customSound = "";
     customSoundName = "";
     localStorage.removeItem(KEY.sound);
     localStorage.removeItem(KEY.soundName);
     updateSoundStatus();
-  });
-
-  $("bgFile").addEventListener("change", () => {
-    const file = $("bgFile").files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return alert("請選擇圖片檔。");
-    if (file.size > 1024 * 1024 * 4) return alert("圖片太大，建議 4MB 以下。");
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      customBg = reader.result;
-      customBgName = file.name;
-      localStorage.setItem(KEY.bg, customBg);
-      localStorage.setItem(KEY.bgName, customBgName);
-      updateBg();
-      alert("背景已儲存。");
-    };
-    reader.readAsDataURL(file);
-  });
-
-  $("applyBgBtn").addEventListener("click", () => {
-    bgDim = $("bgDim").value;
-    cardOpacity = $("cardOpacity").value;
-    localStorage.setItem(KEY.bgDim, bgDim);
-    localStorage.setItem(KEY.cardOpacity, cardOpacity);
-    updateBg();
-  });
-
-  $("clearBgBtn").addEventListener("click", () => {
-    customBg = "";
-    customBgName = "";
-    localStorage.removeItem(KEY.bg);
-    localStorage.removeItem(KEY.bgName);
-    updateBg();
   });
 }
 
@@ -1927,14 +1530,16 @@ function updateSoundStatus() {
 }
 
 function updateBg() {
-  $("bgDim").value = bgDim;
-  $("cardOpacity").value = cardOpacity;
+  customBg = "";
+  customBgName = "";
+
   document.documentElement.style.setProperty("--bgDim", Number(bgDim) / 100);
   document.documentElement.style.setProperty("--card", `rgba(27,31,42,${Number(cardOpacity) / 100})`);
-  $("appBg").style.backgroundImage = customBg
-    ? `url("${customBg}")`
-    : `radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%), radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%), linear-gradient(180deg, #111318, #111318)`;
-  $("bgStatus").textContent = customBg ? `目前：${customBgName}` : "目前：預設背景";
+
+  if ($("appBg")) {
+    $("appBg").style.backgroundImage =
+      `radial-gradient(circle at top left, rgba(183,215,168,.18), transparent 35%), radial-gradient(circle at bottom right, rgba(139,167,219,.14), transparent 32%), linear-gradient(180deg, #111318, #111318)`;
+  }
 }
 
 
@@ -2527,107 +2132,6 @@ setTimeout(initCleanCloud, 0);
 
 
 
-function repairFindSectionByText(text) {
-  const candidates = Array.from(document.querySelectorAll("section, .panel, .card, main > div, div"));
-  return candidates.find(el => {
-    const directHead = Array.from(el.children).slice(0, 4).some(child => {
-      const t = (child.textContent || "").trim();
-      return t === text || t.includes(text);
-    });
-    return directHead && (el.textContent || "").includes(text);
-  });
-}
-
-function repairHideTextSections(titles) {
-  const all = Array.from(document.querySelectorAll("section, .panel, .card, div"));
-  for (const title of titles) {
-    const target = all.find(el => {
-      const txt = (el.textContent || "").trim();
-      if (!txt.includes(title)) return false;
-      return txt.length < 3000;
-    });
-    if (target) target.classList.add("hiddenByRepair");
-  }
-}
-
-function repairMoveLongmenIntoTimer() {
-  const longmen = repairFindSectionByText("龍門陣");
-  const timer = repairFindSectionByText("製作提醒");
-
-  if (longmen && timer && longmen !== timer) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "bulkDeleteBox";
-    wrapper.innerHTML = `<div class="sectionTitle">龍門陣鬧鐘</div>`;
-    while (longmen.firstChild) wrapper.appendChild(longmen.firstChild);
-    timer.appendChild(wrapper);
-    longmen.classList.add("hiddenByRepair");
-  }
-
-  // 移除左側或分類選單中的獨立「龍門陣」入口，但不移除內容文字。
-  Array.from(document.querySelectorAll("button, a, option")).forEach(el => {
-    const txt = (el.textContent || "").trim();
-    const attr = `${el.getAttribute("data-section") || ""} ${el.getAttribute("data-target") || ""} ${el.getAttribute("href") || ""}`;
-    if (txt === "龍門陣" || (txt.includes("龍門陣") && /longmen|dragon|alarm/i.test(attr))) {
-      el.classList.add("hiddenByRepair");
-    }
-  });
-}
-
-function repairHideCalibrationText() {
-  const words = ["秒數校正", "校正秒數", "秒差", "時間校正", "校正值", "校準秒數"];
-  Array.from(document.querySelectorAll("label, .row, .field, div, button")).forEach(el => {
-    const txt = (el.textContent || "").trim();
-    if (words.some(w => txt.includes(w)) && txt.length < 200) {
-      el.classList.add("hiddenByRepair");
-    }
-  });
-}
-
-function repairPatchRenderLists() {
-  const oldRenderNotes = window.renderNotes || renderNotes;
-  const oldRenderRecipes = window.renderRecipeList || renderRecipeList;
-
-  window.renderNotes = function() {
-    oldRenderNotes();
-    document.querySelectorAll("#noteList .item").forEach(item => {
-      if (item.querySelector(".noteBulkCheck")) return;
-      const onclick = item.getAttribute("onclick") || "";
-      const m = onclick.match(/selectNote\('([^']+)'\)/);
-      if (!m) return;
-      const id = m[1];
-      const box = document.createElement("input");
-      box.type = "checkbox";
-      box.className = "noteBulkCheck";
-      box.value = id;
-      box.style.width = "auto";
-      box.style.marginRight = "8px";
-      box.addEventListener("click", e => e.stopPropagation());
-      item.prepend(box);
-    });
-  };
-
-  window.renderRecipeList = function() {
-    oldRenderRecipes();
-    document.querySelectorAll("#recipeList .item").forEach(item => {
-      if (item.querySelector(".recipeBulkCheck")) return;
-      const onclick = item.getAttribute("onclick") || "";
-      const m = onclick.match(/selectRecipe\('([^']+)'\)/);
-      if (!m) return;
-      const id = m[1];
-      const box = document.createElement("input");
-      box.type = "checkbox";
-      box.className = "recipeBulkCheck";
-      box.value = id;
-      box.style.width = "auto";
-      box.style.marginRight = "8px";
-      box.addEventListener("click", e => e.stopPropagation());
-      item.prepend(box);
-    });
-  };
-
-  renderNotes = window.renderNotes;
-  renderRecipeList = window.renderRecipeList;
-}
 
 function getCheckedValues(selector) {
   return Array.from(document.querySelectorAll(selector + ":checked")).map(el => el.value);
@@ -2641,6 +2145,7 @@ function deleteSelectedNotesLocal() {
   notes = notes.filter(n => !ids.includes(n.id));
   if (ids.includes(selectedNoteId)) selectedNoteId = notes[0]?.id || "";
   saveNotes();
+
   if (selectedNoteId) selectNote(selectedNoteId);
   else {
     if ($("noteTitle")) $("noteTitle").value = "";
@@ -2648,19 +2153,23 @@ function deleteSelectedNotesLocal() {
     if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
     renderNotes();
   }
+
   showToast(`已刪除 ${ids.length} 筆本機記事`);
 }
 
 function deleteAllNotesLocal() {
   if (!notes.length) return alert("目前沒有記事可刪除。");
   if (!confirm(`確定刪除全部 ${notes.length} 筆本機記事嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
   notes = [];
   selectedNoteId = "";
   saveNotes();
+
   if ($("noteTitle")) $("noteTitle").value = "";
   if ($("noteContent")) $("noteContent").value = "";
   if ($("noteCurrent")) $("noteCurrent").value = "尚未選取記事";
   renderNotes();
+
   showToast("已刪除全部本機記事");
 }
 
@@ -2672,8 +2181,10 @@ function deleteSelectedRecipesLocal() {
   recipes = recipes.filter(r => !ids.includes(r.id));
   if (ids.includes(selectedRecipeId)) selectedRecipeId = recipes[0]?.id || "";
   saveRecipes();
+
   if (selectedRecipeId) selectRecipe(selectedRecipeId);
   else newRecipeForm();
+
   renderRecipeList();
   showToast(`已刪除 ${ids.length} 個本機配方`);
 }
@@ -2681,63 +2192,17 @@ function deleteSelectedRecipesLocal() {
 function deleteAllRecipesLocal() {
   if (!recipes.length) return alert("目前沒有配方可刪除。");
   if (!confirm(`確定刪除全部 ${recipes.length} 個本機配方嗎？\n\n雲端不會立刻變更，只有按「本機資料上傳雲端」後才會同步覆蓋。`)) return;
+
   recipes = [];
   selectedRecipeId = "";
   saveRecipes();
   newRecipeForm();
   renderRecipeList();
+
   showToast("已刪除全部本機配方");
 }
 
-
-function repairHideBackupSectionsSafely() {
-  // 只隱藏「備份小區塊」，不要再用大範圍文字搜尋，避免把整個設定頁藏掉。
-  const titles = ["記事本備份", "配方備份"];
-  const headings = Array.from(document.querySelectorAll(".sectionTitle, h1, h2, h3, h4, label, strong"));
-
-  headings.forEach(h => {
-    const text = (h.textContent || "").trim();
-    if (!titles.includes(text)) return;
-
-    let node = h;
-    let box = h.parentElement;
-
-    // 找一個較小的父層，不要吃到整個設定頁。
-    for (let i = 0; i < 3 && box; i++) {
-      const txt = (box.textContent || "");
-      if (txt.length < 1200) break;
-      box = box.parentElement;
-    }
-
-    if (box && (box.textContent || "").length < 1500) {
-      box.classList.add("hiddenByRepair");
-    } else {
-      // 如果找不到安全父層，只隱藏標題本身，不隱藏整個設定。
-      node.classList.add("hiddenByRepair");
-    }
-  });
-}
-
-function repairEnsureSettingsVisible() {
-  // 防止設定區被 previous repair 加到 hiddenByRepair。
-  Array.from(document.querySelectorAll("section, .panel, .card, main > div, div")).forEach(el => {
-    const txt = el.textContent || "";
-    const hasCloud = txt.includes("雲端") || txt.includes("管理者") || txt.includes("設定");
-    const hugePanel = txt.length > 1500;
-    if (hasCloud && hugePanel) {
-      el.classList.remove("hiddenByRepair");
-      el.style.display = "";
-    }
-  });
-}
-
-function initStableRepairControls() {
-  repairEnsureSettingsVisible();
-  repairPatchRenderLists();
-  repairHideCalibrationText();
-  repairMoveLongmenIntoTimer();
-  repairHideBackupSectionsSafely();
-
+function initBulkDeleteControls() {
   if ($("deleteSelectedNotesBtn")) $("deleteSelectedNotesBtn").addEventListener("click", deleteSelectedNotesLocal);
   if ($("deleteAllNotesBtn")) $("deleteAllNotesBtn").addEventListener("click", deleteAllNotesLocal);
   if ($("deleteSelectedRecipesBtn")) $("deleteSelectedRecipesBtn").addEventListener("click", deleteSelectedRecipesLocal);
@@ -2746,16 +2211,12 @@ function initStableRepairControls() {
   if ($("noteBulkSelectAll")) $("noteBulkSelectAll").addEventListener("change", (e) => {
     document.querySelectorAll(".noteBulkCheck").forEach(el => el.checked = e.target.checked);
   });
+
   if ($("recipeBulkSelectAll")) $("recipeBulkSelectAll").addEventListener("change", (e) => {
     document.querySelectorAll(".recipeBulkCheck").forEach(el => el.checked = e.target.checked);
   });
-
-  renderNotes();
-  renderRecipeList();
 }
-
-setTimeout(initStableRepairControls, 50);
-
+setTimeout(initBulkDeleteControls, 0);
 
 function recipeBulkFindIngredientRows() {
   const selectors = [
@@ -2780,69 +2241,20 @@ function recipeBulkFindIngredientRows() {
 }
 
 function recipeBulkPatchIngredientCheckboxes() {
-  const rows = recipeBulkFindIngredientRows();
-
-  rows.forEach((row, index) => {
+  document.querySelectorAll(".ingredientRow").forEach(row => {
     if (row.querySelector(".ingredientBulkCheck")) return;
 
-    const cell = document.createElement("div");
-    cell.className = "ingredientSelectCell";
-    cell.innerHTML = `<input type="checkbox" class="ingredientBulkCheck" data-index="${index}" />`;
-
-    row.prepend(cell);
-  });
-
-  recipeBulkBindAutoNextRow();
-}
-
-
-function recipeBulkIsRowFilled(row) {
-  if (!row) return false;
-  const inputs = Array.from(row.querySelectorAll("input, select, textarea"))
-    .filter(el => !el.classList.contains("ingredientBulkCheck") && el.type !== "checkbox" && el.type !== "button");
-  return inputs.some(el => String(el.value || "").trim() !== "");
-}
-
-function recipeBulkLastRowIsFilled() {
-  const rows = recipeBulkFindIngredientRows();
-  if (!rows.length) return false;
-  return recipeBulkIsRowFilled(rows[rows.length - 1]);
-}
-
-function recipeBulkAutoAddNextRow() {
-  const rows = recipeBulkFindIngredientRows();
-  if (!rows.length) return;
-
-  const last = rows[rows.length - 1];
-  if (!recipeBulkIsRowFilled(last)) return;
-
-  if (typeof addIngredient === "function") {
-    addIngredient();
-  } else {
-    const btn = $("addIngredientBtn");
-    if (btn) btn.click();
-  }
-
-  setTimeout(() => {
-    recipeBulkPatchIngredientCheckboxes();
-  }, 30);
-}
-
-function recipeBulkBindAutoNextRow() {
-  const rows = recipeBulkFindIngredientRows();
-  rows.forEach(row => {
-    if (row.dataset.autoNextBound === "1") return;
-    row.dataset.autoNextBound = "1";
-    row.addEventListener("input", () => {
-      clearTimeout(window.__recipeAutoNextTimer);
-      window.__recipeAutoNextTimer = setTimeout(recipeBulkAutoAddNextRow, 120);
-    });
-    row.addEventListener("change", () => {
-      clearTimeout(window.__recipeAutoNextTimer);
-      window.__recipeAutoNextTimer = setTimeout(recipeBulkAutoAddNextRow, 120);
-    });
+    const checkWrap = document.createElement("div");
+    checkWrap.className = "ingredientSelectCell";
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.className = "ingredientBulkCheck";
+    check.style.width = "auto";
+    checkWrap.appendChild(check);
+    row.prepend(checkWrap);
   });
 }
+
 
 function recipeBulkSelectAllIngredients() {
   recipeBulkPatchIngredientCheckboxes();
@@ -2854,39 +2266,17 @@ function recipeBulkSelectAllIngredients() {
 }
 
 function recipeBulkDeleteSelectedIngredients() {
-  recipeBulkPatchIngredientCheckboxes();
+  const selected = Array.from(document.querySelectorAll(".ingredientBulkCheck:checked"));
+  if (!selected.length) return alert("請先勾選要刪除的材料欄位。");
+  if (!confirm(`確定刪除 ${selected.length} 個材料欄位嗎？`)) return;
 
-  const rows = recipeBulkFindIngredientRows();
-  const checks = Array.from(document.querySelectorAll(".ingredientBulkCheck"));
-  const selectedIndexes = checks
-    .filter(c => c.checked)
-    .map(c => Number(c.dataset.index))
-    .filter(n => Number.isFinite(n))
-    .sort((a, b) => b - a);
+  selected.forEach(check => {
+    const row = check.closest(".ingredientRow");
+    if (row) row.remove();
+  });
 
-  if (!selectedIndexes.length) return alert("請先勾選要刪除的材料欄位。");
-  if (!confirm(`確定刪除 ${selectedIndexes.length} 個材料欄位嗎？`)) return;
-
-  // Prefer data model update if selected recipe exists.
-  const recipe = recipes.find(r => r.id === selectedRecipeId);
-  if (recipe && Array.isArray(recipe.ingredients)) {
-    for (const index of selectedIndexes) {
-      recipe.ingredients.splice(index, 1);
-    }
-    recipe.updatedAt = Date.now();
-    saveRecipes();
-    selectRecipe(selectedRecipeId);
-  } else {
-    // Fallback: remove DOM rows only.
-    for (const index of selectedIndexes) {
-      if (rows[index]) rows[index].remove();
-    }
-  }
-
-  setTimeout(() => {
-    recipeBulkPatchIngredientCheckboxes();
-    showToast(`已刪除 ${selectedIndexes.length} 個材料欄位`);
-  }, 50);
+  calculateRecipe();
+  showToast(`已刪除 ${selected.length} 個材料欄位`);
 }
 
 function recipeBulkSetConvertDefaultOneGram() {
@@ -2923,34 +2313,7 @@ function recipeBulkSetConvertDefaultOneGram() {
 function initRecipeMaterialBulkTools() {
   if ($("selectAllIngredientsBtn")) $("selectAllIngredientsBtn").addEventListener("click", recipeBulkSelectAllIngredients);
   if ($("deleteSelectedIngredientsBtn")) $("deleteSelectedIngredientsBtn").addEventListener("click", recipeBulkDeleteSelectedIngredients);
-
-  const oldRenderIngredientRows = window.renderIngredientRows || (typeof renderIngredientRows !== "undefined" ? renderIngredientRows : null);
-  if (typeof oldRenderIngredientRows === "function") {
-    window.renderIngredientRows = function(...args) {
-      const result = oldRenderIngredientRows.apply(this, args);
-      setTimeout(recipeBulkPatchIngredientCheckboxes, 0);
-      return result;
-    };
-    try { renderIngredientRows = window.renderIngredientRows; } catch {}
-  }
-
-  const oldSelectRecipe = window.selectRecipe || (typeof selectRecipe !== "undefined" ? selectRecipe : null);
-  if (typeof oldSelectRecipe === "function") {
-    window.selectRecipe = function(...args) {
-      const result = oldSelectRecipe.apply(this, args);
-      setTimeout(() => {
-        recipeBulkPatchIngredientCheckboxes();
-        recipeBulkSetConvertDefaultOneGram();
-      }, 0);
-      return result;
-    };
-    try { selectRecipe = window.selectRecipe; } catch {}
-  }
-
-  setTimeout(() => {
-    recipeBulkPatchIngredientCheckboxes();
-    recipeBulkSetConvertDefaultOneGram();
-  }, 100);
+  recipeBulkSetConvertDefaultOneGram();
 }
 setTimeout(initRecipeMaterialBulkTools, 100);
 
