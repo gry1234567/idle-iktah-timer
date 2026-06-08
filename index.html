@@ -495,7 +495,7 @@
       width: auto !important;
     }
 
-    /* YOUTUBE_ALARM_CSS */
+    /* YOUTUBE_ONCE_REPAIR_CSS */
     .youtubeAlarmPanel {
       margin-top: 12px;
       padding: 12px;
@@ -525,6 +525,57 @@
     }
     .youtubeAlarmCard h2 { margin-top: 0; }
     .youtubeAlarmCard .actions { justify-content: center; }
+
+    /* CLEANUP_CONVERSION_DISPLAY_CSS */
+    .cleanupHidden {
+      display: none !important;
+    }
+    .mergedConversionResult {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+    .mergedConversionResult .mergedTitle {
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .mergedConversionResult .mergedLine {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* SETTINGS_VISIBILITY_REPAIR_CSS */
+    .settingsVisibilityNote {
+      display: none;
+    }
+
+    /* CONVERSION_INLINE_MERGE_REPAIR_CSS */
+    .inlineMergedConversionResult {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      line-height: 1.9;
+      white-space: pre-wrap;
+    }
+    .inlineMergedConversionResult .mergedTitle {
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .inlineMergedConversionResult .mergedContent {
+      color: var(--text);
+      font-size: 15px;
+    }
+    .conversionCardsHiddenByMerge {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -533,7 +584,7 @@
   <div id="youtubeAlarmOverlay" class="youtubeAlarmOverlay">
     <div class="youtubeAlarmCard">
       <h2>時間到了</h2>
-      <p class="note">YouTube 鈴聲已準備開啟。若瀏覽器阻擋自動開啟，請手動點下面按鈕。</p>
+      <p class="note">YouTube 鈴聲只會開啟一次。若瀏覽器阻擋自動開啟，請手動點下面按鈕。</p>
       <div class="actions">
         <button id="openYoutubeAlarmBtn">開啟 YouTube 鈴聲</button>
         <button class="secondary" id="closeYoutubeAlarmBtn">關閉提示</button>
@@ -554,7 +605,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-LINK-ALARM-20260608-15</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CONVERSION-INLINE-MERGE-REPAIR-20260608-20</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -572,25 +623,7 @@
         <button class="menuBtn" data-page="settingsPage" data-short="設"><span class="menuText">設定</span></button>
       </nav>
 
-      <div class="youtubeAlarmPanel" id="youtubeAlarmSettingsPanel">
-              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">YouTube 鈴聲連動</div>
-              <label>鈴聲類型</label>
-              <select id="alarmSoundType">
-                <option value="builtin">內建鈴聲</option>
-                <option value="youtube">YouTube 網址</option>
-              </select>
-              <label style="margin-top:10px;">YouTube 鈴聲網址</label>
-              <input id="youtubeAlarmUrlInput" placeholder="貼上 YouTube 影片或播放清單網址" />
-              <div class="actions">
-                <button class="secondary" id="saveYoutubeAlarmBtn">儲存 YouTube 鈴聲</button>
-                <button class="secondary" id="testYoutubeAlarmBtn">測試開啟 YouTube</button>
-              </div>
-              <div class="note">
-                若你有 YouTube Premium，開啟 YouTube App 後可由 YouTube 自己背景播放。網頁 APP 會負責提醒與開啟連動。
-              </div>
-            </div>
-            
-<main>
+      <main>
         <section class="page active" id="craftPage">
           <div class="card">
             <h2>開始倒數</h2>
@@ -836,6 +869,23 @@
 
         <section class="page" id="settingsPage">
           <div class="card">
+            <div class="youtubeAlarmPanel" id="youtubeAlarmSettingsPanel">
+              <div class="sectionTitle" style="border-top:0; padding-top:0; margin-top:0;">YouTube 鈴聲設定</div>
+              <label>鈴聲類型</label>
+              <select id="alarmSoundType">
+                <option value="builtin">內建鈴聲</option>
+                <option value="youtube">YouTube 網址</option>
+              </select>
+              <label style="margin-top:10px;">YouTube 鈴聲網址</label>
+              <input id="youtubeAlarmUrlInput" placeholder="貼上 YouTube 影片或播放清單網址" />
+              <div class="actions">
+                <button class="secondary" id="saveYoutubeAlarmBtn">儲存 YouTube 鈴聲</button>
+                <button class="secondary" id="testYoutubeAlarmBtn">測試開啟 YouTube</button>
+              </div>
+              <div class="note">
+                選擇 YouTube 時，時間到只會開啟一次 YouTube，不播放內建鈴聲；背景播放由 YouTube App / Premium 處理。
+              </div>
+            </div>
             <h2>設定</h2>
 
             <div class="sectionTitle">自訂鈴聲</div>
@@ -871,9 +921,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜YOUTUBE-LINK-ALARM-20260608-15</div>
+            <div class="sectionTitle">雲端同步｜CONVERSION-INLINE-MERGE-REPAIR-20260608-20</div>
             <div class="note">
-              版本：YOUTUBE-LINK-ALARM-20260608-15<br>
+              版本：CONVERSION-INLINE-MERGE-REPAIR-20260608-20<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -2958,6 +3008,8 @@ setTimeout(initRecipeMaterialBulkTools, 100);
 
 const YOUTUBE_ALARM_KEY_URL = "longmen_youtube_alarm_url_v1";
 const YOUTUBE_ALARM_KEY_TYPE = "longmen_alarm_sound_type_v1";
+let youtubeAlarmOpenedForCurrentRing = false;
+let youtubeAlarmLastOpenAt = 0;
 
 function normalizeYoutubeUrl(url) {
   return String(url || "").trim();
@@ -2996,18 +3048,52 @@ function openYoutubeAlarmUrl() {
   return true;
 }
 
-function showYoutubeAlarmPrompt() {
-  if (!isYoutubeAlarmEnabled()) return;
-  const overlay = $("youtubeAlarmOverlay");
-  if (overlay) overlay.classList.add("show");
-  setTimeout(() => {
-    try { openYoutubeAlarmUrl(); } catch {}
-  }, 150);
-}
-
 function closeYoutubeAlarmPrompt() {
   const overlay = $("youtubeAlarmOverlay");
   if (overlay) overlay.classList.remove("show");
+}
+
+function stopBuiltinAlarmIfYoutubeMode() {
+  if (!isYoutubeAlarmEnabled()) return;
+
+  try {
+    document.querySelectorAll("audio").forEach(a => {
+      try { a.pause(); a.currentTime = 0; } catch {}
+    });
+  } catch {}
+
+  ["stopAlarm", "stopRinging", "stopSound", "pauseAlarm", "cancelAlarmSound"].forEach(name => {
+    try {
+      const fn = window[name] || globalThis[name];
+      if (typeof fn === "function") fn();
+    } catch {}
+  });
+}
+
+function resetYoutubeAlarmOnceFlag() {
+  youtubeAlarmOpenedForCurrentRing = false;
+}
+
+function showYoutubeAlarmPromptOnce() {
+  if (!isYoutubeAlarmEnabled()) return;
+
+  const now = Date.now();
+
+  // Hard lock: the same ring can only open once; also prevent repeated calls within 10 minutes.
+  if (youtubeAlarmOpenedForCurrentRing) return;
+  if (now - youtubeAlarmLastOpenAt < 10 * 60 * 1000) return;
+
+  youtubeAlarmOpenedForCurrentRing = true;
+  youtubeAlarmLastOpenAt = now;
+
+  stopBuiltinAlarmIfYoutubeMode();
+
+  const overlay = $("youtubeAlarmOverlay");
+  if (overlay) overlay.classList.add("show");
+
+  setTimeout(() => {
+    try { openYoutubeAlarmUrl(); } catch {}
+  }, 150);
 }
 
 function initYoutubeAlarmLink() {
@@ -3021,19 +3107,30 @@ function initYoutubeAlarmLink() {
   if ($("openYoutubeAlarmBtn")) $("openYoutubeAlarmBtn").addEventListener("click", openYoutubeAlarmUrl);
   if ($("closeYoutubeAlarmBtn")) $("closeYoutubeAlarmBtn").addEventListener("click", closeYoutubeAlarmPrompt);
 
-  const hookNames = [
-    "triggerAlarm", "startAlarm", "playAlarm", "ringAlarm",
-    "timerDone", "onTimerDone", "handleTimerDone",
-    "finishTimer", "completeTimer"
-  ];
+  // Reset the one-shot flag only when a new timer is started.
+  ["startTimer", "resumeTimer", "setTimer", "startPresetTimer", "startCustomTimer"].forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__youtubeResetHooked) {
+        const wrapped = function(...args) {
+          resetYoutubeAlarmOnceFlag();
+          return fn.apply(this, args);
+        };
+        wrapped.__youtubeResetHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
 
-  hookNames.forEach(name => {
+  // Hook alarm end functions only. No broad text observer, so it will not keep popping repeatedly.
+  ["triggerAlarm", "startAlarm", "playAlarm", "ringAlarm", "timerDone", "onTimerDone", "handleTimerDone", "finishTimer", "completeTimer"].forEach(name => {
     try {
       const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
       if (typeof fn === "function" && !fn.__youtubeHooked) {
         const wrapped = function(...args) {
           const result = fn.apply(this, args);
-          showYoutubeAlarmPrompt();
+          showYoutubeAlarmPromptOnce();
           return result;
         };
         wrapped.__youtubeHooked = true;
@@ -3042,26 +3139,252 @@ function initYoutubeAlarmLink() {
       }
     } catch {}
   });
-
-  // 備援：監測鬧鐘 UI 出現。避免太頻繁，每 15 秒最多觸發一次。
-  let lastPromptAt = 0;
-  const observer = new MutationObserver(() => {
-    if (!isYoutubeAlarmEnabled()) return;
-    const now = Date.now();
-    if (now - lastPromptAt < 15000) return;
-
-    const hasAlarmUi = document.querySelector(".alarm, .timerAlert, .ringing, [id*='alarm'], [class*='alarm']");
-    const text = document.body ? document.body.innerText : "";
-    if (hasAlarmUi && /時間到|完成|提醒|鬧鐘/.test(text)) {
-      lastPromptAt = now;
-      showYoutubeAlarmPrompt();
-    }
-  });
-
-  if (document.body) observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 }
 
 setTimeout(initYoutubeAlarmLink, 200);
+
+
+function cleanupNormalizeText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function cleanupShouldHideSmallBlock(el) {
+  const text = cleanupNormalizeText(el.textContent || "");
+  if (!text) return false;
+
+  // 保留雲端相關，不要誤刪「本機資料上傳雲端」。
+  if (/雲端|管理者|登入|登出|同步|上傳雲端|讀取雲端/.test(text)) return false;
+
+  // 只針對小區塊，避免把整個設定頁隱藏。
+  if (text.length > 900) return false;
+
+  const isNoteImportExport = /記事本/.test(text) && /(匯入|匯出|備份|下載|上傳檔案)/.test(text);
+  const isRecipeImportExport = /配方/.test(text) && /(匯入|匯出|備份|下載|上傳檔案)/.test(text);
+
+  // 背景修改功能：包含背景 + 修改/圖片/顏色/上傳/自訂，才隱藏。
+  const isBackgroundSetting = /背景/.test(text) && /(修改|圖片|顏色|上傳|自訂|清除|恢復)/.test(text);
+
+  return isNoteImportExport || isRecipeImportExport || isBackgroundSetting;
+}
+
+
+function cleanupHideImportExportAndBackground() {
+  // 重要：這版不再隱藏整個 panel / div，避免把設定區藏掉。
+  // 只隱藏明確的匯入、匯出、備份、背景修改按鈕或很小的控制元件。
+  const targets = Array.from(document.querySelectorAll("button, input, label, a, .sectionTitle, h3, h4, strong"));
+
+  targets.forEach(el => {
+    const text = cleanupNormalizeText(el.textContent || el.value || el.placeholder || "");
+
+    // 雲端上傳、雲端讀取、管理者登入登出必須保留。
+    if (/雲端|管理者|登入|登出|同步|讀取雲端|上傳雲端/.test(text)) return;
+
+    const shouldHide =
+      /(匯入|匯出|備份|下載備份|還原備份|上傳檔案)/.test(text) ||
+      (/背景/.test(text) && /(修改|圖片|顏色|上傳|自訂|清除|恢復)/.test(text));
+
+    if (!shouldHide) return;
+
+    el.classList.add("cleanupHidden");
+
+    // 只允許隱藏非常小的父層；絕不往上吃到整個設定頁。
+    const parent = el.parentElement;
+    if (parent) {
+      const pText = cleanupNormalizeText(parent.textContent || "");
+      if (
+        pText.length < 260 &&
+        !/雲端|管理者|登入|登出|同步|讀取雲端|上傳雲端|YouTube|鈴聲/.test(pText)
+      ) {
+        parent.classList.add("cleanupHidden");
+      }
+    }
+  });
+
+  cleanupRestoreSettingsVisible();
+}
+
+function cleanupRestoreSettingsVisible() {
+  // 強制恢復設定、雲端、YouTube 鈴聲這些區塊。
+  Array.from(document.querySelectorAll("section, .panel, .card, main > div, div")).forEach(el => {
+    const text = el.textContent || "";
+    const shouldShow =
+      text.includes("雲端") ||
+      text.includes("管理者") ||
+      text.includes("YouTube 鈴聲") ||
+      text.includes("鈴聲類型") ||
+      text.includes("本機資料上傳雲端");
+
+    if (shouldShow && text.length > 300) {
+      el.classList.remove("cleanupHidden");
+      el.classList.remove("hiddenByRepair");
+      el.style.display = "";
+    }
+  });
+}
+
+
+function conversionInlineText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function conversionFindSection() {
+  const all = Array.from(document.querySelectorAll("section, .card, .panel, main > div, div"));
+
+  // 找包含「2. 換算」且有「實際原材料重量 / 倍率」的小區塊。
+  let target = all.find(el => {
+    const text = conversionInlineText(el.textContent || "");
+    return text.includes("2. 換算") && text.includes("實際原材料重量") && text.includes("倍率") && text.length < 5000;
+  });
+
+  if (target) return target;
+
+  // 備援：找含換算結果卡的父層。
+  const cards = conversionFindResultCards();
+  if (cards.length) {
+    let parent = cards[0].parentElement;
+    for (let i = 0; i < 5 && parent; i++) {
+      const text = conversionInlineText(parent.textContent || "");
+      if (text.includes("換算") && text.length < 5000) return parent;
+      parent = parent.parentElement;
+    }
+  }
+
+  return null;
+}
+
+function conversionFindResultCards() {
+  const all = Array.from(document.querySelectorAll("div, article, li"));
+
+  return all.filter(el => {
+    if (el.id === "inlineMergedConversionResult") return false;
+    if (el.classList.contains("inlineMergedConversionResult")) return false;
+    if (el.classList.contains("conversionCardsHiddenByMerge")) return false;
+
+    const text = conversionInlineText(el.textContent || "");
+    if (!text) return false;
+    if (text.length > 180) return false;
+
+    // 圖 2 的卡片格式：品名 + 基準： + 實際需要：
+    return text.includes("基準：") && text.includes("實際需要：");
+  }).filter(el => {
+    // 避免抓到父層，把最小卡片留下。
+    return !Array.from(el.children || []).some(child => {
+      const t = conversionInlineText(child.textContent || "");
+      return t.includes("基準：") && t.includes("實際需要：");
+    });
+  });
+}
+
+function conversionParseCard(card) {
+  const raw = conversionInlineText(card.textContent || "");
+  if (!raw) return "";
+
+  // 目標：酥肉粉｜基準：1 包｜實際需要：1 包
+  let name = raw;
+  let base = "";
+  let need = "";
+
+  const baseMatch = raw.match(/基準：\s*([^實]+)/);
+  const needMatch = raw.match(/實際需要：\s*(.+)$/);
+
+  if (baseMatch) base = baseMatch[1].trim();
+  if (needMatch) need = needMatch[1].trim();
+
+  name = raw
+    .replace(/基準：[\s\S]*$/, "")
+    .trim();
+
+  if (!name) {
+    name = raw.split("基準：")[0].trim();
+  }
+
+  if (!name && raw) return raw;
+
+  const parts = [];
+  if (name) parts.push(name);
+  if (base) parts.push(`基準：${base}`);
+  if (need) parts.push(`實際需要：${need}`);
+
+  return parts.join("　");
+}
+
+function conversionRenderInlineMerged() {
+  const section = conversionFindSection();
+  if (!section) return;
+
+  // 移除上一版錯誤產生在下方的大框。
+  const old = $("oldMergedConversionResult");
+  if (old) old.remove();
+
+  const cards = conversionFindResultCards();
+  if (!cards.length) return;
+
+  const lines = [];
+  cards.forEach(card => {
+    const line = conversionParseCard(card);
+    if (line && !lines.includes(line)) lines.push(line);
+  });
+
+  if (!lines.length) return;
+
+  cards.forEach(card => card.classList.add("conversionCardsHiddenByMerge"));
+
+  let box = $("inlineMergedConversionResult");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "inlineMergedConversionResult";
+    box.className = "inlineMergedConversionResult";
+
+    // 插在換算區塊裡，盡量放在輸入欄下方、原本結果卡片前面。
+    const firstCard = cards[0];
+    firstCard.parentElement.insertBefore(box, firstCard);
+  }
+
+  box.innerHTML = `
+    <div class="mergedTitle">換算結果</div>
+    <div class="mergedContent">${escapeHtml(lines.join("\\n"))}</div>
+  `;
+}
+
+function conversionPatchInlineMergeHooks() {
+  const hookNames = [
+    "calculateRecipe", "calcRecipe", "convertRecipe", "renderConversion",
+    "renderRecipeCalc", "updateRecipeCalc", "selectRecipe", "saveRecipe"
+  ];
+
+  hookNames.forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__inlineMergeHooked) {
+        const wrapped = function(...args) {
+          const result = fn.apply(this, args);
+          setTimeout(conversionRenderInlineMerged, 80);
+          return result;
+        };
+        wrapped.__inlineMergeHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
+
+  document.addEventListener("input", event => {
+    const area = event.target?.closest("section, .card, .panel, div");
+    const text = conversionInlineText(area?.textContent || "");
+    if (/換算|實際原材料重量|倍率|基準|實際需要/.test(text)) {
+      clearTimeout(window.__inlineMergeTimer);
+      window.__inlineMergeTimer = setTimeout(conversionRenderInlineMerged, 120);
+    }
+  });
+}
+
+function initConversionInlineMergeRepair() {
+  conversionPatchInlineMergeHooks();
+  setTimeout(conversionRenderInlineMerged, 250);
+  setTimeout(conversionRenderInlineMerged, 800);
+}
+
+setTimeout(initConversionInlineMergeRepair, 200);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
