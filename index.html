@@ -525,6 +525,29 @@
     }
     .youtubeAlarmCard h2 { margin-top: 0; }
     .youtubeAlarmCard .actions { justify-content: center; }
+
+    /* CLEANUP_CONVERSION_DISPLAY_CSS */
+    .cleanupHidden {
+      display: none !important;
+    }
+    .mergedConversionResult {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+    .mergedConversionResult .mergedTitle {
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .mergedConversionResult .mergedLine {
+      color: var(--muted);
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -554,7 +577,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 YOUTUBE-ONCE-REPAIR-20260608-17</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 CLEANUP-CONVERSION-DISPLAY-20260608-18</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -870,9 +893,9 @@
             </div>
             <div class="note" id="bgStatus">目前：預設背景</div>
 
-            <div class="sectionTitle">雲端同步｜YOUTUBE-ONCE-REPAIR-20260608-17</div>
+            <div class="sectionTitle">雲端同步｜CLEANUP-CONVERSION-DISPLAY-20260608-18</div>
             <div class="note">
-              版本：YOUTUBE-ONCE-REPAIR-20260608-17<br>
+              版本：CLEANUP-CONVERSION-DISPLAY-20260608-18<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -3091,6 +3114,175 @@ function initYoutubeAlarmLink() {
 }
 
 setTimeout(initYoutubeAlarmLink, 200);
+
+
+function cleanupNormalizeText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function cleanupShouldHideSmallBlock(el) {
+  const text = cleanupNormalizeText(el.textContent || "");
+  if (!text) return false;
+
+  // 保留雲端相關，不要誤刪「本機資料上傳雲端」。
+  if (/雲端|管理者|登入|登出|同步|上傳雲端|讀取雲端/.test(text)) return false;
+
+  // 只針對小區塊，避免把整個設定頁隱藏。
+  if (text.length > 900) return false;
+
+  const isNoteImportExport = /記事本/.test(text) && /(匯入|匯出|備份|下載|上傳檔案)/.test(text);
+  const isRecipeImportExport = /配方/.test(text) && /(匯入|匯出|備份|下載|上傳檔案)/.test(text);
+
+  // 背景修改功能：包含背景 + 修改/圖片/顏色/上傳/自訂，才隱藏。
+  const isBackgroundSetting = /背景/.test(text) && /(修改|圖片|顏色|上傳|自訂|清除|恢復)/.test(text);
+
+  return isNoteImportExport || isRecipeImportExport || isBackgroundSetting;
+}
+
+function cleanupHideImportExportAndBackground() {
+  const selectors = [
+    ".sectionTitle", "h1", "h2", "h3", "h4", "label", "strong",
+    "button", ".card", ".panel", "section > div", "main > div", "div"
+  ];
+
+  const nodes = Array.from(document.querySelectorAll(selectors.join(",")));
+
+  nodes.forEach(node => {
+    if (!cleanupShouldHideSmallBlock(node)) return;
+
+    // 從標題/按鈕往上找小父層，限制大小，避免吃掉整個頁面。
+    let target = node;
+    for (let i = 0; i < 4; i++) {
+      const parent = target.parentElement;
+      if (!parent) break;
+      const parentText = cleanupNormalizeText(parent.textContent || "");
+      if (parentText.length > 900) break;
+      target = parent;
+    }
+
+    target.classList.add("cleanupHidden");
+  });
+
+  // 額外隱藏明確的匯入匯出按鈕，但保留雲端按鈕。
+  Array.from(document.querySelectorAll("button, input, label")).forEach(el => {
+    const text = cleanupNormalizeText(el.textContent || el.value || el.placeholder || "");
+    if (/雲端|管理者|登入|登出/.test(text)) return;
+    if (/(匯入|匯出|備份|背景修改|修改背景|背景圖片|自訂背景)/.test(text)) {
+      el.classList.add("cleanupHidden");
+    }
+  });
+}
+
+function cleanupFindConversionContainer() {
+  // 找「換算」附近的小區塊，不碰整個頁面。
+  const candidates = Array.from(document.querySelectorAll("section, .card, .panel, div")).filter(el => {
+    const text = cleanupNormalizeText(el.textContent || "");
+    return text.includes("換算") && text.length < 3000;
+  });
+
+  // 優先選有材料/結果/原材料文字的區塊。
+  return candidates.find(el => /材料|結果|原材料|基準|重量/.test(el.textContent || "")) || candidates[0] || null;
+}
+
+function cleanupCollectConversionLines(container) {
+  if (!container) return [];
+
+  const lines = [];
+
+  // 優先從結果區文字抓取。
+  const possibleResultNodes = Array.from(container.querySelectorAll("div, li, p, .item, .row, tr")).filter(el => {
+    const text = cleanupNormalizeText(el.textContent || "");
+    if (!text) return false;
+    if (text.includes("換算") || text.includes("基準") || text.includes("原材料")) return false;
+    if (text.length > 120) return false;
+    return /\d/.test(text) && /[a-zA-Z克公斤gGmlML湯匙茶匙顆根片球小撮]/.test(text);
+  });
+
+  possibleResultNodes.forEach(el => {
+    const text = cleanupNormalizeText(el.textContent || "");
+    if (text && !lines.includes(text)) lines.push(text);
+  });
+
+  // 如果沒有結果文字，從目前配方資料抓。
+  try {
+    const recipe = recipes && recipes.find(r => r.id === selectedRecipeId);
+    if (!lines.length && recipe && Array.isArray(recipe.ingredients)) {
+      recipe.ingredients.forEach(i => {
+        const name = i.name || "";
+        const amount = i.amount ?? "";
+        const unit = i.unit || "";
+        if (name || amount) lines.push(`${name} ${amount} ${unit}`.trim());
+      });
+    }
+  } catch {}
+
+  return lines;
+}
+
+function cleanupRenderMergedConversion() {
+  const container = cleanupFindConversionContainer();
+  if (!container) return;
+
+  let box = $("mergedConversionResult");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "mergedConversionResult";
+    box.className = "mergedConversionResult";
+    container.appendChild(box);
+  }
+
+  const lines = cleanupCollectConversionLines(container);
+  if (!lines.length) {
+    box.innerHTML = `<div class="mergedTitle">換算結果</div><div class="mergedLine">尚無換算內容。</div>`;
+    return;
+  }
+
+  const merged = lines.join("　｜　");
+  box.innerHTML = `
+    <div class="mergedTitle">換算結果合併顯示</div>
+    <div class="mergedLine">${escapeHtml(merged)}</div>
+  `;
+}
+
+function cleanupPatchConversionHooks() {
+  const hookNames = [
+    "calculateRecipe", "calcRecipe", "convertRecipe", "renderConversion",
+    "renderRecipeCalc", "updateRecipeCalc", "selectRecipe", "saveRecipe"
+  ];
+
+  hookNames.forEach(name => {
+    try {
+      const fn = window[name] || (typeof globalThis[name] === "function" ? globalThis[name] : null);
+      if (typeof fn === "function" && !fn.__mergedConversionHooked) {
+        const wrapped = function(...args) {
+          const result = fn.apply(this, args);
+          setTimeout(cleanupRenderMergedConversion, 50);
+          return result;
+        };
+        wrapped.__mergedConversionHooked = true;
+        window[name] = wrapped;
+        try { globalThis[name] = wrapped; } catch {}
+      }
+    } catch {}
+  });
+
+  document.addEventListener("input", event => {
+    const text = cleanupNormalizeText(event.target?.closest("div")?.textContent || "");
+    if (/換算|原材料|重量|配方/.test(text)) {
+      clearTimeout(window.__mergedConversionTimer);
+      window.__mergedConversionTimer = setTimeout(cleanupRenderMergedConversion, 120);
+    }
+  });
+}
+
+function initCleanupConversionDisplay() {
+  cleanupHideImportExportAndBackground();
+  cleanupPatchConversionHooks();
+  setTimeout(cleanupRenderMergedConversion, 150);
+  setTimeout(cleanupHideImportExportAndBackground, 300);
+}
+
+setTimeout(initCleanupConversionDisplay, 200);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
