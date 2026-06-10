@@ -554,7 +554,7 @@
   <div class="wrap">
     <header>
       <h1>龍門陣工具箱</h1>
-      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 SOURCE-CLEANUP-CONVERSION-20260608-21</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
+      <div class="sub">倒數、龍門陣、記事本、配方計算機。可安裝成手機 APP。<span class="cloudBadgeClean on">版本 TIMER-COUNTDOWN-REPAIR-20260608-24</span> <span id="cleanCloudBadge" class="cloudBadgeClean">本機模式</span></div>
       <div class="actions" style="margin-top:12px; max-width:420px;">
         <button id="installAppBtn" style="display:none;">安裝成 APP</button>
         <button class="secondary" id="reloadAppBtn">重新整理</button>
@@ -819,9 +819,9 @@
               <button class="danger" id="clearSoundBtn">清除</button>
             </div>
             <div class="note" id="soundStatus">目前：預設提示音</div>
-<div class="sectionTitle">雲端同步｜SOURCE-CLEANUP-CONVERSION-20260608-21</div>
+<div class="sectionTitle">雲端同步｜TIMER-COUNTDOWN-REPAIR-20260608-24</div>
             <div class="note">
-              版本：SOURCE-CLEANUP-CONVERSION-20260608-21<br>
+              版本：TIMER-COUNTDOWN-REPAIR-20260608-24<br>
               這版不需要填 Supabase URL / key。APP 只連新的 Vercel API：/api/cloud，再由 Vercel 使用 https://oivbidfpeuddedsucwhg.supabase.co/rest/v1/ 連線，並強制指定 public schema測試。
             </div>
             <div class="grid" style="margin-top:12px;">
@@ -3036,6 +3036,215 @@ function initYoutubeAlarmLink() {
 }
 
 setTimeout(initYoutubeAlarmLink, 200);
+
+
+/* TIMER_COUNTDOWN_REPAIR */
+let longmenRepairTimerInterval = null;
+let longmenRepairTimerEndAt = 0;
+let longmenRepairTimerRunning = false;
+let longmenRepairTimerName = "製作提醒";
+let longmenRepairAlarmOn = false;
+let longmenRepairAudio = null;
+
+function longmenRepairParseDurationFromText(text) {
+  const raw = String(text || "").trim();
+
+  if (/30\s*分/.test(raw)) return 30 * 60;
+  if (/1\s*小時/.test(raw)) return 60 * 60;
+  if (/2\s*小時/.test(raw)) return 2 * 60 * 60;
+
+  const hourMatch = raw.match(/(\d+(?:\.\d+)?)\s*小時/);
+  const minMatch = raw.match(/(\d+(?:\.\d+)?)\s*分/);
+  const secMatch = raw.match(/(\d+(?:\.\d+)?)\s*秒/);
+
+  let seconds = 0;
+  if (hourMatch) seconds += Number(hourMatch[1]) * 3600;
+  if (minMatch) seconds += Number(minMatch[1]) * 60;
+  if (secMatch) seconds += Number(secMatch[1]);
+
+  return seconds > 0 ? Math.round(seconds) : 0;
+}
+
+function longmenRepairFormatTime(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
+function longmenRepairFindReminderSection() {
+  const sections = Array.from(document.querySelectorAll("section, .card, .panel, main > div, div"));
+  return sections.find(el => {
+    const txt = el.textContent || "";
+    return txt.includes("製作提醒") && txt.length < 6000;
+  }) || null;
+}
+
+function longmenRepairFindTimerDisplay() {
+  const ids = ["timerDisplay", "countdownDisplay", "alarmDisplay", "currentTimerDisplay", "timerCountdown", "countdownText", "activeTimerText"];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el) return el;
+  }
+
+  const section = longmenRepairFindReminderSection();
+  if (!section) return null;
+
+  return Array.from(section.querySelectorAll("h2, h3, .timer, .time, .display, .muted, div, span")).find(el => {
+    const txt = el.textContent || "";
+    return /目前倒數|倒數|沒有進行中|時間|00:00|0:00/.test(txt) && txt.length < 80;
+  }) || null;
+}
+
+function longmenRepairUpdateDisplay() {
+  const display = longmenRepairFindTimerDisplay();
+  if (!display) return;
+
+  if (!longmenRepairTimerRunning) {
+    display.textContent = "目前沒有進行中的倒數。";
+    return;
+  }
+
+  const left = Math.max(0, Math.ceil((longmenRepairTimerEndAt - Date.now()) / 1000));
+  display.textContent = `${longmenRepairTimerName}｜剩餘 ${longmenRepairFormatTime(left)}`;
+}
+
+function longmenRepairPlayAlarm() {
+  longmenRepairAlarmOn = true;
+
+  try {
+    if (typeof isYoutubeAlarmEnabled === "function" && isYoutubeAlarmEnabled()) {
+      if (typeof showYoutubeAlarmPromptOnce === "function") showYoutubeAlarmPromptOnce();
+      else if (typeof showYoutubeAlarmPrompt === "function") showYoutubeAlarmPrompt();
+      return;
+    }
+  } catch {}
+
+  try {
+    if (typeof customSound !== "undefined" && customSound) {
+      longmenRepairAudio = new Audio(customSound);
+      longmenRepairAudio.loop = true;
+      longmenRepairAudio.play().catch(() => {});
+      return;
+    }
+  } catch {}
+
+  try {
+    if (typeof playDefaultBeep === "function") {
+      const beepLoop = setInterval(() => {
+        if (!longmenRepairAlarmOn) {
+          clearInterval(beepLoop);
+          return;
+        }
+        try { playDefaultBeep(); } catch {}
+      }, 1200);
+      try { playDefaultBeep(); } catch {}
+      return;
+    }
+  } catch {}
+
+  alert("時間到了！");
+}
+
+function longmenRepairStopAlarm() {
+  longmenRepairAlarmOn = false;
+  try {
+    if (longmenRepairAudio) {
+      longmenRepairAudio.pause();
+      longmenRepairAudio.currentTime = 0;
+    }
+  } catch {}
+  longmenRepairAudio = null;
+}
+
+function longmenRepairFinishTimer() {
+  longmenRepairTimerRunning = false;
+  clearInterval(longmenRepairTimerInterval);
+  longmenRepairTimerInterval = null;
+  longmenRepairUpdateDisplay();
+
+  try { showToast(`${longmenRepairTimerName} 時間到了`); } catch {}
+  longmenRepairPlayAlarm();
+}
+
+function longmenRepairStartTimer(seconds, name = "製作提醒") {
+  if (!seconds || seconds <= 0) return;
+
+  longmenRepairStopAlarm();
+  clearInterval(longmenRepairTimerInterval);
+
+  longmenRepairTimerName = name || "製作提醒";
+  longmenRepairTimerEndAt = Date.now() + seconds * 1000;
+  longmenRepairTimerRunning = true;
+
+  longmenRepairUpdateDisplay();
+
+  longmenRepairTimerInterval = setInterval(() => {
+    const left = Math.ceil((longmenRepairTimerEndAt - Date.now()) / 1000);
+    if (left <= 0) longmenRepairFinishTimer();
+    else longmenRepairUpdateDisplay();
+  }, 1000);
+}
+
+function longmenRepairInitTimerButtons() {
+  const section = longmenRepairFindReminderSection();
+  if (!section) return;
+
+  const buttons = Array.from(section.querySelectorAll("button"));
+
+  buttons.forEach(btn => {
+    if (btn.dataset.longmenTimerRepairBound === "1") return;
+
+    const text = String(btn.textContent || "").trim();
+    const seconds = longmenRepairParseDurationFromText(text);
+
+    if (seconds > 0) {
+      btn.dataset.longmenTimerRepairBound = "1";
+      btn.addEventListener("click", () => {
+        setTimeout(() => longmenRepairStartTimer(seconds, text), 0);
+      });
+    }
+
+    if (/停止|取消|關閉|停止鬧鐘|取消鬧鐘/.test(text)) {
+      btn.dataset.longmenTimerRepairBound = "1";
+      btn.addEventListener("click", () => {
+        longmenRepairStopAlarm();
+        longmenRepairTimerRunning = false;
+        clearInterval(longmenRepairTimerInterval);
+        longmenRepairTimerInterval = null;
+        longmenRepairUpdateDisplay();
+      });
+    }
+  });
+
+  const customInputs = Array.from(section.querySelectorAll("input")).filter(input => {
+    const label = input.closest("div")?.textContent || "";
+    return /自設|自訂|分鐘|小時|時間/.test(label);
+  });
+
+  buttons.forEach(btn => {
+    const text = String(btn.textContent || "").trim();
+    if (!/開始|新增|啟動|倒數/.test(text)) return;
+    if (btn.dataset.longmenCustomTimerRepairBound === "1") return;
+
+    btn.dataset.longmenCustomTimerRepairBound = "1";
+    btn.addEventListener("click", () => {
+      const input = customInputs.find(i => Number(i.value || 0) > 0);
+      if (!input) return;
+      const label = input.closest("div")?.textContent || "";
+      const value = Number(input.value || 0);
+      const seconds = /小時/.test(label) ? value * 3600 : value * 60;
+      if (seconds > 0) setTimeout(() => longmenRepairStartTimer(seconds, "自訂倒數"), 0);
+    });
+  });
+
+  longmenRepairUpdateDisplay();
+}
+
+setTimeout(longmenRepairInitTimerButtons, 300);
 
 window.pauseTimer = pauseTimer;
 window.resumeTimer = resumeTimer;
