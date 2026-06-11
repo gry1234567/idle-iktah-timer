@@ -1,23 +1,23 @@
-# 龍門陣工具箱｜製作提醒倒數修正版
+# 龍門陣工具箱｜製作提醒初始化修正版
 
-版本：TIMER-COUNTDOWN-REPAIR-20260608-24
+版本：TIMER-INITIALIZATION-FIX-20260611-25
 
-修正：
-- 修復製作提醒倒數時間不會動
-- 修復時間到後沒有開啟鬧鐘
-- 補上獨立倒數計時保護邏輯
-- 選擇 YouTube 鈴聲時，時間到會呼叫 YouTube 提示，不播放內建循環鈴聲
-- 使用內建 / 自訂音訊時，時間到會循環播放直到取消
+真正原因：
+- 記事本與配方備份欄位已從 HTML 原始碼移除。
+- initSettings() 仍呼叫 updateNotesPreview() 與 updateRecipesPreview()。
+- 因找不到欄位而發生 JavaScript 錯誤。
+- DOMContentLoaded 初始化中斷，setInterval(tickTimers, 1000) 沒有執行。
+- 因此倒數不更新，時間到也不會啟動鬧鐘。
 
-本版只針對製作提醒倒數與鬧鐘修復。
-不動：
-- 雲端 API
-- 配方計算機
-- 記事本
-- 本機資料上傳雲端
-- Supabase 設定
+本版修正：
+- 從 initSettings() 移除已不存在的備份預覽初始化。
+- 從原始碼移除已不存在的匯入匯出事件綁定。
+- 設定與停止鬧鐘按鈕增加空值防呆。
+- 保留原本 addTimer / tickTimers / completeTimer / startAlarm 倒數系統。
+- 沒有加入第二套倒數補丁。
+- 不動雲端、配方、記事本與 YouTube 設定。
 
-一定要上傳：
+上傳：
 - index.html
 - manifest.webmanifest
 - service-worker.js

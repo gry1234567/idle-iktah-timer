@@ -1,7 +1,7 @@
 {
   "name": "龍門陣工具箱",
   "short_name": "龍門陣",
-  "description": "製作提醒倒數修正版 TIMER-COUNTDOWN-REPAIR-20260608-24",
+  "description": "製作提醒初始化修正版 TIMER-INITIALIZATION-FIX-20260611-25",
   "id": "/",
   "start_url": "/",
   "scope": "/",
